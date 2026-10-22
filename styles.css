@@ -1,0 +1,471 @@
+/* Bundled fonts: offline, SIL OFL licenses in assets/fonts. */
+@font-face{font-family:'Plus Jakarta Sans';src:url('assets/fonts/PlusJakartaSans-700.woff2') format('woff2');font-style:normal;font-weight:700;font-display:swap}
+@font-face{font-family:'Plus Jakarta Sans';src:url('assets/fonts/PlusJakartaSans-800.woff2') format('woff2');font-style:normal;font-weight:800;font-display:swap}
+@font-face{font-family:'DM Sans';src:url('assets/fonts/DM-Sans.ttf') format('truetype');font-style:normal;font-weight:100 1000;font-display:swap}
+
+:root{
+  --ink:#14151A;--ink-soft:#4A4A52;--muted:#8E8B7E;
+  --bg:#FBF9F4;--card:#FFFFFF;--line:#ECE7DA;
+  --accent:#D6F25C;--accent-ink:#1C2410;
+  --mint:#D8F3DE;--mint-ink:#2F7D4C;
+  --sky:#D8ECFB;--sky-ink:#2A6CA8;
+  --blush:#FBDCE6;--blush-ink:#B23A66;
+  --butter:#FCEFC0;--butter-ink:#8A6D12;
+  --shadow:0 2px 6px rgba(20,21,26,.05),0 14px 28px rgba(20,21,26,.06);
+  --radius-lg:22px;--radius-md:16px;--radius-sm:10px;
+  font-size:16px;color-scheme:light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',Arial,sans-serif;line-height:1.4}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+a{color:inherit}
+h1,h2,p{margin:0}
+.muted{color:var(--muted)}
+
+#app{max-width:860px;margin:0 auto;padding:22px 20px 110px}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.wordmark{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-.02em;white-space:nowrap}
+.topbar-actions{white-space:nowrap}
+.wordmark .star{color:var(--accent-ink);background:var(--accent);border-radius:50%;display:inline-grid;place-items:center;width:1.4em;height:1.4em;font-size:1em;margin-right:4px;vertical-align:-.3em}
+.topbar-actions{display:flex;align-items:center;gap:14px;font-size:.82rem}
+.save-state{color:var(--muted)}
+.save-state[data-status="paused"]{color:var(--blush-ink)}
+.textbtn{background:none;border:0;color:var(--ink-soft);font-size:.82rem;font-weight:600;padding:4px 2px;text-decoration:underline;text-underline-offset:2px}
+.textbtn:hover{color:var(--ink)}
+
+.screen-switch{display:inline-flex;background:var(--ink);border-radius:999px;padding:4px;gap:2px;margin-bottom:22px}
+.switch-pill{border:0;background:transparent;color:#fff;opacity:.6;padding:9px 20px;border-radius:999px;font-weight:600;font-size:.88rem}
+.switch-pill.active{background:var(--accent);color:var(--accent-ink);opacity:1}
+
+.stats-head{margin-bottom:14px}
+.stats-head h1{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:2rem;letter-spacing:-.02em}
+.stats-head p{margin-top:4px}
+
+.stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}
+.stat-tile{border-radius:var(--radius-md);padding:14px 14px 12px;min-width:0}
+.stat-label{display:block;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;font-weight:600;opacity:.75;margin-bottom:8px}
+.stat-value{display:block;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat-tile.tone-ink{background:var(--ink);color:#fff}
+.stat-tile.tone-ink .stat-label{color:#cfcdc6}
+.stat-tile.tone-mint{background:var(--mint);color:var(--mint-ink)}
+.stat-tile.tone-sky{background:var(--sky);color:var(--sky-ink)}
+.stat-tile.tone-blush{background:var(--blush);color:var(--blush-ink)}
+
+.progress{height:8px;background:var(--line);border-radius:999px;overflow:hidden;margin-bottom:26px}
+.progress span{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width .2s ease}
+
+.cal-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.mode-switch{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px}
+.mode-pill{border:0;background:transparent;color:var(--muted);padding:7px 16px;border-radius:999px;font-weight:600;font-size:.82rem}
+.mode-pill.active{background:var(--ink);color:#fff}
+.nav-arrows{display:flex;gap:8px}
+.icon-btn{border:1px solid var(--line);background:var(--card);width:34px;height:34px;border-radius:50%;display:inline-grid;place-items:center;color:var(--ink-soft);font-size:1rem}
+.icon-btn:hover{background:#f3f1e9}
+
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.cal-weekday{text-align:center;font-size:.72rem;letter-spacing:.06em;color:var(--muted);font-weight:700;padding:4px 0 8px;text-transform:uppercase}
+.cal-day{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);min-height:92px;padding:7px;cursor:pointer;min-width:0;transition:box-shadow .15s ease}
+.cal-day:hover{box-shadow:var(--shadow)}
+.cal-day.outside{background:#f6f4ee;opacity:.55}
+.cal-day.is-today{border-color:var(--ink);box-shadow:inset 0 0 0 2px var(--accent)}
+.day-num{font-weight:700;font-size:.82rem}
+.day-pills{display:flex;flex-direction:column;gap:3px;margin-top:5px}
+.day-pill{border:0;width:100%;text-align:left;padding:3px 7px;border-radius:8px;font-size:.66rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day-pill.is-paid{opacity:.5;text-decoration:line-through}
+.day-more{font-size:.64rem;color:var(--muted);font-weight:600;padding-left:2px}
+
+.week-list{display:flex;flex-direction:column;gap:10px}
+.week-row{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-md);padding:14px 16px;cursor:pointer;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.week-row.is-today{box-shadow:inset 0 0 0 2px var(--accent)}
+.week-row-label{font-weight:700;min-width:150px;font-size:.88rem}
+.week-row-pills{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.week-row-empty{color:var(--muted);font-size:.84rem}
+.week-row .day-pill{width:auto}
+
+.bills-list{display:flex;flex-direction:column;gap:10px}
+.bill-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-md);padding:12px 14px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)}
+.bill-card-main{display:flex;flex-direction:column;flex:1;min-width:0}
+.bill-card-name{font-weight:700}
+.bill-card-meta{font-size:.78rem;color:var(--muted)}
+.bill-card-amount{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-variant-numeric:tabular-nums}
+
+.chip{display:inline-block;padding:4px 10px;border-radius:999px;font-size:.72rem;font-weight:700;white-space:nowrap}
+
+.fab{position:fixed;right:24px;bottom:24px;width:58px;height:58px;border-radius:50%;background:var(--ink);color:#fff;border:0;font-size:1.8rem;line-height:1;box-shadow:0 10px 24px rgba(20,21,26,.3);display:grid;place-items:center}
+.fab:hover{background:#000}
+.fab:active{transform:translateY(1px)}
+
+.empty{padding:50px 20px;text-align:center;background:var(--card);border:1px dashed var(--line);border-radius:var(--radius-lg)}
+.empty h3{margin-bottom:8px;font-family:'Plus Jakarta Sans',sans-serif}
+.empty-note{color:var(--muted);padding:20px 0;text-align:center}
+
+dialog{border:0;border-radius:var(--radius-lg);width:min(520px,calc(100% - 32px));padding:24px;box-shadow:0 24px 70px rgba(20,21,26,.25)}
+dialog::backdrop{background:rgba(20,21,26,.45)}
+.dialog-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.dialog-head h2{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.4rem;letter-spacing:-.02em}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid label{display:flex;flex-direction:column;gap:6px;font-size:.84rem;font-weight:600;color:var(--ink-soft)}
+.form-grid .full{grid-column:1/-1}
+.field,input:not([type=checkbox]),select,textarea{border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px 11px;font-size:.92rem;color:var(--ink)}
+input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.form-error{color:var(--blush-ink);font-size:.85rem;margin-top:12px;min-height:1em}
+.dialog-actions{display:flex;align-items:center;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.spacer{flex:1}
+.btn{border:1px solid var(--line);background:#fff;padding:10px 18px;border-radius:999px;font-weight:700;font-size:.88rem}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--ink-soft)}
+.btn.danger{color:var(--blush-ink)}
+.btn.danger.ghost{border-color:transparent}
+
+.day-detail-row{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line)}
+.day-detail-row:last-child{border-bottom:0}
+.day-detail-row input[type=checkbox]{width:18px;height:18px;accent-color:var(--ink)}
+.day-detail-name{flex:1;font-weight:600}
+.day-detail-name.is-paid{text-decoration:line-through;color:var(--muted)}
+.day-detail-amount{font-variant-numeric:tabular-nums;font-weight:700}
+.status-tag{font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:999px}
+.status-Paid{background:var(--mint);color:var(--mint-ink)}
+.status-Overdue{background:var(--blush);color:var(--blush-ink)}
+.status-Upcoming{background:var(--sky);color:var(--sky-ink)}
+
+#toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 20px;border-radius:999px;font-size:.85rem;z-index:80;opacity:0;pointer-events:none;transition:opacity .15s}
+#toast.visible{opacity:1}
+
+@media(max-width:620px){
+  .stats-strip{grid-template-columns:repeat(2,1fr)}
+  .form-grid{grid-template-columns:1fr}
+  .cal-day{min-height:76px}
+  .day-pill{font-size:.6rem}
+  .stats-head h1{font-size:1.6rem}
+}
+@media(max-width:420px){
+  .cal-weekday{font-size:.62rem}
+  .cal-day{padding:5px 4px}
+  .fab{right:16px;bottom:16px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* Reference-led finish: ink outlines, paper grid and pastel accents. */
+:root{--bg:#fafaf7;--muted:#60616a;--line:#dededb;--blush:#f2b6d4;--mint:#dceecb;--sky:#dfe9fb}
+body{background-image:linear-gradient(#16161605 1px,transparent 1px),linear-gradient(90deg,#16161605 1px,transparent 1px);background-size:24px 24px}
+#app{max-width:1120px;padding:32px 32px 100px}
+.topbar{padding-bottom:24px;border-bottom:2px solid var(--ink);margin-bottom:28px}
+.wordmark{display:flex;align-items:center;gap:8px;font-size:1.2rem}
+.wordmark small{font-family:'DM Sans',sans-serif;font-size:12px;letter-spacing:.14em;border-left:1px solid var(--ink);padding-left:16px;margin-left:12px}
+.wordmark .star{background:none;font-size:30px;margin:0;width:auto;height:auto}
+.screen-switch{background:#fff;border:2px solid var(--ink);border-radius:12px;box-shadow:2px 3px 0 var(--ink);padding:4px}
+.switch-pill{color:var(--ink);opacity:1;border-radius:7px;min-width:110px;font-size:14px}
+.switch-pill.active{background:var(--accent)}
+.stats-head h1{font-size:clamp(2rem,4vw,3rem);letter-spacing:-.055em;line-height:1.2}
+.stats-head{margin:6px 0 22px}.stats-strip{gap:14px}.stat-tile{border:1.5px solid var(--ink);padding:18px 20px;box-shadow:2px 3px 0 var(--ink);border-radius:16px;color:var(--ink)!important}
+.stat-tile.tone-ink{background:#e6ddf8}.stat-tile.tone-ink .stat-label{color:var(--ink)}.stat-label{font-size:14px;text-transform:none;letter-spacing:0;opacity:1}.stat-value{font-size:clamp(1.3rem,2.6vw,2rem);white-space:normal;overflow-wrap:anywhere}
+.progress-label{display:flex;justify-content:space-between;font-size:14px;margin:22px 0 9px}.progress{height:10px;border:1px solid var(--ink);background:#fff;margin-bottom:30px}.progress span{background:var(--accent)}
+.cal-toolbar{margin-bottom:18px}.mode-switch{border:2px solid var(--ink);border-radius:11px;box-shadow:2px 3px 0 var(--ink)}.mode-pill{font-size:14px;border-radius:6px;min-width:90px;color:var(--ink)}.mode-pill.active{background:var(--blush);color:var(--ink)}.icon-btn{min-width:40px;height:40px;border:1.5px solid var(--ink);border-radius:11px;font-size:22px}.nav-arrows #nav-today{width:auto;padding:0 14px;font-size:14px;font-weight:700}
+#cal-body{background:#fff;border:2px solid var(--ink);border-radius:20px;padding:15px;box-shadow:3px 4px 0 var(--ink)}
+.cal-grid{gap:5px}.cal-weekday{font-size:12px;padding:4px 0 12px}.cal-day{min-height:102px;border-radius:10px;padding:8px;background:#fff}.cal-day.outside{background:#f6f6f3;opacity:.6}.cal-day.is-today{background:#f3fad9;box-shadow:none;border:2px solid var(--ink)}.day-num{font-size:14px}.day-pill{font-size:12px;color:var(--ink)!important;padding:5px 6px;border-radius:5px}.day-pill.is-paid{opacity:.7}.day-more{font-size:12px}.legend{display:flex;gap:18px;font-size:14px;margin:18px 0}.legend span{display:flex;align-items:center;gap:6px}.legend i{width:10px;height:10px;border:1px solid var(--ink);border-radius:50%;background:var(--mint)}.legend .late{background:var(--blush)}
+.empty-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;border:1.5px solid var(--ink);border-radius:16px;background:#f0eafa;margin-bottom:22px}.empty-banner h2{font-size:20px;font-weight:800;letter-spacing:-.04em}.empty-banner p{font-size:14px;margin-top:4px}.btn{font-size:14px}.btn.primary{background:var(--accent);color:var(--ink);border:2px solid var(--ink);box-shadow:2px 3px 0 var(--ink)}
+.fab{background:var(--blush);color:var(--ink);border:2px solid var(--ink);box-shadow:3px 4px 0 var(--ink);width:62px;height:62px;right:max(24px,calc((100vw - 1120px)/2 + 24px));font-size:36px}.fab:hover{background:#eea5ca}.bill-card{border:1.5px solid var(--ink);box-shadow:2px 3px 0 var(--ink);padding:20px}.bill-card-name{font-size:18px}.bill-card-meta,.chip,.status-tag{font-size:14px}.bill-card-name{overflow-wrap:anywhere}.bill-card-amount{white-space:nowrap}
+.week-row{border-color:var(--ink)}.week-row-label,.week-row-empty{font-size:16px}.week-range{font-size:14px;margin:0 0 12px}.week-row .day-pill{font-size:14px}
+dialog{border:2px solid var(--ink);box-shadow:6px 7px 0 var(--ink);max-height:90dvh;overflow:auto}.form-grid label{font-size:14px}.form-grid input,.form-grid select{border-color:#7b7b80;min-width:0;width:100%;font-size:16px}.day-detail-row{flex-wrap:wrap}.day-detail-row .chip{display:none}.day-detail-name{min-width:90px;overflow-wrap:anywhere}.day-detail-row input[type=checkbox]{min-width:24px;height:24px}.settings-note{font-size:14px;margin:22px 0}.recovery-btn{display:block;margin:8px 0}.save-state{font-size:12px}.textbtn{font-size:14px}.save-warning{background:#ffe2ec;border:2px solid var(--ink);padding:12px;border-radius:10px;margin-bottom:16px;font-size:14px}#toast{max-width:calc(100% - 30px);width:max-content;border-radius:12px}.day-pill.late{border-left:0}
+button:focus-visible,[tabindex]:focus-visible{outline:3px solid #7e51bc;outline-offset:3px}.cal-day:hover{border-color:var(--ink)}
+@media(max-width:650px){#app{padding:20px 14px 100px}.topbar{gap:16px}.wordmark{flex-wrap:wrap}.wordmark small{font-size:10px}.topbar-actions{width:100%;justify-content:space-between;gap:12px}.stats-strip{gap:12px}.stat-tile{padding:14px}.stat-value{font-size:1.6rem}.empty-banner{align-items:flex-start;flex-direction:column}#cal-body{padding:8px 5px;border-radius:14px}.cal-day{padding:4px 2px;min-height:82px}.cal-grid{gap:3px}.day-pill{font-size:12px;padding:3px 2px}.cal-weekday{font-size:12px;letter-spacing:0}.day-num{font-size:14px;display:block;padding-left:4px}.day-more{font-size:12px}.bill-card{flex-wrap:wrap;padding:14px;gap:10px}.bill-card>.chip{order:4}.bill-card-main{flex:1 1 100%;order:1}.bill-card-amount{order:2}.bill-card>.icon-btn{order:3}.bill-card-meta{font-size:14px}.day-detail-row{gap:8px}.dialog-actions{flex-wrap:wrap}.form-grid{grid-template-columns:1fr}.settings-note{line-height:1.6}.progress-label{font-size:14px}}
+
+/* Income is a distinct marker above each day's bill list. */
+.payday-pill{display:block;width:100%;margin:4px 0 6px;padding:4px 3px;border:1px solid #334f26;border-radius:6px;background:#d6f25c;color:#203019;font-size:12px;font-weight:800;line-height:1.35;text-align:center;overflow-wrap:anywhere}
+.payday-pill:hover,.payday-detail-link:hover{background:#c7e84b}.week-row .payday-pill{width:auto;padding:6px 14px;margin:0}.week-row-pills{align-items:center}.legend .payday-dot{background:#d6f25c}.legend{flex-wrap:wrap}
+.payday-detail-link{width:100%;padding:14px;background:#d6f25c;border:1.5px solid var(--ink);border-radius:12px;text-align:left;font-size:16px;font-weight:700;margin-bottom:16px}
+.income-detail-card{display:flex;align-items:center;flex-wrap:wrap;gap:16px;border:1.5px solid var(--ink);border-radius:14px;padding:18px;background:#d6f25c;margin-bottom:12px}.income-detail-card>div{flex:1;min-width:140px}.income-detail-card h3{margin:0 0 5px;font-size:20px;overflow-wrap:anywhere}.income-detail-card p{font-size:14px}.income-detail-card strong{font-size:20px;overflow-wrap:anywhere}.income-detail-card .textbtn{flex-basis:100%;text-align:left}
+@media(max-width:420px){.payday-pill{font-size:12px;padding:3px 0}.cal-day{min-height:92px}}
+
+.demo-banner{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;margin-bottom:24px;border:1.5px solid var(--ink);border-radius:12px;background:#e8f6bc;font-size:14px}.demo-banner a{font-weight:700;text-underline-offset:3px}
+
+/* Keep paired controls aligned; helper text follows the control. */
+#bill-form .form-grid{align-items:start}
+#bill-form .form-grid>label{min-width:0}
+#bill-form .form-grid input,#bill-form .form-grid select{height:46px;line-height:1.4}
+#bill-form .field-hint{font-size:12px;font-weight:400;line-height:1.4}
+
+/* Payday shares the date heading, above the bill list. */
+.day-heading{display:flex;align-items:center;justify-content:space-between;gap:4px;min-height:24px;min-width:0}
+.day-heading .day-num{flex-shrink:0}
+.day-heading .payday-pill{width:auto;min-width:0;max-width:100%;margin:0;padding:2px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
+.week-day-heading{display:flex;align-items:center;gap:12px;flex-basis:100%;min-width:0}
+@media(max-width:650px){.day-heading{gap:2px}.day-heading .payday-pill{padding:2px 1px}}
+
+/* A single filled date-and-payday band, matching the reference. */
+.day-heading.has-payday,.week-day-heading.has-payday{background:#d6f25c;border-radius:8px;padding:4px 7px;color:#203019}
+.day-heading.has-payday .payday-pill,.week-day-heading.has-payday .payday-pill{background:transparent;border:0;border-radius:0;box-shadow:none;padding:0;margin:0;color:inherit}
+.day-heading.has-payday:hover,.week-day-heading.has-payday:hover{background:#c7e84b}
+.week-day-heading.has-payday{justify-content:space-between;padding:8px 12px}
+@media(max-width:650px){.day-heading.has-payday{padding:4px 2px}}
+
+/* Payment checkboxes are per occurrence and stay separate from detail buttons. */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.paid-check{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;padding:3px;cursor:pointer;line-height:1}
+.paid-check input[type=checkbox]{margin:0;width:18px;height:18px;min-width:18px;accent-color:#39705d;cursor:pointer}
+.payment-pill{display:flex;align-items:center;min-width:0;border-radius:6px;background:var(--category-bg,#fff)}
+.payment-pill .day-pill{background:transparent;min-width:0;flex:1;padding-left:2px}
+.payday-actions{display:flex;align-items:center;justify-content:flex-end;gap:2px;min-width:0}
+.day-heading .payday-actions .payday-pill{min-width:0;max-width:100%;background:transparent;border:0;padding:0}
+.day-detail-row.payment-paid{padding:10px;border-radius:10px}.income-detail-card.payment-paid h3{text-decoration:none}
+.bill-card{flex-wrap:wrap}.occurrence-list{flex-basis:100%;display:grid;gap:6px;margin-top:4px;border-top:1px solid #14151a22;padding-top:10px}
+.occurrence-row{display:flex;align-items:center;gap:10px;border-radius:8px;padding:6px;font-size:14px;flex-wrap:wrap}.occurrence-row strong{margin-left:auto}
+/* The category-colour fill behind a bill's name/amount only covered the text's own
+   width, leaving the rest of the day row blank — stretch it to the full row instead,
+   stacking bills on their own row when a day has more than one. */
+.week-row-pills{flex-direction:column;align-items:stretch}
+.week-row .payment-pill{width:100%}
+.week-row .payment-pill .day-pill{width:100%;padding-left:12px;padding-right:10px}
+@media(max-width:650px){.payment-pill .paid-check{padding:3px 1px}.payment-pill .paid-check input[type=checkbox],.payday-actions .paid-check input[type=checkbox]{width:14px;height:14px;min-width:14px}.payday-actions{gap:0}.payday-actions .paid-check{padding:2px 1px}.day-heading.has-payday{flex-wrap:wrap}.day-heading .payday-actions{flex:1;min-width:0}.occurrence-row{gap:6px}}
+
+/* Paid controls are shown only inside payment details. */
+.payment-pill .day-pill{padding-left:7px}
+
+/* Use the supplied logo artwork; only the chart is rendered black. */
+.studio-brand{display:inline-flex;align-items:center;gap:10px;flex:none}
+
+.studio-brand-name{display:block;width:108px;height:38px;overflow:hidden}
+.wordmark .studio-brand+small{margin-left:8px}
+@media(max-width:420px){.studio-brand{gap:8px}.studio-brand-name{width:100px;height:35px}.wordmark .studio-brand+small{padding-left:10px;margin-left:2px}}
+
+.next-seven{display:flex;align-items:center;justify-content:space-between;gap:16px;border:1.5px solid var(--ink);border-radius:16px;padding:16px 20px;margin:0 0 24px;background:#fff;box-shadow:2px 3px 0 var(--ink)}
+.next-seven h2{font-size:18px;font-weight:800;letter-spacing:-.03em}.next-seven p{font-size:14px;color:var(--muted);margin-top:5px}.next-seven>strong{font-family:'Plus Jakarta Sans',sans-serif;font-size:26px;font-weight:800;white-space:nowrap}
+.payment-filters{display:flex;gap:6px;flex-wrap:wrap}.filter-pill{border:1px solid var(--ink);border-radius:999px;padding:7px 16px;background:#fff;color:var(--ink);font-size:14px;font-weight:700}.filter-pill.active{background:var(--ink);color:#fff}.filter-note{font-size:13px;color:var(--muted);margin:9px 0 16px}
+@media(max-width:650px){.next-seven{padding:14px;flex-wrap:wrap}.next-seven>strong{font-size:24px}.next-seven h2{font-size:16px}}
+
+/* Status is conveyed without calendar legends or icons. */
+.payment-overdue .payment-name,.payment-overdue .day-detail-name,.income-detail-card.payment-overdue h3,.day-heading.payday-overdue .payday-pill,.week-day-heading.payday-overdue .payday-pill{color:#922F46}
+.day-pill.is-paid{text-decoration:none}.day-pill.is-paid .payment-name,.day-detail-row.payment-paid:not(.income-detail-row) .day-detail-name{text-decoration:line-through}
+
+
+.payment-status-legend{display:flex;flex-wrap:wrap;gap:24px;margin-top:20px;font-size:14px;font-weight:600;color:var(--ink)}
+.payment-status-legend .legend-paid{text-decoration:line-through;opacity:.7}.payment-status-legend .legend-overdue{color:#922F46}
+
+/* Show each occurrence's effective amount beneath its name. */
+.payment-pill .payment-name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.payment-pill .payment-amount{display:block;margin-top:2px;font-size:12px;font-weight:500;line-height:1.35;font-variant-numeric:tabular-nums;white-space:normal;overflow-wrap:anywhere}
+.payment-overdue .payment-amount{color:#922F46}.day-pill.is-paid .payment-amount{text-decoration:line-through}
+@media(max-width:650px){.payment-pill .day-pill{padding-left:2px;padding-right:2px}}
+
+.cal-toolbar{flex-wrap:wrap;align-items:flex-end}
+@media(max-width:650px){
+  .mode-switch{display:flex;width:100%}
+  .mode-pill{flex:1}
+  /* Sized to fit the longest cross-month range ("November 30 – December 6, 2026")
+     on one line down to ~360px wide phones, without shrinking the Month heading. */
+  .stats-head h1.week-range{font-size:1.25rem}
+  .cal-toolbar .nav-arrows{flex-wrap:wrap;justify-content:flex-end;width:100%}
+  .cal-toolbar .nav-arrows :is(.mp-picker,.week-nav-picker){width:100%}
+  .cal-toolbar .nav-arrows :is(.mp-picker,.week-nav-picker) .mp-trigger{flex:1;justify-content:center}
+}
+
+/* Month/year picker — ported from Ultimate Budget's month-picker.js, restyled to this product's
+   bold-outline ink/lime look instead of Budget's soft plum one. No "+ Add month" (addMonth unset). */
+:is(.mp-picker,.week-nav-picker){display:inline-flex;align-items:center;max-width:100%;min-width:0;border:1.5px solid var(--ink);border-radius:11px;background:var(--card)}
+:is(.mp-picker,.week-nav-picker) button,.mp-dialog button{font:inherit;color:inherit;background:transparent;border:0;border-radius:8px;min-height:40px;padding:6px 10px;line-height:1.3}
+:is(.mp-picker,.week-nav-picker) .mp-trigger{display:flex;align-items:center;justify-content:center;gap:8px;min-width:0;font-size:14px;font-weight:700}
+.mp-trigger span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mp-trigger svg{width:17px;height:17px;flex-shrink:0;fill:none;stroke:var(--ink);stroke-width:1.6}
+:is(.mp-picker,.week-nav-picker) .mp-step{flex-shrink:0;min-width:30px;font-size:20px;color:var(--ink-soft)}
+:is(.mp-picker,.week-nav-picker) button:hover:not(:disabled),.mp-dialog button:hover:not(:disabled){background:#f3f1e9}
+:is(.mp-picker,.week-nav-picker) button:focus-visible,.mp-dialog button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+:is(.mp-picker,.week-nav-picker) button:disabled,.mp-dialog button:disabled{opacity:.4;cursor:default}
+.mp-dialog{position:fixed;inset:auto;margin:0;width:296px;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);padding:12px;overflow:auto;font-size:14px}
+.mp-dialog[open]{animation:mp-appear 120ms ease-out}
+.mp-dialog::backdrop{background:transparent}
+@keyframes mp-appear{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.mp-dialog[open]{animation:none}}
+.mp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px}
+.mp-header .mp-year{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;flex:1}
+.mp-header .mp-arrow{font-size:20px;width:36px;padding:0;color:var(--ink-soft)}
+.mp-grid{display:grid;gap:6px}
+.mp-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.mp-dialog .mp-cell{min-width:0;padding:8px 2px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-weight:600;text-overflow:ellipsis;overflow:hidden;color:var(--ink-soft)}
+.mp-dialog .mp-cell.mp-today{border-color:var(--accent-ink);box-shadow:inset 0 0 0 1px var(--accent-ink)}
+.mp-dialog .mp-cell[aria-selected="true"],.mp-dialog .mp-cell[aria-selected="true"]:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+.mp-footer{display:flex;align-items:center;gap:2px;border-top:1px solid var(--line);margin-top:12px;padding-top:8px}
+.mp-footer button{font-size:12px;padding:6px;font-weight:700}
+.mp-footer [data-mp-today],.mp-footer [data-wk-thisweek]{background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:6px 12px}
+.mp-footer [data-mp-today]:hover:not(:disabled),.mp-footer [data-wk-thisweek]:hover:not(:disabled){background:#c3e64a}
+.mp-footer .mp-close{margin-left:auto;font-size:18px;min-width:30px}
+@media(max-width:600px){.mp-dialog{bottom:8px;width:calc(100vw - 16px);padding:16px 12px max(12px,env(safe-area-inset-bottom));border-radius:16px}:is(.mp-picker,.week-nav-picker) button,.mp-dialog button{min-height:44px}:is(.mp-picker,.week-nav-picker) .mp-step,.mp-header .mp-arrow,.mp-footer .mp-close{min-width:44px}.mp-dialog .mp-cell{font-size:14px}}
+
+/* Week mode's own day-grid picker — same .mp-dialog/.mp-header/.mp-footer chrome as the month picker. */
+.wk-date-dialog{width:320px}
+.wk-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.wk-weekday{text-align:center;font-size:11px;font-weight:700;color:var(--muted);padding:2px 0 6px;text-transform:uppercase}
+.wk-day{min-width:0;padding:8px 2px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-weight:600;color:var(--ink-soft);background:var(--card)}
+.wk-day.outside{opacity:.4}
+.wk-day.wk-today{border-color:var(--accent-ink);box-shadow:inset 0 0 0 1px var(--accent-ink)}
+.wk-day.wk-selected{border-color:var(--ink);background:var(--card);color:var(--ink)}
+@media(max-width:600px){.wk-day{min-height:40px;font-size:14px}}
+
+.payment-filters{margin-bottom:16px}
+
+.scope-label{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:700}.scope-label select{width:100%;border:1.5px solid var(--ink);font-size:16px}.form-grid :disabled{background:#f2f2ef;color:#62626a;opacity:1}#edit-scope-field{margin-bottom:18px}#edit-scope-field[hidden]{display:none}#edit-scope-note{margin:9px 0 0}
+
+/* Consistent inset chevrons for every native dropdown. */
+select,.form-grid select,.scope-label select{
+  -webkit-appearance:none;appearance:none;
+  padding-right:42px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%2314151A' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 16px center;background-size:16px 16px;
+}
+@media(forced-colors:active){select,.form-grid select,.scope-label select{appearance:auto;background-image:none}}
+
+/* Allocate Studio's numbered, example-led help, adapted to Bill Calendar. */
+.topbar-actions{flex-wrap:wrap}.textbtn[aria-pressed="true"]{font-weight:800;text-decoration-thickness:2px}.fab[hidden]{display:none}
+.guide-heading{margin:6px 0 24px}.guide-heading h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:800;letter-spacing:-.055em}.guide-heading p{margin-top:10px;color:var(--ink-soft);font-size:16px;max-width:650px}
+.guide-panel{background:#fff;border:2px solid var(--ink);border-radius:20px;padding:24px;box-shadow:3px 4px 0 var(--ink)}.guide-panel>h2{font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;margin:0 0 18px;font-weight:800;letter-spacing:-.035em}
+.guide-section{border-top:1px solid var(--line)}.guide-section summary{display:flex;align-items:baseline;gap:12px;position:relative;list-style:none;cursor:pointer;padding:19px 28px 19px 0;font-size:16px;font-weight:700;line-height:1.5}.guide-section summary::-webkit-details-marker{display:none}.guide-section summary::after{content:'+';position:absolute;right:2px;font-size:22px;line-height:1}.guide-section[open] summary::after{content:'−'}.guide-section summary:focus-visible{outline:3px solid #7e51bc;outline-offset:2px;border-radius:6px}.guide-number{font-size:13px;min-width:25px;color:var(--muted);font-variant-numeric:tabular-nums}
+.guide-copy{max-width:780px;margin:0 0 24px 37px;font-size:16px;line-height:1.7;color:var(--ink-soft)}.guide-copy p{margin:0 0 14px}.guide-copy ul,.guide-copy ol{padding-left:24px;margin:0 0 16px}.guide-copy li{margin:7px 0}.guide-copy b{color:var(--ink)}.guide-copy h3{font-size:15px;font-weight:800;color:var(--ink);border-left:4px solid var(--accent);padding-left:12px;margin:22px 0 9px}.guide-copy p:last-child{margin-bottom:0}
+@media(max-width:650px){.guide-panel{padding:18px 15px}.guide-copy{margin-left:0}.topbar-actions{justify-content:flex-start;column-gap:16px;row-gap:10px}.topbar-actions .save-state{flex-basis:100%}}
+
+.archive-switch{display:flex;gap:8px;margin-bottom:22px}.dialog-actions{flex-wrap:wrap}
+
+/* Keep names aligned regardless of the category badge width. */
+@media(min-width:651px){
+  .bill-card{display:grid;grid-template-columns:132px minmax(0,1fr) auto auto auto}
+  .bill-card>.chip{justify-self:start}
+}
+
+/* Shared control sizes; compact calendar cells keep their own layout. */
+:root{--control-size:40px;--control-font:14px}
+.btn,.textbtn,.switch-pill,.mode-pill,.filter-pill{
+  min-height:var(--control-size);font-size:var(--control-font);line-height:1.4;
+}
+.btn{padding:8px 18px}
+.switch-pill,.mode-pill,.filter-pill{padding:8px 16px}
+.textbtn{padding:8px 4px}
+.icon-btn{
+  width:var(--control-size);min-width:var(--control-size);height:var(--control-size);
+  padding:0;flex-shrink:0;line-height:1;
+}
+.mode-switch{border-width:1.5px}
+:is(.mp-picker,.week-nav-picker){padding:3px}
+:is(.mp-picker,.week-nav-picker) button,.mp-dialog button{min-height:var(--control-size)}
+:is(.mp-picker,.week-nav-picker) .mp-step,.mp-header .mp-arrow,.mp-footer .mp-close{
+  width:var(--control-size);min-width:var(--control-size);padding:0;
+}
+:is(.mp-picker,.week-nav-picker) .mp-trigger{font-size:var(--control-font);padding:6px 10px}
+.mp-trigger svg{width:17px;height:17px}
+.wk-date-dialog .wk-day{font-size:13px;padding:8px 2px;line-height:1.3}
+.nav-arrows{max-width:100%;min-width:0}
+.dialog-head{gap:12px}
+@media(max-width:650px){
+  :root{--control-size:44px}
+  /* Natural width per pill, not forced equal thirds — "Calendar" needs more room than "Bills" or
+     "Income". Stays inline-flex (shrink-to-fit, left-aligned) like desktop instead of stretching
+     the track full-width, which only opens up large empty gaps between short words. */
+  .screen-switch{max-width:100%}
+  .switch-pill{min-width:0;flex:0 0 auto;padding-inline:14px;white-space:nowrap}
+  .wk-date-dialog .wk-day{font-size:14px}
+}
+
+/* Safari centers the native date value and grows the control past its set height; force left
+   alignment and pin the internal value box's own box-model so it stops inflating the control. */
+/* Safari ignores height on a native date input's own chrome; strip the native appearance so it
+   obeys the same box as every other field. The tap-to-open date picker still works without it —
+   only the look of the control (not its behavior) comes from -webkit-appearance. */
+input[type=date]{
+  -webkit-appearance:none;appearance:none;
+  box-sizing:border-box;height:46px;min-height:0;max-height:46px;
+  padding:10px 11px;line-height:1.4;
+}
+input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0;padding:0;min-height:0;height:auto;line-height:inherit}
+#bill-form .form-grid input[type=date]{height:46px;max-height:46px}
+
+.category-settings{margin-top:24px;padding-top:18px;border-top:1px solid var(--line)}
+.category-settings h3{margin:0 0 8px;font-size:18px}
+.category-settings p{font-size:14px;color:var(--ink-soft);margin-bottom:14px}
+.category-settings-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,150px);gap:12px;margin-bottom:12px}
+.category-settings-row label{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:700;min-width:0}
+.category-settings-row input,.category-settings-row select{width:100%;min-width:0;min-height:46px;font-size:16px}
+.category-settings .category-settings-hint{font-size:12px;margin:12px 0 0}
+.bill-card>.chip{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:420px){.category-settings-row{grid-template-columns:1fr}}
+
+/* Palette choices are visible swatches, with text labels for assistive tools. */
+.category-settings-row{grid-template-columns:minmax(0,1fr) 188px}
+.category-colour-field{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:700}
+.category-swatches{display:flex;gap:4px;align-items:center;min-height:46px}
+.category-swatch{display:grid;place-items:center;width:44px;height:44px;flex:0 0 44px;padding:0;background:transparent;border:2px solid transparent;border-radius:12px;color:var(--ink)}
+.category-swatch span{display:grid;place-items:center;width:28px;height:28px;background:var(--swatch);border:1px solid #14151a33;border-radius:50%;font-size:18px;font-weight:800;line-height:1}
+.category-swatch[aria-pressed="true"]{border-color:var(--ink)}
+.category-swatch:hover{background:#f3f1e9}
+@media(max-width:420px){.category-settings-row{grid-template-columns:1fr}}
+
+.custom-currency-field{display:flex;flex-direction:column;gap:6px;margin-top:14px;font-size:14px;font-weight:700}.custom-currency-field[hidden]{display:none}.custom-currency-field input{min-height:46px;width:100%;font-size:16px}
+
+/* Outlined settings cards and a two-row, swipeable pastel palette. */
+#settings-dialog{width:min(620px,calc(100% - 24px));background:var(--bg)}
+#settings-dialog .settings-group{background:var(--card);border:2px solid var(--ink);border-radius:16px;padding:18px;margin:18px 0 0;box-shadow:2px 3px 0 var(--ink);min-width:0}
+#settings-dialog .settings-group h3{font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;margin:0 0 14px}
+#settings-dialog input:not([type="hidden"]),#settings-dialog select{border:1.5px solid var(--ink);border-radius:10px;min-height:46px;background-color:var(--card)}
+#settings-dialog .settings-note{margin:0;font-size:14px;line-height:1.6}
+#settings-dialog .category-settings-row{grid-template-columns:minmax(0,1fr);gap:14px;padding:16px 0;margin:0;border-bottom:1px solid var(--line)}
+#settings-dialog .category-settings-row:first-child{padding-top:0}
+#settings-dialog .category-settings-row:last-child{border-bottom:0}
+#settings-dialog .category-colour-field{min-width:0}
+#settings-dialog .palette-hint{font-size:12px;font-weight:400;color:var(--muted)}
+#settings-dialog .category-swatches{display:grid;grid-template-rows:repeat(2,48px);grid-auto-flow:column;grid-auto-columns:48px;justify-content:start;gap:12px;overflow-x:auto;padding:5px 6px 9px 3px;overscroll-behavior-x:contain;scroll-snap-type:x proximity}
+#settings-dialog .category-swatches.income-swatches{grid-template-rows:48px}
+#settings-dialog .category-swatch{width:48px;height:48px;min-height:48px;border:2px solid var(--ink);border-radius:9px;background:var(--swatch);scroll-snap-align:start}
+#settings-dialog .category-swatch span{width:auto;height:auto;background:none;border:0;border-radius:0;font-size:30px;color:var(--ink)}
+#settings-dialog .category-swatch[aria-pressed="true"]{box-shadow:3px 4px 0 var(--ink)}
+#settings-dialog .category-swatch:hover{box-shadow:2px 2px 0 var(--ink)}
+#settings-dialog #add-category{border:1.5px solid var(--ink);margin-top:8px}
+#settings-dialog .dialog-actions{border-top:0;justify-content:flex-end}
+@media(max-width:420px){#settings-dialog{padding:18px 14px}#settings-dialog .settings-group{padding:14px}}
+
+.rename-link{align-self:flex-start;text-align:left}.rename-link[hidden]{display:none}
+
+/* Entry forms: the same outlined paper cards as the rest of the app. */
+#bill-dialog,#payment-dialog{
+  width:min(620px,calc(100% - 24px));padding:24px;
+  background:var(--bg);border:2px solid var(--ink);border-radius:22px;
+  box-shadow:6px 7px 0 var(--ink);
+}
+#bill-dialog .dialog-head,#payment-dialog .dialog-head{margin-bottom:22px;gap:16px}
+#bill-dialog .dialog-head h2,#payment-dialog .dialog-head h2{font-size:26px;line-height:1.25}
+#bill-dialog .dialog-head .icon-btn,#payment-dialog .dialog-head .icon-btn{background:var(--card);border:2px solid var(--ink);box-shadow:2px 2px 0 var(--ink)}
+#bill-form>.form-grid,#payment-form>.form-grid{
+  padding:0;gap:18px 16px;background:transparent;
+  border:0;border-radius:0;box-shadow:none;
+}
+#bill-form .form-grid label,#payment-form .form-grid label{color:var(--ink);font-weight:700;min-width:0;gap:8px}
+#bill-form .form-grid input,#bill-form .form-grid select,
+#payment-form .form-grid input,#edit-scope{
+  width:100%;min-width:0;border:1.5px solid var(--ink);border-radius:10px;
+  background-color:var(--card);color:var(--ink);font-size:16px;
+  height:46px;max-height:46px;line-height:1.4;
+}
+#bill-form .form-grid input::placeholder,#payment-form .form-grid input::placeholder{color:var(--muted);font-weight:400;opacity:1}
+#bill-form .form-grid :disabled{background-color:#f2f2ef;color:var(--muted);border-color:#a5a59f;border-style:dashed;opacity:1}
+#bill-form .field-hint{font-size:12px;font-weight:400;color:var(--muted)}
+#bill-form #edit-scope-field{padding:16px 18px;margin-bottom:18px;border:2px solid var(--ink);border-radius:16px;background:#eee7f8;box-shadow:2px 3px 0 var(--ink)}
+#bill-form #edit-scope-note{margin:10px 0 0;font-size:13px;line-height:1.5;color:var(--ink-soft)}
+#bill-form .form-error:empty{display:none}
+#bill-form .dialog-actions,#payment-form .dialog-actions{margin-top:22px;padding-top:0;border:0;gap:10px 12px}
+#bill-form .dialog-actions .btn,#payment-form .dialog-actions .btn{border:1.5px solid var(--ink);background:var(--card);min-height:44px;padding:9px 16px}
+#bill-form .dialog-actions .btn.primary,#payment-form .dialog-actions .btn.primary{background:var(--accent);border:2px solid var(--ink);box-shadow:2px 3px 0 var(--ink)}
+#bill-form .dialog-actions .btn.danger{color:var(--blush-ink);border-color:var(--blush-ink)}
+#bill-form .dialog-actions .btn:hover:not(.primary),#payment-form .dialog-actions .btn:hover:not(.primary){background:#f3f1e9}
+@media(max-width:650px){
+  #bill-dialog,#payment-dialog{padding:20px 16px}
+  #bill-form>.form-grid,#payment-form>.form-grid{padding:0;gap:16px}
+}
+@media(max-width:420px){
+  #bill-dialog .dialog-head h2,#payment-dialog .dialog-head h2{font-size:23px}
+  #bill-form .dialog-actions .spacer{display:none}
+  #bill-form .dialog-actions .btn{flex:1 1 calc(50% - 12px)}
+}
+
+.recovery-details{margin:16px 0;border:0;padding:0}
+.recovery-details summary{cursor:pointer;font-size:14px;font-weight:700;min-height:44px;padding:12px 0}
+.recovery-details summary:focus-visible{outline:3px solid #7e51bc;outline-offset:2px;border-radius:6px}
+.recovery-items .recovery-btn{text-align:left;white-space:normal;overflow-wrap:anywhere;width:100%;margin:4px 0}
+
+.schedule-search{display:flex;flex-direction:column;gap:8px;font-size:14px;font-weight:700;margin-bottom:12px}.schedule-search input{width:100%;min-height:46px;border:1.5px solid var(--ink);background:var(--card);border-radius:11px;font-size:16px}.search-count{font-size:14px;color:var(--muted);margin:0 0 14px}.search-count:empty{display:none}
