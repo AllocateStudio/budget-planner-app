@@ -1756,16 +1756,17 @@ td:not(:first-child) {
 .year-num {
   min-height: 15px;
   font-size: 11px;
-  font-weight: 700;
   line-height: 1.35;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 .year-num.in {
-  color: var(--mint-ink);
+  color: var(--ink);
+  font-weight: 600;
 }
 .year-num.out {
-  color: var(--blush-ink);
+  color: var(--muted);
+  font-weight: 400;
   margin-top: -6px;
 }
 .year-col {
@@ -1958,4 +1959,69 @@ button.budget-input:hover {
 #month-budget-form input[name='amount']::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+/* Year chart: month details on hover, keyboard focus or tap. */
+.year-col {
+  position: relative;
+  outline: none;
+}
+.year-col:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.year-tip {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: none;
+  min-width: 190px;
+  padding: 8px 10px;
+  border: 1px solid var(--ink);
+  border-radius: 8px;
+  background: var(--card);
+  box-shadow: 2px 3px 0 var(--ink);
+  text-align: left;
+  font-size: 12px;
+  line-height: 1.5;
+  pointer-events: none;
+}
+.year-tip.from-left {
+  left: 0;
+  transform: none;
+}
+.year-tip.from-right {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+.year-col:hover .year-tip,
+.year-col:focus .year-tip {
+  display: block;
+}
+.year-tip > b {
+  display: block;
+  margin-bottom: 4px;
+}
+.year-tip > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+.year-tip > span b {
+  margin-left: auto;
+  color: var(--ink);
+  font-weight: 600;
+}
+.year-tip i {
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--ink);
+  border-radius: 3px;
+}
+.year-tip-net {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--line);
 }

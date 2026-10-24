@@ -469,7 +469,7 @@
       `<div class="year-chart">${y.months
         .map(
           (m, i) =>
-            `<div class="year-col ${m.month === state.month ? 'is-current' : ''}" role="img" aria-label="${monthNames[i]}: income ${money(m.income)}, expenses ${money(m.expense)}" title="Income ${money(m.income)} · Expenses ${money(m.expense)}"><span class="year-bars"><i class="year-in" style="height:${(m.income / top) * 100}%"></i><i class="year-out" style="height:${(m.expense / top) * 100}%"></i></span><span class="year-label">${monthNames[i]}</span><span class="year-num in">${kMoney(m.income)}</span><span class="year-num out">${kMoney(m.expense)}</span></div>`,
+            `<div class="year-col ${m.month === state.month ? 'is-current' : ''}" tabindex="0" role="img" aria-label="${monthNames[i]}: income ${money(m.income)}, expenses ${money(m.expense)}">${m.income || m.expense ? `<span class="year-tip ${i < 3 ? 'from-left' : i > 8 ? 'from-right' : ''}" aria-hidden="true"><b>${debtMonth(m.month)}</b><span><i class="year-in"></i>Income<b>${money(m.income)}</b></span><span><i class="year-out"></i>Expenses<b>${money(m.expense)}</b></span><span class="year-tip-net">Net<b>${money(m.income - m.expense)}</b></span></span>` : ''}<span class="year-bars"><i class="year-in" style="height:${(m.income / top) * 100}%"></i><i class="year-out" style="height:${(m.expense / top) * 100}%"></i></span><span class="year-label">${monthNames[i]}</span><span class="year-num in">${kMoney(m.income)}</span><span class="year-num out">${kMoney(m.expense)}</span></div>`,
         )
         .join(
           '',
