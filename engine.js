@@ -222,6 +222,13 @@
       rate: income ? (savings / income) * 100 : 0,
     };
   }
+  function debtPriority(a, b, strategy) {
+    return strategy === 'Avalanche'
+      ? b.apr - a.apr || a.balance - b.balance
+      : strategy === 'Custom'
+        ? a.order - b.order || a.balance - b.balance
+        : a.balance - b.balance || b.apr - a.apr;
+  }
   /* Fixed monthly payment pool; interest accrues before payments. Unused minimums
    roll into the selected priority debt. Baseline uses the same pool, no extra. */
   function payoff(debts, extra = 0, strategy = 'Snowball') {
@@ -233,6 +240,8 @@
     while (months < 1200) {
       months++;
       let remaining = pool;
+      // Lock priority before interest and minimum payments change the balances.
+      const ordered = [...ds].sort((a, b) => debtPriority(a, b, strategy));
       ds.forEach((d) => {
         const i = round((d.balance * d.apr) / 1200);
         interest = round(interest + i);
@@ -243,13 +252,6 @@
         d.balance = round(d.balance - p);
         remaining = round(remaining - p);
       });
-      const ordered = [...ds].sort((a, b) =>
-        strategy === 'Avalanche'
-          ? b.apr - a.apr || a.balance - b.balance
-          : strategy === 'Custom'
-            ? a.order - b.order || a.balance - b.balance
-            : a.balance - b.balance || b.apr - a.apr,
-      );
       for (const d of ordered) {
         const p = Math.min(d.balance, remaining);
         d.balance = round(d.balance - p);
@@ -325,6 +327,8 @@
             ),
         ),
       );
+      // Lock priority before interest and minimum payments change the balances.
+      const ordered = [...eligible].sort((a, b) => debtPriority(a, b, strategy));
       const allocations = {};
       for (const d of eligible) {
         const charge = round((d.balance * d.apr) / 1200);
@@ -338,13 +342,6 @@
         available = round(available - amount);
         allocations[d.id] += amount;
       }
-      const ordered = [...eligible].sort((a, b) =>
-        strategy === 'Avalanche'
-          ? b.apr - a.apr || a.balance - b.balance
-          : strategy === 'Custom'
-            ? a.order - b.order || a.balance - b.balance
-            : a.balance - b.balance || b.apr - a.apr,
-      );
       for (const d of ordered) {
         const amount = Math.min(d.balance, available);
         d.balance = round(d.balance - amount);
@@ -419,6 +416,7 @@
     }));
   }
   const api = {
+    debtPriority,
     debtPaid,
     debtBasis,
     debtBalanceAt,
