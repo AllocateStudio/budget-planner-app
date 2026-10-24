@@ -102,3 +102,13 @@ The screen shows Total Debt, Paid So Far, Debt-Free Date and projected Total Int
 Each debt expands to Month / Planned / Paid / Balance. Past rows compare actual payments with the minimum due (capped by the opening balance); future rows use the selected allocation strategy from the current actual balances. The current row contains this month's planned end balance. Default range: three prior months, current month, twelve future months. Show full schedule includes tracked history and forecast, with a 1,200-month projection limit. Current month is highlighted; paid is muted with a pink check, partial/missed payments are accented, future is muted. Paid-off debts sort last. No combined Payment Plan tab in this version.
 
 47 automated checks cover state, calculations, reconciliation, strategy comparison and transfers. Browser visual QA remains unavailable.
+
+## Debt Payoff interaction refinements
+
+Extra monthly payment applies after a 350 ms pause on input/change. Empty or invalid drafts never overwrite the saved amount; strategy cards and quick increments apply immediately and cancel any pending input update. The old strategy dropdown and Update plan action are removed.
+
+All strategies tied for the minimum projected interest receive Lowest interest. A single comparison sentence describes the currently selected plan relative to the least expensive completed plan. Strategies that cannot finish within the projection horizon are not labelled as cheapest.
+
+The chart starts with the first projected month-end rather than duplicating the current month. Without extra is drawn only when extra is positive, using the same strategy and a shared timeline. Y ticks use rounded compact amounts; the debt-free label sits above the plotting area. Pointer and keyboard (arrow keys, Home/End, Escape) exploration show line markers and an anchored tooltip. At widths below 600 px, the chart precedes compact strategy rows with name and interest side by side.
+
+Checks cover the zero-extra baseline, tied badges, debounced input, rounded chart ticks, and hover marker/tooltip positioning. These isolated tests do not replace browser visual QA.

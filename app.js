@@ -515,47 +515,123 @@
   const debtMonth = (m) =>
     B.date(m + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
   function debtChart(plan, current, baseline) {
-    const month = B.today().slice(0, 7),
-      selected = [current, ...plan.rows.map((r) => r.balance)],
-      without = [current, ...baseline.rows.map((r) => r.balance)];
-    const count = Math.max(1, selected.length - 1, without.length - 1),
-      max = Math.max(1, ...selected, ...without);
-    const x = (i) => 90 + (i / count) * 800,
-      y = (value) => 260 - (value / max) * 220;
-    const points = (values) => values.map((v, i) => x(i) + ',' + y(v)).join(' ');
-    const endIndex = selected.length - 1,
-      endX = x(endIndex),
-      endY = y(selected.at(-1));
-    const years = Math.max(1, Math.ceil(count / 12)),
-      step = Math.max(1, Math.ceil(years / 5));
-    const ticks = [];
-    for (let i = 1; i <= count; i++) {
-      const m = B.monthShift(month, i - 1);
-      if (
-        m.endsWith('-01') &&
-        (Number(m.slice(0, 4)) - Number(month.slice(0, 4))) % step === 0 &&
-        x(i) > 160
-      )
-        ticks.push(`<text x="${x(i)}" y="292" text-anchor="middle">${m.slice(0, 4)}</text>`);
+    // Start at the first projected month-end; do not prepend a duplicate current-month point.
+    const month = B.today().slice(0, 7);
+    const selected = plan.rows.length ? plan.rows.map((r) => r.balance) : [current];
+    const showBaseline = state.extra > 0;
+    const without = showBaseline
+      ? baseline.rows.length
+        ? baseline.rows.map((r) => r.balance)
+        : [current]
+      : [];
+    const count = Math.max(1, selected.length - 1, without.length - 1);
+    const rawStep = Math.max(1, ...selected, ...without) / 3;
+    const magnitude = 10 ** Math.floor(Math.log10(rawStep));
+    const step = [1, 2, 2.5, 4, 5, 8, 10].find((n) => n * magnitude >= rawStep) * magnitude;
+    const ceiling = step * 3;
+    const tickLabel = (v) =>
+      esc(state.currency) +
+      new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 })
+        .format(v)
+        .toLowerCase();
+    const rawMoney = (v) =>
+      state.currency +
+      Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const renderPlot = (compact) => {
+      const width = compact ? 320 : 940,
+        left = compact ? 58 : 90,
+        right = width - (compact ? 14 : 30);
+      const top = 62,
+        bottom = compact ? 280 : 270,
+        plotWidth = right - left;
+      const x = (i) => left + (i / count) * plotWidth,
+        y = (v) => bottom - (v / ceiling) * (bottom - top);
+      const points = (values) => values.map((v, i) => `${x(i)},${y(v)}`).join(' ');
+      const endX = x(selected.length - 1),
+        endY = y(selected.at(-1));
+      const grid = [0, 1, 2, 3]
+        .map((i) => {
+          const value = step * i;
+          return `<line x1="${left}" y1="${y(value)}" x2="${right}" y2="${y(value)}" class="chart-gridline"/><text x="${left - 10}" y="${y(value) + 4}" text-anchor="end">${tickLabel(value)}</text>`;
+        })
+        .join('');
+      const ticks = [];
+      // Leave room for the width of This month plus a 60px gap at the smallest layout.
+      let lastTick = left + (compact ? 92 : 72);
+      for (let i = 1; i <= count; i++) {
+        const stamp = B.monthShift(month, i);
+        if (stamp.endsWith('-01') && x(i) - lastTick >= (compact ? 80 : 60) && x(i) < right - 16) {
+          ticks.push(
+            `<text x="${x(i)}" y="${bottom + 30}" text-anchor="middle">${stamp.slice(0, 4)}</text>`,
+          );
+          lastTick = x(i) + (compact ? 28 : 24);
+        }
+      }
+      if (!ticks.length && count > 0 && right - left > 200) {
+        ticks.push(
+          `<text x="${right}" y="${bottom + 30}" text-anchor="end">${B.monthShift(month, count).slice(0, 4)}</text>`,
+        );
+      }
+      const hover = Array.from({ length: count + 1 }, (_, i) => {
+        const primary = selected[i] ?? 0,
+          secondary = without[i] ?? 0;
+        const label =
+          debtMonth(B.monthShift(month, i)) +
+          ' · ' +
+          state.strategy +
+          ': ' +
+          rawMoney(primary) +
+          (showBaseline ? ' · Without extra: ' + rawMoney(secondary) : '');
+        const start = Math.max(left, x(i) - plotWidth / count / 2),
+          end = Math.min(right, x(i) + plotWidth / count / 2);
+        return `<rect x="${start}" y="${top}" width="${end - start}" height="${bottom - top + 8}" fill="transparent" class="debt-chart-hit" data-index="${i}" data-x="${x(i)}" data-y="${y(primary)}" data-baseline-y="${y(secondary)}" data-chart-tip="${esc(label)}"/>`;
+      }).join('');
+      const finish = plan.paidOff
+        ? `<circle cx="${endX}" cy="${endY}" r="5" fill="var(--blush)" stroke="var(--ink)"/><text x="${compact ? left : Math.max(left + 110, Math.min(right - 110, endX))}" y="28" text-anchor="${compact ? 'start' : 'middle'}" class="chart-finish">Debt-free · ${debtMonth(plan.end)}</text>`
+        : '';
+      return `<div class="debt-chart-plot ${compact ? 'chart-mobile' : 'chart-desktop'}"><svg data-debt-chart tabindex="0" viewBox="0 0 ${width} ${bottom + 52}" role="img" aria-label="Monthly debt balance. Use arrow keys to explore."><title>${esc(state.strategy)} monthly debt balance${showBaseline ? ' compared with no extra payment' : ''}</title>${grid}<polygon points="${left},${bottom} ${points(selected)} ${endX},${bottom}" fill="var(--accent)" opacity=".2"/>${showBaseline ? `<polyline points="${points(without)}" class="chart-baseline"/>` : ''}<polyline points="${points(selected)}" class="chart-selected"/><text x="${left}" y="${bottom + 30}" text-anchor="start">This month</text>${ticks.join('')}${finish}${hover}<circle class="chart-hover-marker" r="5" fill="var(--blush)" stroke="var(--ink)" visibility="hidden"/>${showBaseline ? '<circle class="chart-baseline-marker" r="4" fill="white" stroke="#8b8994" visibility="hidden"/>' : ''}</svg><output class="debt-chart-tooltip" aria-live="polite" hidden></output></div>`;
+    };
+    return `<div class="debt-chart enhanced-debt-chart"><div class="chart-legend-inline"><span><i class="chart-line-key"></i>${esc(state.strategy)}</span>${showBaseline ? '<span><i class="chart-line-key dashed"></i>Without extra</span>' : ''}</div>${renderPlot(false)}${renderPlot(true)}${showBaseline && !baseline.paidOff ? '<p class="hint">Without extra: not paid off within the 100-year projection.</p>' : ''}</div>`;
+  }
+  function showDebtHover(hit) {
+    const plot = hit.closest('.debt-chart-plot'),
+      svg = plot.querySelector('svg'),
+      tooltip = plot.querySelector('.debt-chart-tooltip');
+    const marker = svg.querySelector('.chart-hover-marker'),
+      baselineMarker = svg.querySelector('.chart-baseline-marker');
+    marker.setAttribute('cx', hit.dataset.x);
+    marker.setAttribute('cy', hit.dataset.y);
+    marker.setAttribute('visibility', 'visible');
+    if (baselineMarker) {
+      baselineMarker.setAttribute('cx', hit.dataset.x);
+      baselineMarker.setAttribute('cy', hit.dataset.baselineY);
+      baselineMarker.setAttribute('visibility', 'visible');
     }
-    const grid = [0, 1, 2, 3]
-      .map((i) => {
-        const value = (max * i) / 3;
-        return `<line x1="90" y1="${y(value)}" x2="890" y2="${y(value)}" class="chart-gridline"/><text x="78" y="${y(value) + 4}" text-anchor="end">${money(Math.round(value))}</text>`;
-      })
-      .join('');
-    const hover = Array.from({ length: count + 1 }, (_, i) => {
-      const label =
-        (i === 0 ? 'This month · ' + debtMonth(month) : debtMonth(B.monthShift(month, i - 1))) +
-        ' · ' +
-        state.strategy +
-        ': ' +
-        money(selected[i] ?? 0) +
-        ' · Without extra: ' +
-        money(without[i] ?? 0);
-      return `<rect x="${Math.max(90, x(i) - 400 / count)}" y="35" width="${Math.min(800 / count, 890 - Math.max(90, x(i) - 400 / count))}" height="230" fill="transparent" class="debt-chart-hit" data-chart-tip="${esc(label)}"><title>${esc(label)}</title></rect>`;
-    }).join('');
-    return `<div class="debt-chart enhanced-debt-chart"><div class="chart-legend-inline"><span><i class="chart-line-key"></i>${esc(state.strategy)}</span><span><i class="chart-line-key dashed"></i>Without extra</span></div><svg viewBox="0 0 940 315" role="img" aria-label="Debt balance forecast with and without extra monthly payments"><title>Monthly debt balance: ${esc(state.strategy)} compared with no extra payment</title>${grid}<polygon points="90,260 ${points(selected)} ${endX},260" fill="var(--accent)" opacity=".2"/><polyline points="${points(without)}" class="chart-baseline"/><polyline points="${points(selected)}" class="chart-selected"/><text x="90" y="292" text-anchor="start">This month</text>${ticks}${plan.paidOff ? `<circle cx="${endX}" cy="${endY}" r="5" fill="var(--blush)" stroke="var(--ink)"/><text x="${endX}" y="${Math.max(22, endY - 15)}" text-anchor="${endX > 650 ? 'end' : 'start'}" class="chart-finish">Debt-free · ${debtMonth(plan.end)}</text>` : ''}${hover}</svg><output class="debt-chart-tooltip" aria-live="polite">Hover over the chart for monthly balances</output>${!baseline.paidOff ? '<p class="hint">Without extra: not paid off within the 100-year projection.</p>' : ''}</div>`;
+    svg.dataset.activeIndex = hit.dataset.index;
+    tooltip.textContent = hit.dataset.chartTip;
+    tooltip.hidden = false;
+    const point = svg.createSVGPoint();
+    point.x = Number(hit.dataset.x);
+    point.y = Number(hit.dataset.y);
+    const position = point.matrixTransform(svg.getScreenCTM()),
+      rect = plot.getBoundingClientRect();
+    const left = Math.max(
+      4,
+      Math.min(
+        position.x - rect.left - tooltip.offsetWidth / 2,
+        rect.width - tooltip.offsetWidth - 4,
+      ),
+    );
+    const above = position.y - rect.top - tooltip.offsetHeight - 14;
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = (above < 0 ? position.y - rect.top + 14 : above) + 'px';
+  }
+  function hideDebtHover(plot) {
+    if (!plot) return;
+    plot.querySelector('.debt-chart-tooltip').hidden = true;
+    plot
+      .querySelectorAll('.chart-hover-marker,.chart-baseline-marker')
+      .forEach((marker) => marker.setAttribute('visibility', 'hidden'));
   }
   function debtComparison(plans) {
     const successful = plans.filter(([, p]) => p.paidOff),
@@ -573,21 +649,31 @@
               : debtMonth(p.end)
             : 'Increase payment',
           interest = p.paidOff ? money(p.interest) : '—';
-        return `<button type="button" class="strategy-card ${label === state.strategy ? 'is-selected' : ''}" data-action="choose-debt-strategy" data-id="${label}" aria-pressed="${label === state.strategy}"><span class="strategy-card-title">${label}</span><span class="strategy-badge ${best && best[0] === label && p.months > 0 ? 'has-badge' : ''}">${best && best[0] === label && p.months > 0 ? 'Lowest interest' : '&nbsp;'}</span><span class="strategy-main-label">${sameDate ? 'Total interest' : 'Debt-free date'}</span><strong class="strategy-main-value">${sameDate ? interest : date}</strong><span class="strategy-secondary">${sameDate ? 'Debt-free date · ' + date : interest + ' total interest'}</span></button>`;
+        return `<button type="button" class="strategy-card ${label === state.strategy ? 'is-selected' : ''}" data-action="choose-debt-strategy" data-id="${label}" aria-pressed="${label === state.strategy}"><span class="strategy-card-title">${label}</span><span class="strategy-badge ${p.paidOff && p.interest === bestInterest ? 'has-badge' : ''}">${p.paidOff && p.interest === bestInterest ? 'Lowest interest' : '&nbsp;'}</span><span class="strategy-main-label">${sameDate ? 'Total interest' : 'Debt-free date'}</span><strong class="strategy-main-value">${sameDate ? interest : date}</strong><strong class="strategy-mobile-interest">${interest}</strong><span class="strategy-mobile-interest-label">Total interest</span><span class="strategy-mobile-date">Debt-free date · ${date}</span><span class="strategy-secondary">${sameDate ? 'Debt-free date · ' + date : interest + ' total interest'}</span></button>`;
       })
       .join('');
-    const avalanche = plans.find(([label]) => label === 'Avalanche')[1],
-      custom = plans.find(([label]) => label === 'Custom')[1];
-    const difference = B.round(custom.interest - avalanche.interest);
-    const comparison =
-      avalanche.paidOff && custom.paidOff
-        ? `Avalanche: ${difference >= 0 ? '−' : '+'}${money(Math.abs(difference))} vs Custom`
-        : '';
-    const selected = plans.find(([label]) => label === state.strategy)[1],
-      cost = best && selected.paidOff ? B.round(selected.interest - bestInterest) : 0;
-    return `<div class="debt-comparison" role="group" aria-label="Payoff strategy">${cards}</div><p class="strategy-comparison-note">${comparison}${cost > 0 ? `<span>Your ${state.strategy} plan costs ${money(cost)} more than ${best[0]}.</span>` : ''}</p>`;
+    const selected = plans.find(([label]) => label === state.strategy)[1];
+    const cost = best && selected.paidOff ? B.round(selected.interest - bestInterest) : 0;
+    const comparison = !selected.paidOff
+      ? 'Increase the monthly payment to complete this plan.'
+      : cost > 0
+        ? `Your ${state.strategy} plan costs ${money(cost)} more than ${best[0]}`
+        : 'This is the lowest-interest plan';
+    return `<div class="debt-strategy-section"><div class="debt-comparison" role="group" aria-label="Payoff strategy">${cards}</div><p class="strategy-comparison-note">${comparison}</p></div>`;
   }
-  function applyDebtPlan(strategy = state.strategy, increment = 0) {
+  let extraPaymentTimer;
+  function queueDebtPlan(field) {
+    clearTimeout(extraPaymentTimer);
+    extraPaymentTimer = setTimeout(() => {
+      if (screen === 'Debt Payoff' && $('#extra-payment') === field)
+        applyDebtPlan(state.strategy, 0, true);
+    }, 350);
+  }
+  function applyDebtPlan(strategy = state.strategy, increment = 0, quiet = false) {
+    clearTimeout(extraPaymentTimer);
+    const field = $('#extra-payment');
+    if (!field) return;
+    const focused = document.activeElement === field;
     const value = $('#extra-payment').value,
       extra = Number(value) + increment;
     if (
@@ -597,13 +683,17 @@
       extra < 0 ||
       extra > 1e9
     ) {
-      toast('Enter a valid extra payment.');
+      field.setAttribute?.('aria-invalid', 'true');
+      if (!quiet) toast('Enter a valid extra payment.');
       return;
     }
+    field.removeAttribute?.('aria-invalid');
+    if (state.extra === B.round(extra) && state.strategy === strategy) return;
     mutate((n) => {
       n.extra = B.round(extra);
       n.strategy = strategy;
     });
+    if (focused) $('#extra-payment')?.focus({ preventScroll: true });
   }
   function debtTable(d, plan) {
     const current = B.today().slice(0, 7),
@@ -640,13 +730,16 @@
       `<div class="stats-strip debt-stats">${stat('Total debt', money(totalDebt), '', 'tone-sky')}${stat('Paid so far', money(paid), '', 'tone-mint')}${stat('Debt-free date', finish(plan), '', 'tone-ink')}${stat('Total interest', plan.paidOff ? money(plan.interest) : '—', '', 'tone-blush')}</div>` +
       panel(
         'Balance over time',
-        `<div class="debt-plan-toolbar"><div class="extra-payment-control"><label for="extra-payment">Extra monthly payment</label><div class="extra-payment-input"><span>${esc(state.currency)}</span><input id="extra-payment" type="number" min="0" max="1000000000" step="0.01" value="${state.extra}"><span>/ month</span></div></div><div class="extra-payment-quick">${[50, 100, 200].map((amount) => btn('+' + amount, 'extra-debt-payment', String(amount), 'btn')).join('')}</div>${btn('Update plan', 'plan', '', 'btn primary')}</div>` +
+        `<div class="debt-plan-toolbar"><div class="extra-payment-control"><label for="extra-payment">Extra monthly payment</label><div class="extra-payment-input"><span>${esc(state.currency)}</span><input id="extra-payment" type="number" min="0" max="1000000000" step="0.01" value="${state.extra}"><span>/ month</span></div></div><div class="extra-payment-quick">${[50, 100, 200].map((amount) => btn('+' + amount, 'extra-debt-payment', String(amount), 'btn')).join('')}</div></div>` +
           (debts.length
-            ? debtComparison([
+            ? '<div class="debt-visuals">' +
+              debtComparison([
                 ['Snowball', snow],
                 ['Avalanche', avalanche],
                 ['Custom', custom],
-              ]) + debtChart(plan, totalDebt, baseline)
+              ]) +
+              debtChart(plan, totalDebt, baseline) +
+              '</div>'
             : '<p class="empty-copy">Add a debt to see your payment forecast.</p>') +
           '<details class="debt-assumptions"><summary>ⓘ Projection assumptions</summary><p>Fixed APRs, monthly interest, no new borrowing or fees. Freed minimums roll into the next debt. Without extra uses the same strategy and minimums with zero extra payment.</p></details>',
       ) +
@@ -2245,9 +2338,7 @@
     else if (a === 'debt-recurring') debtRecurring(id);
     else if (a === 'choose-debt-strategy') applyDebtPlan(id);
     else if (a === 'extra-debt-payment') applyDebtPlan(state.strategy, Number(id));
-    else if (a === 'plan') {
-      applyDebtPlan();
-    } else if (a === 'sample') sample();
+    else if (a === 'sample') sample();
     else if (a === 'clear-sample') {
       mutate(cleanSamples);
       toast('Sample records cleared. Your entries are kept.');
@@ -2303,18 +2394,8 @@
   });
   document.addEventListener('change', async (event) => {
     const e = event.target;
-    if (e.id === 'strategy') {
-      const extra = Number($('#extra-payment').value);
-      if (!Number.isFinite(extra) || extra < 0 || extra > 1e9) {
-        toast('Enter a valid extra payment.');
-        e.value = state.strategy;
-        return;
-      }
-      const strategy = e.value;
-      mutate((n) => {
-        n.strategy = strategy;
-        n.extra = B.round(extra);
-      });
+    if (e.id === 'extra-payment') {
+      queueDebtPlan(e);
     } else if (e.id === 'budget-month') {
       const m = e.value;
       filters.month = m;
@@ -2389,11 +2470,44 @@
       }
     }
   });
-  document.addEventListener('pointerover', (event) => {
+  document.addEventListener('pointermove', (event) => {
     const hit = event.target.closest?.('[data-chart-tip]');
-    if (hit)
-      hit.closest('.debt-chart').querySelector('.debt-chart-tooltip').textContent =
-        hit.dataset.chartTip;
+    if (hit) showDebtHover(hit);
+  });
+  document.addEventListener('pointerout', (event) => {
+    const plot = event.target.closest?.('.debt-chart-plot');
+    if (plot && !plot.contains(event.relatedTarget)) hideDebtHover(plot);
+  });
+  document.addEventListener('focusout', (event) => {
+    if (event.target.matches?.('[data-debt-chart]'))
+      hideDebtHover(event.target.closest('.debt-chart-plot'));
+  });
+  document.addEventListener('keydown', (event) => {
+    const svg = event.target;
+    if (
+      !svg.matches?.('[data-debt-chart]') ||
+      !['ArrowLeft', 'ArrowRight', 'Home', 'End', 'Escape'].includes(event.key)
+    )
+      return;
+    event.preventDefault();
+    if (event.key === 'Escape') {
+      hideDebtHover(svg.closest('.debt-chart-plot'));
+      return;
+    }
+    const hits = svg.querySelectorAll('[data-chart-tip]');
+    const index =
+      event.key === 'Home'
+        ? 0
+        : event.key === 'End'
+          ? hits.length - 1
+          : Math.max(
+              0,
+              Math.min(
+                hits.length - 1,
+                Number(svg.dataset.activeIndex || 0) + (event.key === 'ArrowRight' ? 1 : -1),
+              ),
+            );
+    if (hits[index]) showDebtHover(hits[index]);
   });
   document.addEventListener('keydown', (event) => {
     if (!event.target.matches?.('[data-category-budget]')) return;
@@ -2423,7 +2537,8 @@
     }
   });
   document.addEventListener('input', (event) => {
-    if (event.target.id === 'search') {
+    if (event.target.id === 'extra-payment') queueDebtPlan(event.target);
+    else if (event.target.id === 'search') {
       const cursor = event.target.selectionStart;
       filters.search = event.target.value;
       render();

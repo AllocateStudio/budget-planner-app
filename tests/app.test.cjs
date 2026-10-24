@@ -7,13 +7,25 @@ const test = require('node:test'),
   B = require('../engine.js');
 function harness() {
   const nodes = new Map(),
-    storage = new Map();
+    storage = new Map(),
+    timers = new Map(),
+    listeners = {};
+  let timerId = 0;
   const node = (s) => {
     if (!nodes.has(s))
       nodes.set(s, {
         innerHTML: '',
         textContent: '',
         value: '',
+        focus() {
+          ctx.document.activeElement = this;
+        },
+        setAttribute(name, value) {
+          this[name] = value;
+        },
+        removeAttribute(name) {
+          delete this[name];
+        },
         classList: { add() {}, remove() {} },
         showModal() {
           this.open = true;
@@ -26,14 +38,24 @@ function harness() {
   };
   const ctx = {
     Budget: B,
-    document: { querySelector: node, addEventListener() {} },
+    document: {
+      querySelector: node,
+      addEventListener(type, fn) {
+        (listeners[type] ||= []).push(fn);
+      },
+    },
     localStorage: { getItem: (k) => storage.get(k) || null, setItem: (k, v) => storage.set(k, v) },
     crypto: require('node:crypto').webcrypto,
     structuredClone,
     Date,
     console,
-    setTimeout: () => 0,
-    clearTimeout() {},
+    setTimeout: (fn) => {
+      timers.set(++timerId, fn);
+      return timerId;
+    },
+    clearTimeout(id) {
+      timers.delete(id);
+    },
     FormData: class {
       constructor(target) {
         this.data = target?.data || {};
@@ -54,10 +76,22 @@ function harness() {
   let source = fs.readFileSync(path.join(__dirname, '../app.js'), 'utf8');
   source = source.replace(
     /if\s*\(state\.sampleProfile[\s\S]*?else render\(\);\s*\}\)\(\);\s*$/,
-    'globalThis.api={get:()=>state,setSpendingExpanded:value=>{spendingExpanded=value;render();},applyDebtPlan,addSampleDebtPayments,updateDebtBalance,saveDebtBalance,debtRecurring,pauseRecurring,skipPayment,findPayment,mutate,empty,sample,cleanSamples,validateImport,editor,saveRecord,deleteRecord,removeRecord,commit,renderScreen:s=>{screen=s;render();},render};render();})();',
+    'globalThis.api={get:()=>state,setSpendingExpanded:value=>{spendingExpanded=value;render();},showDebtHover,hideDebtHover,applyDebtPlan,addSampleDebtPayments,updateDebtBalance,saveDebtBalance,debtRecurring,pauseRecurring,skipPayment,findPayment,mutate,empty,sample,cleanSamples,validateImport,editor,saveRecord,deleteRecord,removeRecord,commit,renderScreen:s=>{screen=s;render();},render};render();})();',
   );
   vm.runInContext(source, ctx);
-  return { api: ctx.api, node, storage };
+  return {
+    api: ctx.api,
+    node,
+    storage,
+    fire(type, event) {
+      for (const fn of listeners[type] || []) fn(event);
+    },
+    flushTimers() {
+      const jobs = [...timers.values()];
+      timers.clear();
+      jobs.forEach((fn) => fn());
+    },
+  };
 }
 function save(h, kind, id, data) {
   h.api.editor(kind, id);
@@ -975,4 +1009,115 @@ test('Strategy selection and quick extra increments update state and comparison 
   h.api.applyDebtPlan('Snowball');
   assert.equal(h.api.get().strategy, 'Custom');
   assert.equal(h.api.get().extra, 400);
+});
+
+test('Zero extra hides the comparison line and legend; entering extra restores them', () => {
+  const h = harness();
+  h.api.sample();
+  h.api.renderScreen('Debt Payoff');
+  let html = h.node('#main').innerHTML;
+  assert.ok(!html.includes('class="chart-baseline"'));
+  assert.ok(!html.includes('class="chart-line-key dashed"'));
+  assert.ok(!html.includes('Update plan'));
+  const field = h.node('#extra-payment');
+  field.id = 'extra-payment';
+  field.value = '100';
+  h.fire('input', { target: field });
+  assert.equal(h.api.get().extra, 0);
+  field.value = '200';
+  h.fire('input', { target: field });
+  h.flushTimers();
+  assert.equal(h.api.get().extra, 200);
+  html = h.node('#main').innerHTML;
+  assert.ok(html.includes('class="chart-baseline"'));
+  assert.ok(html.includes('class="chart-line-key dashed"'));
+  field.value = '0';
+  h.fire('change', { target: field });
+  h.flushTimers();
+  assert.equal(h.api.get().extra, 0);
+  assert.ok(!h.node('#main').innerHTML.includes('class="chart-baseline"'));
+  field.value = '';
+  h.fire('input', { target: field });
+  h.flushTimers();
+  assert.equal(h.api.get().extra, 0);
+  assert.equal(field['aria-invalid'], 'true');
+  field.value = '50';
+  h.fire('input', { target: field });
+  h.flushTimers();
+  assert.equal(h.api.get().extra, 50);
+  assert.equal(field['aria-invalid'], undefined);
+});
+test('All tied strategies receive Lowest interest and only the selected-plan comparison is shown', () => {
+  const h = harness();
+  h.api.mutate((n) => {
+    n.extra = 0;
+    n.debts = [
+      {
+        id: 'd',
+        name: 'Zero APR',
+        balance: 25000,
+        original: 25000,
+        minimum: 1000,
+        apr: 0,
+        order: 1,
+      },
+    ];
+  });
+  h.api.renderScreen('Debt Payoff');
+  let html = h.node('#main').innerHTML;
+  assert.equal((html.match(/>Lowest interest</g) || []).length, 3);
+  assert.ok(html.includes('This is the lowest-interest plan'));
+  assert.ok(!html.includes('vs Custom'));
+  assert.equal((html.match(/class="strategy-comparison-note"/g) || []).length, 1);
+  assert.ok(html.includes('$24k'));
+  assert.ok(html.includes('$16k'));
+  assert.ok(html.includes('$8k'));
+  const selected = html.match(/<polyline points="([^"]+)" class="chart-selected"/)[1].split(' ');
+  assert.notEqual(selected[0].split(',')[1], selected[1].split(',')[1]);
+  // There is one month-end point per forecast month, without a duplicate initial point.
+  assert.equal(selected.length, B.debtProjection(h.api.get()).rows.length);
+  for (const strategy of ['Avalanche', 'Custom']) {
+    h.node('#extra-payment').value = '0';
+    h.api.applyDebtPlan(strategy);
+    assert.ok(h.node('#main').innerHTML.includes('This is the lowest-interest plan'));
+  }
+});
+test('Hover positions a marker on the line and anchors the tooltip near that point', () => {
+  const h = harness(),
+    attrs = {},
+    baselineAttrs = {};
+  const marker = { setAttribute: (k, v) => (attrs[k] = v) },
+    baseline = { setAttribute: (k, v) => (baselineAttrs[k] = v) };
+  const tooltip = { hidden: true, style: {}, offsetWidth: 160, offsetHeight: 40 };
+  const svg = {
+    dataset: {},
+    querySelector: (s) => (s === '.chart-hover-marker' ? marker : baseline),
+    createSVGPoint: () => ({
+      matrixTransform() {
+        return { x: this.x, y: this.y };
+      },
+    }),
+    getScreenCTM: () => ({}),
+  };
+  const plot = {
+    querySelector: (s) => (s === 'svg' ? svg : tooltip),
+    getBoundingClientRect: () => ({ left: 0, top: 0, width: 500 }),
+    querySelectorAll: () => [marker, baseline],
+  };
+  const hit = {
+    dataset: { x: '200', y: '140', baselineY: '100', index: '3', chartTip: 'Jan 2027 · $900' },
+    closest: () => plot,
+  };
+  h.api.showDebtHover(hit);
+  assert.equal(attrs.cx, '200');
+  assert.equal(attrs.cy, '140');
+  assert.equal(attrs.visibility, 'visible');
+  assert.equal(baselineAttrs.cy, '100');
+  assert.equal(tooltip.hidden, false);
+  assert.equal(tooltip.textContent, 'Jan 2027 · $900');
+  assert.equal(tooltip.style.left, '120px');
+  assert.equal(tooltip.style.top, '86px');
+  h.api.hideDebtHover(plot);
+  assert.equal(tooltip.hidden, true);
+  assert.equal(attrs.visibility, 'hidden');
 });
