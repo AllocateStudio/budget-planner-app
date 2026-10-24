@@ -434,7 +434,7 @@
         const open = openBudgetGroups.has(g.id),
           over = g.type === 'Expense' && g.budget > 0 && g.amount > g.budget;
         const cats = open
-          ? `<div class="budget-cats">${g.cats
+          ? `<div class="budget-cats"><div class="budget-cat budget-cat-head"><span></span><span>Actual</span><span>Budget</span></div>${g.cats
               .map((c) => {
                 const own = editable && c.budgetMonths?.[month] !== undefined,
                   catOver = g.type === 'Expense' && c.planned > 0 && c.spent > c.planned;
@@ -447,7 +447,9 @@
       .join('');
     return panel(
       'Group budgets',
-      body || '<p class="empty-copy">Add categories in Setup.</p>',
+      body
+        ? `<div class="budget-head"><span>Actual / Budget</span></div>${body}`
+        : '<p class="empty-copy">Add categories in Setup.</p>',
       overrides ? btn('Apply to following months', 'budget-apply', month, 'btn') : '',
     );
   }

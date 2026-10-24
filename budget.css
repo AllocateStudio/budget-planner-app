@@ -1915,3 +1915,23 @@ td:not(:first-child) {
   font-weight: 400;
   color: var(--muted);
 }
+/* Column captions for Group budgets, styled like table headers. */
+.budget-head {
+  display: flex;
+  justify-content: flex-end;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.budget-head span,
+.budget-cat-head span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.budget-cat-head {
+  border-top: 0;
+  padding: 0 0 2px;
+}
+.budget-cat-head span:not(:first-child) {
+  text-align: right;
+}
