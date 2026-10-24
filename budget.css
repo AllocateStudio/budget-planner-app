@@ -1473,8 +1473,41 @@ td:not(:first-child) {
   position: relative;
   min-width: 0;
 }
-.chart-mobile {
+/* Higher specificity than the legacy .debt-chart > div flex row. */
+.debt-chart > .debt-chart-plot {
+  display: block;
+}
+.debt-chart > .chart-mobile {
   display: none;
+}
+/* The desktop SVG scales with its box (viewBox 940 wide), so font sizes are in
+   viewBox units. Step them by rendered width to keep labels about 12-16px. */
+.chart-desktop {
+  container-type: inline-size;
+}
+@container (max-width: 699px) {
+  .chart-desktop svg text {
+    font-size: 21px;
+  }
+  .chart-desktop svg .chart-finish {
+    font-size: 23px;
+  }
+}
+@container (min-width: 700px) and (max-width: 899px) {
+  .chart-desktop svg text {
+    font-size: 16.5px;
+  }
+  .chart-desktop svg .chart-finish {
+    font-size: 18px;
+  }
+}
+@container (min-width: 900px) and (max-width: 1099px) {
+  .chart-desktop svg text {
+    font-size: 13.5px;
+  }
+  .chart-desktop svg .chart-finish {
+    font-size: 15px;
+  }
 }
 .debt-chart-tooltip {
   position: absolute;
@@ -1512,10 +1545,10 @@ td:not(:first-child) {
   .debt-visuals > .debt-strategy-section {
     order: 1;
   }
-  .chart-desktop {
+  .debt-chart > .chart-desktop {
     display: none;
   }
-  .chart-mobile {
+  .debt-chart > .chart-mobile {
     display: block;
   }
   .chart-mobile svg text,
