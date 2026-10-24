@@ -398,13 +398,16 @@
   }
   function expectedPanel(s) {
     // Phones get rounded amounts so all four columns fit.
-    const cell = (v, sign = '') =>
-        `<td><span class="amt-full">${sign}${money(v)}</span><span class="amt-short">${sign}${shortMoney(v)}</span></td>`,
-      line = (label, expected, actual) =>
-        `<tr><th>${label}</th>${cell(expected)}${cell(actual)}${cell(actual - expected, B.round(actual - expected) > 0 ? '+' : '')}</tr>`;
+    // A shortfall is marked: less income or money left than expected, or more spent.
+    const cell = (v, sign = '', cls = '') =>
+        `<td${cls ? ` class="${cls}"` : ''}><span class="amt-full">${sign}${money(v)}</span><span class="amt-short">${sign}${shortMoney(v)}</span></td>`,
+      line = (label, expected, actual, higherIsBetter = true) => {
+        const diff = B.round(actual - expected);
+        return `<tr><th>${label}</th>${cell(expected)}${cell(actual)}${cell(actual - expected, diff > 0 ? '+' : '', (higherIsBetter ? diff < 0 : diff > 0) ? 'is-worse' : '')}</tr>`;
+      };
     return panel(
       'Expected vs Actual',
-      `<div class="table-wrap expected-wrap"><table class="expected-table"><thead><tr><th></th><th>Expected</th><th>Actual</th><th>Difference</th></tr></thead><tbody>${line('Income', s.expectedIncome, s.income)}${line('Expenses', s.expectedExpense, s.expense)}${line('Left to spend', s.expectedIncome - s.expectedExpense, s.left)}</tbody></table></div>`,
+      `<div class="table-wrap expected-wrap"><table class="expected-table"><thead><tr><th></th><th>Expected</th><th>Actual</th><th>Difference</th></tr></thead><tbody>${line('Income', s.expectedIncome, s.income)}${line('Expenses', s.expectedExpense, s.expense, false)}${line('Left to spend', s.expectedIncome - s.expectedExpense, s.left)}</tbody></table></div>`,
     );
   }
   // Group budgets for the given months; a single month can be edited per category.

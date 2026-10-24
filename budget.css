@@ -2276,3 +2276,6 @@ td .transaction-type-badge,
     flex: 0 1 290px;
   }
 }
+.expected-table td.is-worse {
+  color: var(--terracotta);
+}

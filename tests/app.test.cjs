@@ -1382,6 +1382,26 @@ test('Dashboard edits one month of a budget and applies it to following months',
   assert.equal(B.budgetFor(cat(), B.monthShift(month, -1)), before);
   assert.equal(cat().budgetMonths, undefined);
 });
+test('Expected vs Actual marks only the differences that hurt the budget', () => {
+  const h = harness();
+  h.api.sample('Jessica');
+  const s = B.summary(h.api.get(), h.api.get().month),
+    html = h.node('#main').innerHTML,
+    worse = (label) => {
+      const cells = html
+        .split('<tr>')
+        .find((row) => row.startsWith(`<th>${label}</th>`))
+        .split('<td');
+      return cells[cells.length - 1].startsWith(' class="is-worse"');
+    };
+  assert.equal(worse('Income'), B.round(s.income - s.expectedIncome) < 0);
+  assert.equal(worse('Expenses'), B.round(s.expense - s.expectedExpense) > 0);
+  assert.equal(
+    worse('Left to spend'),
+    B.round(s.left - (s.expectedIncome - s.expectedExpense)) < 0,
+  );
+  assert.ok(worse('Income') || worse('Expenses') || worse('Left to spend'));
+});
 test('Year dashboard sums the months and shows read-only yearly budgets', () => {
   const h = harness();
   h.api.sample('Jessica');
