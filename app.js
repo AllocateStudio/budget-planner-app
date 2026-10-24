@@ -418,7 +418,11 @@
           rowsList.filter((t) => t.paid && t.type === type && ids.has(t.categoryId)),
           (t) => t.actual,
         ),
-      budgetOf = (c) => total(months, (m) => B.budgetFor(c, m));
+      budgetOf = (c) => total(months, (m) => B.budgetFor(c, m)),
+      // Spending over budget is flagged at once; income below target only once the period is over.
+      ended = months[months.length - 1] < thisMonth(),
+      isWorse = (type, amount, budget) =>
+        budget > 0 && (type === 'Expense' ? amount > budget : ended && amount < budget);
     const groups = state.groups
       .map((g) => {
         const cats = state.categories
@@ -436,12 +440,12 @@
     const body = groups
       .map((g) => {
         const open = openBudgetGroups.has(g.id),
-          over = g.type === 'Expense' && g.budget > 0 && g.amount > g.budget;
+          over = isWorse(g.type, g.amount, g.budget);
         const cats = open
           ? `<div class="budget-cats"><div class="budget-cat budget-cat-head"><span></span><span>Actual</span><span>Budget</span></div>${g.cats
               .map((c) => {
                 const own = editable && c.budgetMonths?.[month] !== undefined,
-                  catOver = g.type === 'Expense' && c.planned > 0 && c.spent > c.planned;
+                  catOver = isWorse(g.type, c.spent, c.planned);
                 return `<div class="budget-cat ${catOver ? 'over-budget' : ''}"><span>${esc(c.name)}</span><b>${money(c.spent)}</b>${editable ? `<button type="button" class="budget-input ${own ? 'is-own' : ''}" data-action="month-budget" data-id="${esc(c.id)}" aria-label="Edit ${esc(c.name)} budget">${money(c.planned)}</button>` : `<b class="budget-cat-plan">${money(c.planned)}</b>`}</div>`;
               })
               .join('')}</div>`

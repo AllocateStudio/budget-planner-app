@@ -1382,6 +1382,26 @@ test('Dashboard edits one month of a budget and applies it to following months',
   assert.equal(B.budgetFor(cat(), B.monthShift(month, -1)), before);
   assert.equal(cat().budgetMonths, undefined);
 });
+test('Income below target is flagged only after the month is over', () => {
+  const h = harness();
+  h.api.sample('Jessica');
+  const s = h.api.get(),
+    cat = s.categories.find((c) => c.id === 'Income-0'),
+    current = B.today().slice(0, 7),
+    prev = B.monthShift(current, -1),
+    incomeLine = () =>
+      h
+        .node('#main')
+        .innerHTML.match(/<div class="budget-line ([^"]*)"><button[^>]*data-id="group-income"/)[1];
+  B.setBudgetMonth(cat, current, 1e6);
+  B.setBudgetMonth(cat, prev, 1e6);
+  s.month = current;
+  h.api.renderScreen('Dashboard');
+  assert.ok(!incomeLine().includes('over-budget'));
+  s.month = prev;
+  h.api.render();
+  assert.ok(incomeLine().includes('over-budget'));
+});
 test('Expected vs Actual marks only the differences that hurt the budget', () => {
   const h = harness();
   h.api.sample('Jessica');
