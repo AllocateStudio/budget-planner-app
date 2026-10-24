@@ -994,15 +994,19 @@ td:not(:first-child) {
   color: var(--muted);
 }
 .debt-card-summary {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 20px;
+  gap: 12px 20px;
 }
+/* Actions stay on one line at the right edge of the card. */
 .debt-card-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.debt-card-actions .btn {
+  white-space: nowrap;
 }
 .debt-card-summary p {
   font-size: 13px;
@@ -1036,8 +1040,13 @@ td:not(:first-child) {
 }
 @media (max-width: 650px) {
   .debt-card-summary {
-    align-items: flex-start;
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .debt-card-actions {
+    flex-wrap: wrap;
+  }
+  .debt-card-actions .btn {
+    flex: 1 1 auto;
   }
   .debt-card-footer {
     align-items: center;
@@ -1449,5 +1458,41 @@ td:not(:first-child) {
   }
   .chart-desktop svg .chart-finish {
     font-size: 27px;
+  }
+}
+
+/* Debt cards: tighter vertical rhythm, links flush with the right edge. */
+.debt-list > .panel > .panel-head {
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.debt-list .debt-card-summary .large-value {
+  margin: 0 0 6px;
+}
+.debt-list .debt-card-summary p {
+  margin-top: 0;
+}
+.debt-list .meter {
+  margin: 14px 0 0;
+}
+.debt-card-footer {
+  align-items: center;
+  margin-top: 2px;
+}
+.debt-list .textbtn {
+  padding-right: 0;
+}
+/* Edit keeps its 40px touch target but centres on the 30px title line. */
+.debt-list > .panel > .panel-head > .textbtn {
+  margin: -5px 0 0;
+}
+@media (max-width: 450px) {
+  .debt-card-actions {
+    flex-wrap: nowrap;
+  }
+  .debt-card-actions .btn {
+    flex: 1 1 0;
+    padding: 9px 10px;
+    font-size: 13px;
   }
 }
