@@ -1612,3 +1612,13 @@ td:not(:first-child) {
   grid-column: 2;
   margin-top: 4px;
 }
+
+/* Accounts reuse the two-column card grid and action row from Savings. */
+.large-value.is-negative {
+  color: var(--blush-ink);
+}
+.account-flow {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}

@@ -496,3 +496,27 @@ test('Goal plan reports reached, open, overdue, on track and behind', () => {
   s.recurring[0].end = '2026-10-01';
   assert.equal(plan('plan').planned, 0);
 });
+test('Account adjustments are dated and monthly flow splits money in and out', () => {
+  const s = base();
+  s.accounts[0].adjustments = [{ date: '2026-10-05', amount: -30 }];
+  const t = (id, extra) => ({ id, name: id, paid: true, date: '2026-10-10', ...extra });
+  s.transactions = [
+    t('pay', { type: 'Income', actual: 500, accountId: 'a', categoryId: 'income' }),
+    t('rent', { type: 'Expense', actual: 200, accountId: 'a', categoryId: 'needs' }),
+    t('move', { type: 'Transfer', actual: 50, accountId: 'b', toKind: 'account', toId: 'a' }),
+    t('old', {
+      type: 'Expense',
+      actual: 10,
+      accountId: 'a',
+      categoryId: 'needs',
+      date: '2026-09-30',
+    }),
+    t('plan', { type: 'Expense', actual: 99, accountId: 'a', categoryId: 'needs', paid: false }),
+  ];
+  assert.equal(B.accountBalance(s, 'a', '2026-10-04'), 90);
+  assert.equal(B.accountBalance(s, 'a'), 410);
+  assert.deepEqual(B.accountMonth(s, 'a', '2026-10'), { in: 550, out: 200 });
+  assert.deepEqual(B.accountMonth(s, 'b', '2026-10'), { in: 0, out: 50 });
+  // Adjustments are not income or expenses.
+  assert.equal(B.summary(s, '2026-10').expense, 200);
+});

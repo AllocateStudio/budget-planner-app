@@ -512,16 +512,34 @@
       ).join('')}</div></div>`
     );
   }
+  const accountKinds = ['Checking', 'Savings', 'Cash', 'Investment', 'Other asset'];
   function accountsScreen() {
-    const assets = B.totalAssets(state),
-      debt = total(state.debts, (d) => B.debtBalance(state, d.id));
+    const balances = state.accounts.map((a) => ({ a, balance: B.accountBalance(state, a.id) })),
+      inAccounts = total(balances, (x) => x.balance),
+      inGoals = B.goalAssets(state),
+      debt = total(state.debts, (d) => B.debtBalance(state, d.id)),
+      month = B.today().slice(0, 7);
+    // Group by type in the form's order; names keep their order within a type.
+    balances.sort(
+      (x, y) =>
+        (accountKinds.indexOf(x.a.kind) + 1 || 99) - (accountKinds.indexOf(y.a.kind) + 1 || 99),
+    );
+    const card = ({ a, balance }) => {
+      const flow = B.accountMonth(state, a.id, month);
+      return panel(
+        esc(a.name),
+        `${a.kind.toLowerCase() === a.name.trim().toLowerCase() ? '' : `<span class="eyebrow">${esc(a.kind)}</span>`}<strong class="large-value${balance < 0 ? ' is-negative' : ''}">${money(balance)}</strong><p class="account-flow">This month: +${money(flow.in)} in · −${money(flow.out)} out</p><div class="goal-actions">${btn('Transfer', 'account-transfer', a.id, 'btn')}${btn('Update Balance', 'account-balance', a.id, 'btn')}${btn('Transactions', 'account-transactions', a.id, 'btn')}</div>`,
+        edit('account', a.id, 'Edit', 'textbtn'),
+      );
+    };
     return (
       heading('Accounts', '', edit('account', '', '+ Add account', 'btn primary')) +
-      `<div class="cards-grid">${state.accounts.map((a) => panel(esc(a.name), `<span class="eyebrow">${esc(a.kind)}</span><strong class="large-value">${money(B.accountBalance(state, a.id))}</strong><p class="hint">Opening balance ${money(a.opening)}</p>`, edit('account', a.id, 'Edit', 'textbtn'))).join('') || panel('Your accounts', '<p class="empty-copy">Add your first account and opening balance.</p>')}</div>` +
-      panel(
-        'Net Worth',
-        `<div class="net-worth"><div><small>Assets</small><b>${money(assets)}</b></div><span>−</span><div><small>Outstanding debt</small><b>${money(debt)}</b></div><span>=</span><div><small>Net worth</small><strong>${money(assets - debt)}</strong></div></div>`,
-      )
+      (state.accounts.length
+        ? `<div class="stats-strip">${stat('In accounts', money(inAccounts), '', 'tone-mint')}${stat('In goals', money(inGoals), '', 'tone-sky')}${stat('Debt', money(debt), '', 'tone-blush')}${stat('Net worth', money(inAccounts + inGoals - debt), '', 'tone-ink')}</div><div class="goal-grid">${balances.map(card).join('')}</div>`
+        : panel(
+            'Your accounts',
+            '<p class="empty-copy">Add your first account and opening balance.</p>',
+          ))
     );
   }
   // Desktop chart plot bottom in viewBox units; fitDebtChart() grows it to the panel height.
@@ -893,6 +911,55 @@
         const delta = B.round(value - (B.debtBasis(d, day) - B.debtPaid(n, id, day)));
         d.adjustments ||= [];
         d.adjustments.push({ date: day, amount: delta });
+      })
+    )
+      $('#editor').close();
+  }
+  function updateAccountBalance(id) {
+    const a = state.accounts.find((a) => a.id === id);
+    if (!a) return;
+    editing = { kind: 'account-balance', id, record: a };
+    const earliest =
+      (a.adjustments || [])
+        .map((x) => x.date)
+        .sort()
+        .at(-1) || '';
+    $('#editor').innerHTML =
+      `<form id="account-balance-form"><div class="dialog-head"><h2>Update Balance</h2>${btn('×', 'close', '', 'icon-btn')}</div><h3>${esc(a.name)}</h3><div class="form-grid">${input('Statement balance *', 'balance', B.accountBalance(state, id), 'number', 'required min="-1000000000" max="1000000000" step="0.01"')}${input('Statement date *', 'date', B.today(), 'date', `required max="${B.today()}"${earliest ? ` min="${earliest}"` : ''}`)}</div><p class="settings-note">Entries recorded after the statement date still apply. The difference is not counted as income or an expense.</p><p id="form-error" class="form-error" role="alert"></p><div class="dialog-actions">${btn('Cancel', 'close', '', 'btn ghost')}<button type="submit" class="btn primary">Update Balance</button></div></form>`;
+    $('#editor').showModal();
+  }
+  function saveAccountBalance(data) {
+    const value = Number(data.get('balance')),
+      day = String(data.get('date') || ''),
+      id = editing.id,
+      account = state.accounts.find((a) => a.id === id),
+      earliest =
+        (account.adjustments || [])
+          .map((x) => x.date)
+          .sort()
+          .at(-1) || '';
+    if (
+      data.get('balance') === null ||
+      String(data.get('balance')).trim() === '' ||
+      !Number.isFinite(value) ||
+      Math.abs(value) > 1e9
+    )
+      throw Error('Enter a valid statement balance.');
+    if (
+      !/^(19|20|21)\d{2}-(0[1-9]|1[0-2])-\d{2}$/.test(day) ||
+      B.iso(B.date(day)) !== day ||
+      day > B.today()
+    )
+      throw Error('Enter a statement date that is not in the future.');
+    if (day < earliest)
+      throw Error(`Choose a date on or after your last balance update (${debtDay(earliest)}).`);
+    if (
+      mutate((n) => {
+        const a = n.accounts.find((a) => a.id === id);
+        // Reconcile as of the statement date; later entries still apply.
+        const delta = B.round(value - B.accountBalance(n, id, day));
+        a.adjustments ||= [];
+        a.adjustments.push({ date: day, amount: delta });
       })
     )
       $('#editor').close();
@@ -1612,12 +1679,7 @@
     if (kind === 'account')
       fields =
         input('Account name', 'name', x.name || '', 'text', 'required maxlength="60"') +
-        select(
-          'Account type',
-          'kind',
-          ['Checking', 'Savings', 'Cash', 'Investment', 'Other asset'],
-          x.kind || 'Checking',
-        ) +
+        select('Account type', 'kind', accountKinds, x.kind || 'Checking') +
         input(
           'Opening balance',
           'opening',
@@ -2070,7 +2132,7 @@
       n.budgetStart = '2026-01-01';
       n.onboarded = true;
       n.sampleProfile = 'Sample';
-      n.sampleDataVersion = 3;
+      n.sampleDataVersion = 4;
       const limits = {
         Income: 7200,
         Salary: 7200,
@@ -2266,6 +2328,22 @@
             add(name, category, base, actual, date(day));
           }
         });
+        if (date(15) <= cutoff)
+          n.transactions.push({
+            id: tag + '-' + uid(),
+            type: 'Transfer',
+            name: 'Transfer to Savings',
+            description: '',
+            accountId: account,
+            toKind: 'account',
+            toId: tag + '-savings',
+            date: date(15),
+            expected: 400,
+            actual: 400,
+            paid: true,
+            sample: true,
+            notes: 'Fictional sample data',
+          });
         if (date(10) <= cutoff)
           n.transactions.push({
             id: tag + '-' + uid(),
@@ -2379,7 +2457,20 @@
       )
         throw Error('Invalid category.');
     for (const a of s.accounts)
-      if (typeof a.opening !== 'number' || !Number.isFinite(a.opening) || Math.abs(a.opening) > 1e9)
+      if (
+        typeof a.opening !== 'number' ||
+        !Number.isFinite(a.opening) ||
+        Math.abs(a.opening) > 1e9 ||
+        (a.adjustments &&
+          (!Array.isArray(a.adjustments) ||
+            a.adjustments.some(
+              (x) =>
+                !validDate(x.date) ||
+                typeof x.amount !== 'number' ||
+                !Number.isFinite(x.amount) ||
+                Math.abs(x.amount) > 2e9,
+            )))
+      )
         throw Error('Invalid account.');
     for (const d of s.debts)
       if (
@@ -2588,7 +2679,15 @@
     else if (a === 'goal-withdraw')
       editor('transaction', '', { type: 'Transfer', accountId: 'goal:' + id, destination: '' });
     else if (a === 'goal-recurring') goalRecurring(id);
-    else if (a === 'choose-debt-strategy') applyDebtPlan(id);
+    else if (a === 'account-balance') updateAccountBalance(id);
+    else if (a === 'account-transfer')
+      editor('transaction', '', { type: 'Transfer', accountId: id, destination: '' });
+    else if (a === 'account-transactions') {
+      filters.account = id;
+      screen = 'Transactions';
+      render();
+      globalThis.scrollTo?.(0, 0);
+    } else if (a === 'choose-debt-strategy') applyDebtPlan(id);
     else if (a === 'extra-debt-payment') applyDebtPlan(state.strategy, Number(id));
     else if (a === 'sample') sample();
     else if (a === 'clear-sample') {
@@ -2611,6 +2710,13 @@
       event.preventDefault();
       try {
         saveDebtBalance(new FormData(event.target));
+      } catch (error) {
+        $('#form-error').textContent = error.message;
+      }
+    } else if (event.target.id === 'account-balance-form') {
+      event.preventDefault();
+      try {
+        saveAccountBalance(new FormData(event.target));
       } catch (error) {
         $('#form-error').textContent = error.message;
       }
@@ -2806,7 +2912,7 @@
       $('#search').setSelectionRange(cursor, cursor);
     }
   });
-  if (state.sampleProfile && state.sampleDataVersion !== 3 && !blocked) sample();
+  if (state.sampleProfile && state.sampleDataVersion !== 4 && !blocked) sample();
   else if (
     state.sampleProfile &&
     !blocked &&

@@ -134,22 +134,48 @@
     return iso(d);
   }
   const sum = (rows, fn) => round(rows.reduce((s, t) => s + fn(t), 0));
-  function accountBalance(state, id) {
+  // Signed effect of one paid transaction on an account.
+  const accountFlow = (t, id) =>
+    !t.paid
+      ? 0
+      : t.type === 'Transfer'
+        ? (t.toKind === 'account' && t.toId === id ? t.actual : 0) -
+          (t.accountId === id ? t.actual : 0)
+        : t.accountId === id
+          ? t.type === 'Income'
+            ? t.actual
+            : -t.actual
+          : 0;
+  // Adjustments reconcile an account with a bank statement; they are never income or expenses.
+  function accountBalance(state, id, through = '2199-12-31') {
     const a = state.accounts.find((a) => a.id === id);
     return round(
       (a?.opening || 0) +
         sum(
-          state.transactions.filter((t) => t.paid),
-          (t) => {
-            if (t.type === 'Transfer')
-              return (
-                (t.toKind === 'account' && t.toId === id ? t.actual : 0) -
-                (t.accountId === id ? t.actual : 0)
-              );
-            return t.accountId === id ? (t.type === 'Income' ? t.actual : -t.actual) : 0;
-          },
+          (a?.adjustments || []).filter((x) => x.date <= through),
+          (x) => x.amount,
+        ) +
+        sum(
+          state.transactions.filter((t) => !t.date || t.date <= through),
+          (t) => accountFlow(t, id),
         ),
     );
+  }
+  // Money in and out of an account during one month (paid entries and transfers only).
+  function accountMonth(state, id, month) {
+    const flows = state.transactions
+      .filter((t) => t.date?.startsWith(month))
+      .map((t) => accountFlow(t, id));
+    return {
+      in: sum(
+        flows.filter((v) => v > 0),
+        (v) => v,
+      ),
+      out: sum(
+        flows.filter((v) => v < 0),
+        (v) => -v,
+      ),
+    };
   }
   function debtBalance(state, id) {
     return debtBalanceAt(state, id);
@@ -488,6 +514,7 @@
     debtBalance,
     goalSaved,
     goalAssets,
+    accountMonth,
     goalPlanned,
     goalPlan,
     totalAssets,

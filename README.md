@@ -11,7 +11,7 @@ A standalone budgeting app that runs entirely in the browser. There is nothing t
 
 ### Sample data
 
-**Load sample data** (on the welcome panel or in Setup) loads one fictional dataset. The budget starts on 1 January 2026 and the history runs through 22 October 2026. Every subcategory has a monthly budget, and there are 11 recurring bills and income schedules, several debts with payment history, and two savings goals (the Emergency fund is funded by monthly transfers and has a recurring contribution from November).
+**Load sample data** (on the welcome panel or in Setup) loads one fictional dataset. The budget starts on 1 January 2026 and the history runs through 22 October 2026. Every subcategory has a monthly budget, and there are 11 recurring bills and income schedules, several debts with payment history, two savings goals (the Emergency fund is funded by monthly transfers and has a recurring contribution from November), and a monthly $400 transfer from Checking to Savings.
 
 **Clear sample data** removes only the sample records. Your own entries are kept, and category budgets return to their previous values unless you edited them after loading the sample. If an older sample profile is found on page load, it is replaced with the current one automatically.
 
@@ -21,7 +21,7 @@ A standalone budgeting app that runs entirely in the browser. There is nothing t
 - **Transactions:** one journal for income, expenses and transfers. Filter by month, category, account and type, or search by name and notes. Choosing "—" clears a filter. Only saved transactions appear here; a recurring payment shows up once it is marked Paid.
 - **Recurring:** create and edit schedules. The Payment Schedule tab lists the occurrences for the selected month.
 - **Bill Calendar:** recurring payments and income only, including occurrences that were already paid. One-off transactions stay in the journal. Click an entry to open it; Paid / Received is always set by hand. Unpaid entries past their date are highlighted. Up to 1000 px wide, entries show a one-line name and a whole amount (for example $1,800); the status is shown by colour and the paid check.
-- **Accounts:** balance of each account and Net Worth.
+- **Accounts:** tiles for money in accounts, money in goals, debt and Net worth, then one card per account (grouped by type) with its balance, this month's money in and out, and Transfer / Update Balance / Transactions actions. Update Balance reconciles an account with a bank statement as of the statement date; the difference is an adjustment, never income or an expense. Transactions opens the journal filtered to that account.
 - **Debt Payoff:** Snowball, Avalanche and Custom strategies, extra monthly payment, debt-free date, projected interest and a per-debt schedule.
 - **Savings:** totals across goals, then one card per goal with progress, the monthly amount needed by its target date, and Add money / Withdraw / Set recurring actions.
 - **Setup:** preferences, accounts, categories and monthly budgets, help, sample data, backups.
@@ -114,7 +114,7 @@ Each debt has a Name, Type, Starting balance, Start date, APR, Minimum payment, 
 ## Calculation rules
 
 - Only entries marked Paid / Received count toward actual totals, balances and progress. An actual amount of zero is allowed.
-- **Account balance** = opening balance + received income − paid expenses ± transfers for that account. The app never makes real bank payments.
+- **Account balance** = opening balance + balance adjustments + received income − paid expenses ± transfers for that account. The app never makes real bank payments.
 - **Left to spend** = actual income − actual expenses.
 - **Savings rate** = (paid expenses linked to a savings goal + transfers to goals) ÷ actual income. Withdrawals do not reduce it.
 - Category budgets apply to every month. Overspending is measured against Actual.

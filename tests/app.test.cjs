@@ -76,7 +76,7 @@ function harness() {
   let source = fs.readFileSync(path.join(__dirname, '../app.js'), 'utf8');
   source = source.replace(
     /if\s*\(state\.sampleProfile[\s\S]*?else render\(\);\s*\}\)\(\);\s*$/,
-    'globalThis.api={get:()=>state,setSpendingExpanded:value=>{spendingExpanded=value;render();},showDebtHover,hideDebtHover,applyDebtPlan,addSampleDebtPayments,updateDebtBalance,saveDebtBalance,debtRecurring,pauseRecurring,skipPayment,findPayment,mutate,empty,sample,cleanSamples,validateImport,editor,saveRecord,deleteRecord,removeRecord,commit,renderScreen:s=>{screen=s;render();},render};render();})();',
+    'globalThis.api={get:()=>state,setSpendingExpanded:value=>{spendingExpanded=value;render();},showDebtHover,hideDebtHover,applyDebtPlan,addSampleDebtPayments,updateDebtBalance,saveDebtBalance,updateAccountBalance,saveAccountBalance,debtRecurring,pauseRecurring,skipPayment,findPayment,mutate,empty,sample,cleanSamples,validateImport,editor,saveRecord,deleteRecord,removeRecord,commit,renderScreen:s=>{screen=s;render();},render};render();})();',
   );
   vm.runInContext(source, ctx);
   return {
@@ -915,6 +915,51 @@ test('Savings screen sums goals, shows status only against a plan and lists reac
   html = h.node('#main').innerHTML;
   assert.ok(html.includes('goal-status is-warn">Behind'));
   assert.ok(html.includes('Edit recurring'));
+});
+test('Accounts reconcile with a statement and the screen sums accounts, goals and debt', () => {
+  const h = harness();
+  save(h, 'account', '', { name: 'Brokerage', kind: 'Investment', opening: '1000' });
+  save(h, 'account', '', { name: 'Everyday', kind: 'Checking', opening: '500' });
+  const [brokerage, everyday] = h.api.get().accounts.map((a) => a.id);
+  const statement = (balance, date) => ({ get: (k) => ({ balance, date })[k] });
+  h.api.updateAccountBalance(brokerage);
+  assert.ok(h.node('#editor').innerHTML.includes(`name="date" type="date" value="${B.today()}"`));
+  h.api.saveAccountBalance(statement('1250', B.today()));
+  assert.equal(B.accountBalance(h.api.get(), brokerage), 1250);
+  assert.equal(h.api.get().transactions.length, 0);
+  assert.throws(
+    () => h.api.saveAccountBalance(statement('1', '2025-01-01')),
+    /last balance update/,
+  );
+  assert.throws(
+    () => h.api.saveAccountBalance(statement('1', B.iso(new Date(Date.now() + 864e5 * 2)))),
+    /not in the future/,
+  );
+  // A past statement keeps entries recorded after it.
+  const yesterday = B.iso(new Date(B.date(B.today()).getTime() - 864e5));
+  save(h, 'transaction', '', {
+    type: 'Transfer',
+    date: B.today(),
+    amount: '100',
+    accountId: everyday,
+    destination: 'account:' + brokerage,
+  });
+  h.api.updateAccountBalance(everyday);
+  h.api.saveAccountBalance(statement('-20', yesterday));
+  assert.equal(B.accountBalance(h.api.get(), everyday), -120);
+  assert.doesNotThrow(() => h.api.validateImport(h.api.get()));
+  const broken = structuredClone(h.api.get());
+  broken.accounts[0].adjustments[0].date = 'soon';
+  assert.throws(() => h.api.validateImport(broken), /Invalid account/);
+  h.api.renderScreen('Accounts');
+  const html = h.node('#main').innerHTML;
+  assert.ok(html.includes('In accounts') && html.includes('$1,230.00'));
+  assert.ok(html.includes('In goals') && html.includes('Net worth'));
+  assert.ok(html.includes('large-value is-negative">'));
+  assert.ok(html.includes('This month: +$100.00 in · −$0.00 out'));
+  // Checking is listed before Investment.
+  assert.ok(html.indexOf('>Everyday<') < html.indexOf('>Brokerage<'));
+  assert.ok(!html.includes('Opening balance'));
 });
 test('Skipped payments disappear from calendar and restore inside their recurring template', () => {
   const { h, id } = recurringFixture(),
