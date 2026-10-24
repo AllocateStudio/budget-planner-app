@@ -1596,3 +1596,19 @@ td:not(:first-child) {
     display: inline;
   }
 }
+
+/* Debt card title: the priority number is centred on the name line and the
+   "Extra payment first" label lines up under the name, not under the number. */
+.debt-list > .panel > .panel-head h2 {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+}
+.debt-list > .panel > .panel-head .debt-priority-badge {
+  margin-right: 0;
+}
+.debt-list > .panel > .panel-head .debt-first-label {
+  grid-column: 2;
+  margin-top: 4px;
+}
