@@ -54,7 +54,7 @@ function harness() {
   let source = fs.readFileSync(path.join(__dirname, '../app.js'), 'utf8');
   source = source.replace(
     /if\s*\(state\.sampleProfile[\s\S]*?else render\(\);\s*\}\)\(\);\s*$/,
-    'globalThis.api={get:()=>state,setSpendingExpanded:value=>{spendingExpanded=value;render();},addSampleDebtPayments,updateDebtBalance,saveDebtBalance,debtRecurring,pauseRecurring,skipPayment,findPayment,mutate,empty,sample,cleanSamples,validateImport,editor,saveRecord,deleteRecord,removeRecord,commit,renderScreen:s=>{screen=s;render();},render};render();})();',
+    'globalThis.api={get:()=>state,setSpendingExpanded:value=>{spendingExpanded=value;render();},applyDebtPlan,addSampleDebtPayments,updateDebtBalance,saveDebtBalance,debtRecurring,pauseRecurring,skipPayment,findPayment,mutate,empty,sample,cleanSamples,validateImport,editor,saveRecord,deleteRecord,removeRecord,commit,renderScreen:s=>{screen=s;render();},render};render();})();',
   );
   vm.runInContext(source, ctx);
   return { api: ctx.api, node, storage };
@@ -827,10 +827,10 @@ test('Debt form, statement reconciliation and recurring shortcut keep the ledger
   assert.ok(html.includes('value="100"'));
   h.api.renderScreen('Debt Payoff');
   for (const label of [
-    'Total Debt',
-    'Paid So Far',
-    'Debt-Free Date',
-    'Total Interest',
+    'Total debt',
+    'Paid so far',
+    'Debt-free date',
+    'Total interest',
     'Balance over time',
     'Snowball',
     'Avalanche',
@@ -874,4 +874,38 @@ test('Additional sample debt transfers update four debts once and clear with sam
   assert.equal(B.accountBalance(h.api.get(),transfers[0].accountId),before);
   assert.doesNotThrow(()=>h.api.validateImport(h.api.get()));
   h.api.mutate(h.api.cleanSamples);assert.equal(h.api.get().transactions.length,0);
+});
+
+test('Debt cards follow each strategy and keep paid-off debts last', () => {
+  const h=harness();
+  h.api.mutate(n=>{n.debts=[
+    {id:'a',name:'Alpha',balance:1000,original:1000,minimum:50,apr:25,order:2},
+    {id:'b',name:'Beta',balance:500,original:500,minimum:20,apr:5,order:3},
+    {id:'c',name:'Gamma',balance:2000,original:2000,minimum:70,apr:10,order:1},
+    {id:'z',name:'Closed',balance:0,original:100,minimum:10,apr:30,order:0}];});
+  for(const [strategy,expected] of [['Snowball',['Beta','Alpha','Gamma','Closed']],['Avalanche',['Alpha','Gamma','Beta','Closed']],['Custom',['Gamma','Alpha','Beta','Closed']]]){
+    h.api.mutate(n=>n.strategy=strategy);h.api.renderScreen('Debt Payoff');
+    const html=h.node('#main').innerHTML.split('<div class="debt-list">')[1];
+    const indexes=expected.map(name=>html.indexOf(name));assert.ok(indexes.every(i=>i>=0));assert.deepEqual([...indexes].sort((a,b)=>a-b),indexes);
+    assert.equal((html.match(/Extra payment first/g)||[]).length,1);
+    assert.equal((html.match(/class="debt-priority-badge"/g)||[]).length,3);
+  }
+});
+
+test('Strategy selection and quick extra increments update state and comparison projections', () => {
+  const h=harness();h.api.sample();h.api.renderScreen('Debt Payoff');
+  h.node('#extra-payment').value='300';h.api.applyDebtPlan('Avalanche');
+  assert.equal(h.api.get().strategy,'Avalanche');assert.equal(h.api.get().extra,300);
+  let html=h.node('#main').innerHTML;
+  assert.ok(html.includes('class="strategy-card is-selected" data-action="choose-debt-strategy" data-id="Avalanche" aria-pressed="true"'));
+  assert.ok(html.includes('Lowest interest'));assert.ok(html.includes('Without extra'));assert.ok(html.includes('Debt-free ·'));
+  const expected=B.debtProjection(h.api.get(),'Avalanche').interest;
+  assert.ok(html.includes(expected.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})));
+  const baseline=B.debtProjection({...h.api.get(),extra:0},'Avalanche');
+  assert.ok(html.includes('class="chart-baseline"'));
+  assert.ok(baseline.months>B.debtProjection(h.api.get(),'Avalanche').months);
+  h.node('#extra-payment').value='300';h.api.applyDebtPlan('Custom',100);
+  assert.equal(h.api.get().extra,400);assert.equal(h.api.get().strategy,'Custom');
+  h.node('#extra-payment').value='-1';h.api.applyDebtPlan('Snowball');
+  assert.equal(h.api.get().strategy,'Custom');assert.equal(h.api.get().extra,400);
 });
