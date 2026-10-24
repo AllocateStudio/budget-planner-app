@@ -493,10 +493,7 @@
         .slice(0, 5);
       body =
         `<div class="dashboard-grid">${expectedPanel(s)}${spendingPanel(s)}</div>` +
-        panel(
-          'Upcoming Bills',
-          `<div class="upcoming-wrap">${rows(upcoming, 'No upcoming bills.')}</div>`,
-        ) +
+        panel('Upcoming Bills', rows(upcoming, 'No upcoming bills.')) +
         budgetPanel(s.rows, [state.month], true);
     }
     return (
