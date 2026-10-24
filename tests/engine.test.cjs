@@ -416,3 +416,83 @@ test('Monthly due-day anchor survives short months', () => {
     ['2091-02-28', '2091-03-31', '2091-04-30', '2091-05-31'],
   );
 });
+test('Goal withdrawals and linked expenses keep net worth consistent', () => {
+  const s = base();
+  s.goals = [{ id: 'g', saved: 50, target: 1000 }];
+  const net = B.totalAssets(s);
+  const move = (id, extra) => ({
+    id,
+    name: id,
+    type: 'Transfer',
+    date: '2026-10-10',
+    paid: true,
+    ...extra,
+  });
+  s.transactions = [
+    move('in', { actual: 200, expected: 200, accountId: 'b', toKind: 'goal', toId: 'g' }),
+    {
+      id: 'legacy',
+      name: 'Legacy',
+      type: 'Expense',
+      date: '2026-10-11',
+      paid: true,
+      actual: 100,
+      expected: 100,
+      accountId: 'b',
+      categoryId: 'save',
+      goalId: 'g',
+    },
+  ];
+  assert.equal(B.goalSaved(s, 'g'), 350);
+  // A legacy linked expense leaves the account but stays in Net Worth through the goal.
+  assert.equal(B.totalAssets(s), net);
+  s.transactions.push(
+    move('out', {
+      actual: 120,
+      expected: 120,
+      fromKind: 'goal',
+      fromId: 'g',
+      toKind: 'account',
+      toId: 'a',
+    }),
+  );
+  assert.equal(B.goalSaved(s, 'g'), 230);
+  assert.equal(B.goalAssets(s), 180);
+  assert.equal(B.accountBalance(s, 'a'), 220);
+  assert.equal(B.totalAssets(s), net);
+  assert.equal(B.summary(s, '2026-10').savings, 300);
+});
+test('Goal plan reports reached, open, overdue, on track and behind', () => {
+  const s = base();
+  s.goals = [
+    { id: 'done', saved: 500, target: 500, deadline: '2027-01-31' },
+    { id: 'open', saved: 100, target: 500, deadline: '' },
+    { id: 'late', saved: 100, target: 500, deadline: '2026-09-30' },
+    { id: 'plan', saved: 100, target: 700, deadline: '2026-12-31' },
+  ];
+  const plan = (id) => B.goalPlan(s, id, '2026-10-22');
+  assert.equal(plan('done').status, 'reached');
+  assert.equal(plan('open').status, 'open');
+  assert.equal(plan('open').remaining, 400);
+  assert.equal(plan('late').status, 'overdue');
+  assert.equal(plan('plan').months, 3);
+  assert.equal(plan('plan').needed, 200);
+  assert.equal(plan('plan').status, 'behind');
+  s.recurring = [
+    {
+      active: true,
+      type: 'Transfer',
+      toKind: 'goal',
+      toId: 'plan',
+      expected: 100,
+      frequency: 'Bi-weekly',
+    },
+  ];
+  assert.equal(B.goalPlanned(s, 'plan', '2026-10-22'), 216.67);
+  assert.equal(plan('plan').status, 'on-track');
+  s.recurring[0].active = false;
+  assert.equal(plan('plan').planned, 0);
+  s.recurring[0].active = true;
+  s.recurring[0].end = '2026-10-01';
+  assert.equal(plan('plan').planned, 0);
+});

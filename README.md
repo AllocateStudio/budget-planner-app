@@ -11,7 +11,7 @@ A standalone budgeting app that runs entirely in the browser. There is nothing t
 
 ### Sample data
 
-**Load sample data** (on the welcome panel or in Setup) loads one fictional dataset. The budget starts on 1 January 2026 and the history runs through 22 October 2026. Every subcategory has a monthly budget, and there are 11 recurring schedules plus several debts with payment history.
+**Load sample data** (on the welcome panel or in Setup) loads one fictional dataset. The budget starts on 1 January 2026 and the history runs through 22 October 2026. Every subcategory has a monthly budget, and there are 11 recurring bills and income schedules, several debts with payment history, and two savings goals (the Emergency fund is funded by monthly transfers and has a recurring contribution from November).
 
 **Clear sample data** removes only the sample records. Your own entries are kept, and category budgets return to their previous values unless you edited them after loading the sample. If an older sample profile is found on page load, it is replaced with the current one automatically.
 
@@ -23,7 +23,7 @@ A standalone budgeting app that runs entirely in the browser. There is nothing t
 - **Bill Calendar:** recurring payments and income only, including occurrences that were already paid. One-off transactions stay in the journal. Click an entry to open it; Paid / Received is always set by hand. Unpaid entries past their date are highlighted.
 - **Accounts:** balance of each account and Net Worth.
 - **Debt Payoff:** Snowball, Avalanche and Custom strategies, extra monthly payment, debt-free date, projected interest and a per-debt schedule.
-- **Savings:** goals and sinking funds with a target date, required monthly contribution and progress.
+- **Savings:** totals across goals, then one card per goal with progress, the monthly amount needed by its target date, and Add money / Withdraw / Set recurring actions.
 - **Setup:** preferences, accounts, categories and monthly budgets, help, sample data, backups.
 
 Any entry opened from Upcoming, the calendar or a list uses the same form, with create, edit and delete. An account, goal or debt that still has linked entries can only be deleted after those links are moved or removed.
@@ -64,6 +64,7 @@ One-off income and expenses take effect immediately and have no status or Expect
 - Between accounts: the source decreases and the destination increases.
 - To a debt: the source account and the debt balance both decrease by the full amount. Interest charges are recorded separately.
 - To a goal: the source account decreases and the goal's saved amount increases. The money is still counted as an asset in Net Worth.
+- From a goal (a withdrawal): choose the goal in **From** and an account in **To**. The goal decreases and the account increases. A withdrawal cannot exceed what is saved in the goal, and no change may leave a goal below zero. Withdrawals are one-off only.
 - Transfers never count as income or expenses. Transfers to goals count toward the savings rate.
 - Editing or deleting a transfer recalculates both sides. An account, debt or goal referenced by a transfer cannot be deleted.
 
@@ -115,10 +116,10 @@ Each debt has a Name, Type, Starting balance, Start date, APR, Minimum payment, 
 - Only entries marked Paid / Received count toward actual totals, balances and progress. An actual amount of zero is allowed.
 - **Account balance** = opening balance + received income − paid expenses ± transfers for that account. The app never makes real bank payments.
 - **Left to spend** = actual income − actual expenses.
-- **Savings rate** = (paid expenses linked to a savings goal + transfers to goals) ÷ actual income.
+- **Savings rate** = (paid expenses linked to a savings goal + transfers to goals) ÷ actual income. Withdrawals do not reduce it.
 - Category budgets apply to every month. Overspending is measured against Actual.
-- **Goal saved amount** = starting saved amount + paid expenses linked to the goal + transfers to the goal. The required monthly contribution divides what is left by the number of calendar months until the target date, including the current month. Overdue goals are flagged.
-- **Net Worth** = account balances + money transferred into goals − current debt balances. Record loans and credit cards only under Debt so they are not subtracted twice.
+- **Goal saved amount** = starting saved amount + paid expenses linked to the goal + transfers to the goal − withdrawals. The target date is optional. With a date, the monthly amount needed divides what is left by the number of calendar months until that date, including the current month. A goal shows **On track** or **Behind** by comparing that amount with its active recurring contributions (converted to a monthly amount); without a recurring contribution no status is shown. Goals past their date are marked **Overdue**, and reached goals are listed last.
+- **Net Worth** = account balances + money held in goals − current debt balances. Money held in goals is everything moved into them (transfers and older linked expenses) minus withdrawals; the starting saved amount is assumed to sit in an account already. Record loans and credit cards only under Debt so they are not subtracted twice.
 - Older debt payments recorded as expenses with a principal amount are still read, so upgrading does not change past balances.
 
 ## Storage and backups

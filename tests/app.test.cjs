@@ -809,6 +809,113 @@ test('Recurring transfers update goals and debts only after Paid and round-trip 
     assert.doesNotThrow(() => h.api.validateImport(h.api.get()));
   }
 });
+test('Goal withdrawals move money back to an account and guard the goal balance', () => {
+  const h = harness();
+  save(h, 'account', '', { name: 'Checking', kind: 'Checking', opening: '1000' });
+  save(h, 'goal', '', {
+    name: 'Trip',
+    kind: 'Sinking fund',
+    target: '600',
+    saved: '0',
+    deadline: '',
+  });
+  const account = h.api.get().accounts[0].id,
+    goal = h.api.get().goals[0].id;
+  assert.equal(h.api.get().goals[0].deadline, '');
+  const transfer = (data) =>
+    save(h, 'transaction', data.id || '', { type: 'Transfer', date: B.today(), ...data });
+  transfer({ amount: '400', accountId: account, destination: 'goal:' + goal });
+  assert.equal(B.goalSaved(h.api.get(), goal), 400);
+  h.api.editor('transaction', '', { type: 'Transfer', accountId: 'goal:' + goal });
+  assert.ok(h.node('#editor').innerHTML.includes('Goal · Trip'));
+  assert.throws(
+    () => transfer({ amount: '500', accountId: 'goal:' + goal, destination: 'account:' + account }),
+    /exceeds the money saved/,
+  );
+  assert.throws(
+    () => transfer({ amount: '50', accountId: 'goal:' + goal, destination: 'goal:' + goal }),
+    /into an account/,
+  );
+  transfer({ amount: '150', accountId: 'goal:' + goal, destination: 'account:' + account });
+  const out = h.api.get().transactions.at(-1);
+  assert.equal(out.fromKind, 'goal');
+  assert.equal(out.fromId, goal);
+  assert.equal(out.accountId, undefined);
+  assert.equal(out.name, 'Withdrawal from Trip');
+  assert.equal(B.goalSaved(h.api.get(), goal), 250);
+  assert.equal(B.accountBalance(h.api.get(), account), 750);
+  assert.notEqual(h.api.get().lastAccountId, 'goal:' + goal);
+  assert.doesNotThrow(() => h.api.validateImport(h.api.get()));
+  // Editing the withdrawal may reuse its own amount.
+  transfer({
+    id: out.id,
+    amount: '400',
+    accountId: 'goal:' + goal,
+    destination: 'account:' + account,
+  });
+  assert.equal(B.goalSaved(h.api.get(), goal), 0);
+  // Removing the contribution would leave the goal below zero.
+  const contribution = h.api.get().transactions[0].id;
+  h.api.editor('transaction', contribution);
+  h.api.removeRecord();
+  assert.equal(h.api.get().transactions.length, 2);
+  h.api.editor('goal', goal);
+  h.api.deleteRecord();
+  assert.ok(h.node('#form-error').textContent.includes('linked'));
+  const broken = structuredClone(h.api.get());
+  broken.transactions.at(-1).toKind = 'debt';
+  assert.throws(() => h.api.validateImport(broken), /goal withdrawal/);
+});
+test('Savings screen sums goals, shows status only against a plan and lists reached goals last', () => {
+  const h = harness();
+  save(h, 'account', '', { name: 'Checking', kind: 'Checking', opening: '1000' });
+  const year = Number(B.today().slice(0, 4)) + 1;
+  save(h, 'goal', '', {
+    name: 'Done',
+    kind: 'Savings goal',
+    target: '100',
+    saved: '100',
+    deadline: '',
+  });
+  save(h, 'goal', '', {
+    name: 'Car',
+    kind: 'Savings goal',
+    target: '1300',
+    saved: '100',
+    deadline: `${year}-12-31`,
+  });
+  save(h, 'goal', '', {
+    name: 'Rainy day',
+    kind: 'Savings goal',
+    target: '500',
+    saved: '0',
+    deadline: '',
+  });
+  h.api.renderScreen('Savings');
+  let html = h.node('#main').innerHTML;
+  assert.ok(html.includes('Total saved') && html.includes('$200.00'));
+  assert.ok(html.includes('Goals reached') && html.includes('1 of 3'));
+  assert.ok(html.includes('$500.00 to go'));
+  assert.ok(html.includes(' / month · by Dec ' + year));
+  assert.ok(!html.includes('goal-status is-warn'));
+  assert.ok(html.indexOf('>Car<') < html.indexOf('>Rainy day<'));
+  assert.ok(html.indexOf('>Rainy day<') < html.indexOf('>Done<'));
+  assert.ok(!html.includes('Saved includes the starting amount'));
+  const car = h.api.get().goals.find((g) => g.name === 'Car').id;
+  save(h, 'recurring', '', {
+    type: 'Transfer',
+    name: 'Car fund',
+    expected: '1',
+    frequency: 'Monthly',
+    start: B.today(),
+    end: '',
+    accountId: h.api.get().accounts[0].id,
+    destination: 'goal:' + car,
+  });
+  html = h.node('#main').innerHTML;
+  assert.ok(html.includes('goal-status is-warn">Behind'));
+  assert.ok(html.includes('Edit recurring'));
+});
 test('Skipped payments disappear from calendar and restore inside their recurring template', () => {
   const { h, id } = recurringFixture(),
     t = B.generated(h.api.get(), B.today())[0];

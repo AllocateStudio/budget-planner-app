@@ -154,31 +154,76 @@
   function debtBalance(state, id) {
     return debtBalanceAt(state, id);
   }
+  // Money moved into a goal (transfers and legacy linked expenses) minus withdrawals.
+  const goalFlow = (t, id) =>
+    !t.paid
+      ? 0
+      : t.type === 'Transfer' && t.toKind === 'goal' && (id === undefined || t.toId === id)
+        ? t.actual
+        : t.type === 'Transfer' && t.fromKind === 'goal' && (id === undefined || t.fromId === id)
+          ? -t.actual
+          : t.type === 'Expense' && t.goalId && (id === undefined || t.goalId === id)
+            ? t.actual
+            : 0;
   function goalSaved(state, id) {
     const g = state.goals.find((g) => g.id === id);
-    return round(
-      (g?.saved || 0) +
-        sum(
-          state.transactions.filter((t) => t.paid),
-          (t) =>
-            t.type === 'Transfer' && t.toKind === 'goal' && t.toId === id
-              ? t.actual
-              : t.type === 'Expense' && t.goalId === id
-                ? t.actual
-                : 0,
-        ),
-    );
+    return round((g?.saved || 0) + sum(state.transactions, (t) => goalFlow(t, id)));
   }
-  function goalTransferAssets(state) {
-    return sum(
-      state.transactions.filter((t) => t.paid && t.type === 'Transfer' && t.toKind === 'goal'),
-      (t) => t.actual,
-    );
+  // The starting saved amount is assumed to sit in an account already.
+  function goalAssets(state) {
+    return sum(state.transactions, (t) => goalFlow(t));
   }
   function totalAssets(state) {
-    return round(
-      sum(state.accounts, (a) => accountBalance(state, a.id)) + goalTransferAssets(state),
+    return round(sum(state.accounts, (a) => accountBalance(state, a.id)) + goalAssets(state));
+  }
+  const monthlyFactor = {
+    Weekly: 52 / 12,
+    'Bi-weekly': 26 / 12,
+    'Every 4 Weeks': 13 / 12,
+    'Semi-monthly': 2,
+    Monthly: 1,
+    'Every 2 months': 1 / 2,
+    Quarterly: 1 / 3,
+    'Semi-annually': 1 / 6,
+    Annually: 1 / 12,
+  };
+  // Active recurring transfers into a goal, as a monthly amount.
+  function goalPlanned(state, id, asOf = today()) {
+    return sum(
+      state.recurring.filter(
+        (r) =>
+          r.active &&
+          r.type === 'Transfer' &&
+          r.toKind === 'goal' &&
+          r.toId === id &&
+          (!r.end || r.end >= asOf),
+      ),
+      (r) => r.expected * (monthlyFactor[frequencyAliases[r.frequency] || r.frequency] || 0),
     );
+  }
+  // Calendar months until the target date, including the current month.
+  function goalPlan(state, id, asOf = today()) {
+    const g = state.goals.find((g) => g.id === id),
+      saved = goalSaved(state, id),
+      remaining = Math.max(0, round(g.target - saved)),
+      planned = goalPlanned(state, id, asOf);
+    if (remaining === 0) return { saved, remaining, planned, status: 'reached' };
+    if (!g.deadline) return { saved, remaining, planned, status: 'open' };
+    if (g.deadline < asOf) return { saved, remaining, planned, status: 'overdue' };
+    const months =
+      (Number(g.deadline.slice(0, 4)) - Number(asOf.slice(0, 4))) * 12 +
+      Number(g.deadline.slice(5, 7)) -
+      Number(asOf.slice(5, 7)) +
+      1;
+    const needed = round(remaining / months);
+    return {
+      saved,
+      remaining,
+      planned,
+      months,
+      needed,
+      status: planned + 0.005 >= needed ? 'on-track' : 'behind',
+    };
   }
   function summary(state, month) {
     const inMonth = (d) => d.startsWith(month) && (!state.budgetStart || d >= state.budgetStart),
@@ -442,7 +487,9 @@
     accountBalance,
     debtBalance,
     goalSaved,
-    goalTransferAssets,
+    goalAssets,
+    goalPlanned,
+    goalPlan,
     totalAssets,
     summary,
     payoff,

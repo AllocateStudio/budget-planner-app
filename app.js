@@ -231,6 +231,10 @@
       toast('Saved data could not be read. Reload before making changes.');
       return false;
     }
+    if (next.goals.some((g) => B.goalSaved(next, g.id) < 0)) {
+      toast('This change would leave a goal below zero. Adjust its withdrawals first.');
+      return false;
+    }
     try {
       if (localStorage.getItem(KEY) !== raw) {
         toast('Another tab changed your budget. Reload this tab before saving.');
@@ -274,6 +278,9 @@
             : 'Paid';
     return t.date < B.today() ? 'Overdue' : t.date === B.today() ? 'Due today' : 'Upcoming';
   }
+  // Withdrawals come from a goal rather than an account.
+  const entrySource = (t) =>
+    t.fromKind === 'goal' ? name('goals', t.fromId) : name('accounts', t.accountId);
   function entryCategory(t) {
     return t.type === 'Transfer'
       ? `Transfer → ${name({ account: 'accounts', debt: 'debts', goal: 'goals' }[t.toKind], t.toId)}`
@@ -283,7 +290,7 @@
     return edit(
       'transaction',
       t.id,
-      `<span class="record-name">${esc(t.name)}<small>${esc(t.date)} · ${entryCategory(t)} · ${name('accounts', t.accountId)}</small></span><span class="record-amount">${money(t.paid ? t.actual : t.expected)}<small class="${status(t) === 'Overdue' ? 'terracotta' : ''}">${status(t)}</small></span>`,
+      `<span class="record-name">${esc(t.name)}<small>${esc(t.date)} · ${entryCategory(t)} · ${entrySource(t)}</small></span><span class="record-amount">${money(t.paid ? t.actual : t.expected)}<small class="${status(t) === 'Overdue' ? 'terracotta' : ''}">${status(t)}</small></span>`,
     );
   }
   function rows(list, emptyText = 'No entries yet.') {
@@ -413,7 +420,7 @@
     );
     return (
       heading('Transactions', '', edit('transaction', '', '+ Add transaction', 'btn primary')) +
-      `<section class="panel"><div class="filters"><label>Month<div class="month-filter"><input type="month" id="filter-month" value="${esc(filters.month)}">${btn('—', 'reset-month', '', 'icon-btn')}</div></label><label>Category<select data-filter="category">${options(state.categories, filters.category, true)}</select></label><label>Account<select data-filter="account">${options(state.accounts, filters.account, true)}</select></label><label>Type<select data-filter="type">${options(['Income', 'Expense', 'Transfer'], filters.type, true)}</select></label><label class="search-field">Search<input id="search" value="${esc(filters.search)}" placeholder="Name or note"></label></div><p class="hint">${list.length} entries · “—” removes a filter. Recurring payments appear here after they are marked paid.</p><div class="table-wrap"><table><thead><tr><th>Entry</th><th>Date</th><th>Category / Account</th><th>Expected</th><th>Actual</th><th>Status</th></tr></thead><tbody>${list.map((t) => `<tr><td>${edit('transaction', t.id, esc(t.name), 'table-link')}<small>${esc(t.type)}</small></td><td>${esc(t.date)}</td><td>${entryCategory(t)}<small>${name('accounts', t.accountId)}</small></td><td>${money(t.expected)}</td><td>${t.paid ? money(t.actual) : '—'}</td><td class="${status(t) === 'Overdue' ? 'terracotta' : ''}">${status(t)}</td></tr>`).join('') || '<tr><td colspan="6">No matching entries.</td></tr>'}</tbody></table></div></section>`
+      `<section class="panel"><div class="filters"><label>Month<div class="month-filter"><input type="month" id="filter-month" value="${esc(filters.month)}">${btn('—', 'reset-month', '', 'icon-btn')}</div></label><label>Category<select data-filter="category">${options(state.categories, filters.category, true)}</select></label><label>Account<select data-filter="account">${options(state.accounts, filters.account, true)}</select></label><label>Type<select data-filter="type">${options(['Income', 'Expense', 'Transfer'], filters.type, true)}</select></label><label class="search-field">Search<input id="search" value="${esc(filters.search)}" placeholder="Name or note"></label></div><p class="hint">${list.length} entries · “—” removes a filter. Recurring payments appear here after they are marked paid.</p><div class="table-wrap"><table><thead><tr><th>Entry</th><th>Date</th><th>Category / Account</th><th>Expected</th><th>Actual</th><th>Status</th></tr></thead><tbody>${list.map((t) => `<tr><td>${edit('transaction', t.id, esc(t.name), 'table-link')}<small>${esc(t.type)}</small></td><td>${esc(t.date)}</td><td>${entryCategory(t)}<small>${entrySource(t)}</small></td><td>${money(t.expected)}</td><td>${t.paid ? money(t.actual) : '—'}</td><td class="${status(t) === 'Overdue' ? 'terracotta' : ''}">${status(t)}</td></tr>`).join('') || '<tr><td colspan="6">No matching entries.</td></tr>'}</tbody></table></div></section>`
     );
   }
   function recurringScreen() {
@@ -506,7 +513,7 @@
       `<div class="cards-grid">${state.accounts.map((a) => panel(esc(a.name), `<span class="eyebrow">${esc(a.kind)}</span><strong class="large-value">${money(B.accountBalance(state, a.id))}</strong><p class="hint">Opening balance ${money(a.opening)}</p>`, edit('account', a.id, 'Edit', 'textbtn'))).join('') || panel('Your accounts', '<p class="empty-copy">Add your first account and opening balance.</p>')}</div>` +
       panel(
         'Net Worth',
-        `<div class="net-worth"><div><small>Assets</small><b>${money(assets)}</b></div><span>−</span><div><small>Outstanding debt</small><b>${money(debt)}</b></div><span>=</span><div><small>Net worth</small><strong>${money(assets - debt)}</strong></div></div><p class="hint">Accounts plus funds transferred to goals, minus outstanding debts. Transfers do not count as income or expenses.</p>`,
+        `<div class="net-worth"><div><small>Assets</small><b>${money(assets)}</b></div><span>−</span><div><small>Outstanding debt</small><b>${money(debt)}</b></div><span>=</span><div><small>Net worth</small><strong>${money(assets - debt)}</strong></div></div><p class="hint">Accounts plus money held in goals, minus outstanding debts. Transfers do not count as income or expenses.</p>`,
       )
     );
   }
@@ -914,29 +921,70 @@
     });
   }
 
+  function goalRecurring(id) {
+    const g = state.goals.find((g) => g.id === id),
+      existing = state.recurring.find(
+        (r) => r.type === 'Transfer' && r.toKind === 'goal' && r.toId === id,
+      );
+    if (existing) {
+      editor('recurring', existing.id);
+      return;
+    }
+    const plan = B.goalPlan(state, id);
+    editor('recurring', '', {
+      type: 'Transfer',
+      name: g.name,
+      expected: plan.needed || '',
+      start: B.today(),
+      monthDay: Number(B.today().slice(-2)),
+      frequency: 'Monthly',
+      end: g.deadline || '',
+      toKind: 'goal',
+      toId: id,
+    });
+  }
   function savingsScreen() {
+    const plans = state.goals.map((g) => ({ g, plan: B.goalPlan(state, g.id) })),
+      reached = plans.filter(({ plan }) => plan.status === 'reached').length;
+    // Open goals first by target date (no date last), reached goals at the end.
+    plans.sort(
+      (a, b) =>
+        (a.plan.status === 'reached') - (b.plan.status === 'reached') ||
+        (a.g.deadline || '9999').localeCompare(b.g.deadline || '9999'),
+    );
+    const badge = {
+      reached: ['Reached', 'is-good'],
+      'on-track': ['On track', 'is-good'],
+      behind: ['Behind', 'is-warn'],
+      overdue: ['Overdue', 'is-warn'],
+    };
+    const card = ({ g, plan }) => {
+      // Behind is only shown against a recurring contribution, not when none is set.
+      const [label, tone] =
+          plan.status === 'behind' && !plan.planned ? [] : badge[plan.status] || [],
+        when = g.deadline ? ' · by ' + debtMonth(g.deadline.slice(0, 7)) : '';
+      const detail =
+        plan.status === 'reached'
+          ? 'Goal reached'
+          : plan.status === 'overdue'
+            ? money(plan.remaining) + ' to go · target date passed'
+            : plan.status === 'open'
+              ? money(plan.remaining) + ' to go'
+              : money(plan.needed) + ' / month' + when;
+      return panel(
+        esc(g.name),
+        `<div class="goal-meta"><span class="eyebrow">${esc(g.kind)}</span>${label ? `<span class="goal-status ${tone}">${label}</span>` : ''}</div><strong class="large-value">${money(plan.saved)} <small>/ ${money(g.target)}</small></strong>${bar(plan.saved, g.target)}<p class="goal-detail">${detail}</p><div class="goal-actions">${btn('Add money', 'goal-add', g.id, 'btn')}${plan.saved > 0 ? btn('Withdraw', 'goal-withdraw', g.id, 'btn') : ''}${plan.status !== 'reached' ? btn(plan.planned ? 'Edit recurring' : 'Set recurring', 'goal-recurring', g.id, 'btn') : ''}</div>`,
+        edit('goal', g.id, 'Edit', 'textbtn'),
+      );
+    };
     return (
       heading('Savings', '', edit('goal', '', '+ Add goal', 'btn primary')) +
-      `<div class="cards-grid">${
-        state.goals
-          .map((g) => {
-            const saved = B.goalSaved(state, g.id),
-              remaining = Math.max(0, g.target - saved),
-              now = new Date(),
-              due = B.date(g.deadline),
-              months = Math.max(
-                1,
-                (due.getFullYear() - now.getFullYear()) * 12 + due.getMonth() - now.getMonth() + 1,
-              );
-            return panel(
-              esc(g.name),
-              `<span class="eyebrow">${esc(g.kind)}</span><strong class="large-value">${money(saved)} <small>/ ${money(g.target)}</small></strong>${bar(saved, g.target)}<p class="goal-detail">${remaining === 0 ? 'Goal reached!' : g.deadline < B.today() ? 'Deadline passed · ' + money(remaining) + ' remaining' : money(remaining / months) + ' needed / month'}</p><p class="hint">Deadline ${esc(g.deadline)} · ${months} monthly contributions including this month</p>`,
-              edit('goal', g.id, 'Edit', 'textbtn'),
-            );
-          })
-          .join('') ||
-        panel('Savings goals', '<p class="empty-copy">Create a savings goal or sinking fund.</p>')
-      }</div><p class="hint">Saved includes the starting amount, linked payments and transfers to this goal. Transferred funds leave the source account and remain assets in Net Worth.</p>`
+      (plans.length
+        ? `<div class="stats-strip">${stat('Total saved', money(total(plans, ({ plan }) => plan.saved)), '', 'tone-mint')}${stat('Total target', money(total(state.goals, (g) => g.target)), '', 'tone-sky')}${stat('Needed / month', money(total(plans, ({ plan }) => plan.needed || 0)), '', 'tone-ink')}${stat('Goals reached', reached + ' of ' + plans.length, '', 'tone-blush')}</div><div class="goal-grid">${plans.map(card).join('')}</div>`
+        : panel(
+            'Savings goals',
+            '<p class="empty-copy">Create a savings goal or sinking fund.</p>',
+          ))
     );
   }
   function groupPanel(g) {
@@ -1039,7 +1087,9 @@
     const type = x.type || 'Expense',
       currentCategory = state.categories.find((c) => c.id === x.categoryId),
       group = x.groupId || currentCategory?.groupId || '';
-    const account = x.accountId || state.lastAccountId || '';
+    // A transfer from a goal is a withdrawal; its source is stored as fromKind/fromId.
+    const account =
+      x.accountId || (x.fromKind === 'goal' ? 'goal:' + x.fromId : '') || state.lastAccountId || '';
     const requiredSelect = (label, key, list, value) =>
       select(label + ' *', key, list, value, true).replace('<select ', '<select required ');
     let fields =
@@ -1058,13 +1108,26 @@
         'required min="0.01" max="1000000000" step="0.01" inputmode="decimal"',
       );
     if (type === 'Transfer') {
-      fields += requiredSelect('From', 'accountId', state.accounts, account);
+      fields += requiredSelect(
+        'From',
+        'accountId',
+        [
+          ...state.accounts,
+          ...state.goals.map((g) => ({ id: 'goal:' + g.id, name: 'Goal · ' + g.name })),
+        ],
+        account,
+      );
+      const fromGoal = account.startsWith('goal:');
       const targets = [
         ...state.accounts
           .filter((a) => a.id !== account)
           .map((a) => ({ id: 'account:' + a.id, name: 'Account · ' + a.name })),
-        ...state.debts.map((d) => ({ id: 'debt:' + d.id, name: 'Debt · ' + d.name })),
-        ...state.goals.map((g) => ({ id: 'goal:' + g.id, name: 'Goal · ' + g.name })),
+        ...(fromGoal
+          ? []
+          : [
+              ...state.debts.map((d) => ({ id: 'debt:' + d.id, name: 'Debt · ' + d.name })),
+              ...state.goals.map((g) => ({ id: 'goal:' + g.id, name: 'Goal · ' + g.name })),
+            ]),
       ];
       fields += requiredSelect(
         'To',
@@ -1136,7 +1199,12 @@
       throw Error('Enter an amount greater than zero.');
     if (!/^(19|20|21)\d{2}-(0[1-9]|1[0-2])-\d{2}$/.test(date) || B.iso(B.date(date)) !== date)
       throw Error('Choose a valid date.');
-    if (!state.accounts.some((a) => a.id === accountId)) throw Error('Choose an account.');
+    const fromGoal =
+      type === 'Transfer' && accountId.startsWith('goal:')
+        ? state.goals.find((g) => 'goal:' + g.id === accountId)
+        : null;
+    if (!fromGoal && !state.accounts.some((a) => a.id === accountId))
+      throw Error('Choose an account.');
     const x = {
       ...record,
       id: id || uid(),
@@ -1159,6 +1227,15 @@
         throw Error('Choose a destination account, debt or goal.');
       if (toKind === 'account' && toId === accountId)
         throw Error('From and To must be different accounts.');
+      if (fromGoal) {
+        if (toKind !== 'account') throw Error('Move money from a goal into an account.');
+        const oldWithdrawal =
+          record.paid && record.fromKind === 'goal' && record.fromId === fromGoal.id
+            ? record.actual
+            : 0;
+        if (amount > B.goalSaved(state, fromGoal.id) + oldWithdrawal)
+          throw Error('Amount exceeds the money saved in this goal.');
+      }
       if (toKind === 'debt') {
         const oldCredit =
           record.paid &&
@@ -1175,9 +1252,18 @@
       Object.assign(x, {
         toKind,
         toId,
-        name: `Transfer to ${state[list].find((t) => t.id === toId).name}`,
+        name: fromGoal
+          ? `Withdrawal from ${fromGoal.name}`
+          : `Transfer to ${state[list].find((t) => t.id === toId).name}`,
         description: '',
       });
+      if (fromGoal) {
+        Object.assign(x, { fromKind: 'goal', fromId: fromGoal.id });
+        delete x.accountId;
+      } else {
+        delete x.fromKind;
+        delete x.fromId;
+      }
       delete x.categoryId;
       delete x.goalId;
       delete x.debtId;
@@ -1195,6 +1281,8 @@
       });
       delete x.toKind;
       delete x.toId;
+      delete x.fromKind;
+      delete x.fromId;
       if (record.type !== type) {
         delete x.goalId;
         delete x.debtId;
@@ -1222,7 +1310,7 @@
         throw Error('Total debt payments exceed the starting debt balance.');
     }
     next.skipped = next.skipped.filter((key) => key !== x.id);
-    next.lastAccountId = accountId;
+    if (!fromGoal) next.lastAccountId = accountId;
     next.month = date.slice(0, 7);
     if (commit(next)) {
       filters.month = next.month;
@@ -1590,11 +1678,11 @@
         num('Target amount', 'target', x.target || 0) +
         num('Starting saved amount', 'saved', x.saved || 0) +
         input(
-          'Deadline',
+          'Target date',
           'deadline',
-          x.deadline || B.today(),
+          x.deadline ?? '',
           'date',
-          'required min="1900-01-01" max="2199-12-31"',
+          'min="1900-01-01" max="2199-12-31"',
         );
     $('#editor').innerHTML =
       `<form id="record-form"><div class="dialog-head"><h2 id="editor-title">${id ? 'Edit' : 'Add'} ${kind === 'goal' ? 'savings goal' : kind}</h2>${btn('×', 'close', '', 'icon-btn')}</div>${x.sample ? '<p class="sample-tag">Sample data</p>' : ''}<div class="form-grid">${fields}</div><p id="form-error" class="form-error" role="alert"></p><div class="dialog-actions">${id ? btn('Delete', 'delete', '', 'btn danger') : ''}<span class="spacer"></span>${btn('Cancel', 'close', '', 'btn ghost')}<button class="btn primary" type="submit">Save ${kind === 'transaction' ? 'entry' : kind}</button></div></form>`;
@@ -1687,6 +1775,12 @@
         deadline: get('deadline'),
       });
       if (x.target <= 0) throw Error('Target must be greater than zero.');
+      if (
+        x.deadline &&
+        (!/^(19|20|21)\d{2}-(0[1-9]|1[0-2])-\d{2}$/.test(x.deadline) ||
+          B.iso(B.date(x.deadline)) !== x.deadline)
+      )
+        throw Error('Choose a valid target date or leave it empty.');
     }
     if (
       mutate((n) => {
@@ -1821,7 +1915,10 @@
       }[kind];
       if (
         [...state.transactions, ...state.recurring, ...(state.scheduled || [])].some(
-          (t) => t[field] === id || (t.type === 'Transfer' && t.toKind === kind && t.toId === id),
+          (t) =>
+            t[field] === id ||
+            (t.type === 'Transfer' &&
+              ((t.toKind === kind && t.toId === id) || (t.fromKind === kind && t.fromId === id))),
         )
       ) {
         $('#form-error').textContent =
@@ -1866,8 +1963,9 @@
         (t) =>
           t[field] === id ||
           (t.type === 'Transfer' &&
-            t.toId === id &&
-            t.toKind === { accountId: 'account', debtId: 'debt', goalId: 'goal' }[field]),
+            ((t.toId === id &&
+              t.toKind === { accountId: 'account', debtId: 'debt', goalId: 'goal' }[field]) ||
+              (field === 'goalId' && t.fromKind === 'goal' && t.fromId === id))),
       );
     n.accounts = n.accounts.filter((a) => !sampleAccounts.has(a.id) || used('accountId', a.id));
     n.debts = n.debts.filter((a) => !sampleDebts.has(a.id) || used('debtId', a.id));
@@ -1965,7 +2063,7 @@
       n.budgetStart = '2026-01-01';
       n.onboarded = true;
       n.sampleProfile = 'Sample';
-      n.sampleDataVersion = 2;
+      n.sampleDataVersion = 3;
       const limits = {
         Income: 7200,
         Salary: 7200,
@@ -2085,6 +2183,21 @@
           sample: true,
         }),
       );
+      // Starts after the sample history, so it only drives the goal's On track status.
+      n.recurring.push({
+        id: tag + '-recurring-goal',
+        name: 'Emergency fund',
+        type: 'Transfer',
+        accountId: account,
+        toKind: 'goal',
+        toId: goal,
+        expected: 300,
+        frequency: 'Monthly',
+        start: '2026-11-10',
+        end: '',
+        active: true,
+        sample: true,
+      });
       B.generated(n, cutoff)
         .filter((t) => t.sample)
         .forEach((t) => {
@@ -2146,7 +2259,22 @@
             add(name, category, base, actual, date(day));
           }
         });
-        add('Emergency fund contribution', 'Miscellaneous', 300, 300, date(10), { goalId: goal });
+        if (date(10) <= cutoff)
+          n.transactions.push({
+            id: tag + '-' + uid(),
+            type: 'Transfer',
+            name: 'Transfer to Emergency fund',
+            description: '',
+            accountId: account,
+            toKind: 'goal',
+            toId: goal,
+            date: date(10),
+            expected: 300,
+            actual: 300,
+            paid: true,
+            sample: true,
+            notes: 'Fictional sample data',
+          });
         add('Credit card payment', 'Fees', 150, 150, date(16), {
           debtId: debt,
           principal: 95 + month * 2,
@@ -2270,10 +2398,27 @@
         throw Error('Invalid debt details.');
     }
     for (const g of s.goals)
-      if (!finite(g.target) || g.target <= 0 || !finite(g.saved) || !validDate(g.deadline))
+      if (
+        !finite(g.target) ||
+        g.target <= 0 ||
+        !finite(g.saved) ||
+        (g.deadline && !validDate(g.deadline))
+      )
         throw Error('Invalid goal.');
     for (const t of [...s.transactions, ...s.recurring, ...s.scheduled]) {
-      if (!finite(t.expected) || !s.accounts.some((a) => a.id === t.accountId))
+      // Goal withdrawals are one-off transfers from a goal into an account.
+      const withdrawal = t.fromKind !== undefined;
+      if (
+        withdrawal &&
+        (t.fromKind !== 'goal' ||
+          !s.goals.some((g) => g.id === t.fromId) ||
+          t.type !== 'Transfer' ||
+          t.toKind !== 'account' ||
+          t.accountId !== undefined ||
+          !s.transactions.includes(t))
+      )
+        throw Error('Invalid goal withdrawal.');
+      if (!finite(t.expected) || (!withdrawal && !s.accounts.some((a) => a.id === t.accountId)))
         throw Error('Invalid linked entry.');
       if (t.type === 'Transfer') {
         const list = { account: 'accounts', debt: 'debts', goal: 'goals' }[t.toKind];
@@ -2427,6 +2572,15 @@
       render();
     } else if (a === 'debt-balance') updateDebtBalance(id);
     else if (a === 'debt-recurring') debtRecurring(id);
+    else if (a === 'goal-add')
+      editor('transaction', '', {
+        type: 'Transfer',
+        accountId: state.lastAccountId || state.accounts[0]?.id || '',
+        destination: 'goal:' + id,
+      });
+    else if (a === 'goal-withdraw')
+      editor('transaction', '', { type: 'Transfer', accountId: 'goal:' + id, destination: '' });
+    else if (a === 'goal-recurring') goalRecurring(id);
     else if (a === 'choose-debt-strategy') applyDebtPlan(id);
     else if (a === 'extra-debt-payment') applyDebtPlan(state.strategy, Number(id));
     else if (a === 'sample') sample();
@@ -2534,7 +2688,11 @@
     ) {
       const draft = transactionDraft();
       if (e.name === 'categoryGroup') draft.categoryId = '';
-      if (e.name === 'accountId' && draft.destination === 'account:' + draft.accountId)
+      if (
+        e.name === 'accountId' &&
+        (draft.destination === 'account:' + draft.accountId ||
+          (draft.accountId.startsWith('goal:') && !draft.destination.startsWith('account:')))
+      )
         draft.destination = '';
       drawTransaction(draft);
       $(
@@ -2641,7 +2799,7 @@
       $('#search').setSelectionRange(cursor, cursor);
     }
   });
-  if (state.sampleProfile && state.sampleDataVersion !== 2 && !blocked) sample();
+  if (state.sampleProfile && state.sampleDataVersion !== 3 && !blocked) sample();
   else if (
     state.sampleProfile &&
     !blocked &&

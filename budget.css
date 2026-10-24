@@ -1510,3 +1510,60 @@ td:not(:first-child) {
     font-size: 13px;
   }
 }
+
+/* Savings: two goal cards per row, status pill beside the type, actions at the bottom. */
+.goal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+.goal-grid > .panel {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+.goal-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.goal-status {
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.goal-status.is-good {
+  background: var(--accent);
+}
+.goal-status.is-warn {
+  background: var(--blush);
+}
+.goal-detail {
+  margin: 12px 0 0;
+}
+.goal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 18px;
+}
+.goal-actions .btn {
+  flex: 1 1 auto;
+  white-space: nowrap;
+}
+@media (max-width: 800px) {
+  .goal-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* Narrow cards: three equal buttons on one row. */
+@media (max-width: 1000px) {
+  .goal-actions .btn {
+    flex: 1 1 0;
+    padding: 9px 10px;
+    font-size: 13px;
+  }
+}
