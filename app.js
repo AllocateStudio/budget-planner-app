@@ -510,6 +510,9 @@
       )
     );
   }
+  // Desktop chart plot bottom in viewBox units; fitDebtChart() grows it to the panel height.
+  let debtChartBottom = 380,
+    redrawDebtPlot = null;
   const debtExpanded = new Set(),
     debtFull = new Set();
   const debtMonth = (m) =>
@@ -543,7 +546,7 @@
         left = compact ? 44 : 64,
         right = width;
       const top = 62,
-        bottom = compact ? 280 : 380,
+        bottom = compact ? 280 : debtChartBottom,
         plotWidth = right - left;
       const x = (i) => left + (i / count) * plotWidth,
         y = (v) => bottom - (v / ceiling) * (bottom - top);
@@ -601,7 +604,41 @@
         : '';
       return `<div class="debt-chart-plot ${compact ? 'chart-mobile' : 'chart-desktop'}"><svg data-debt-chart tabindex="0" viewBox="0 0 ${width} ${bottom + 52}" role="img" aria-label="${esc(state.strategy)} monthly debt balance${showBaseline ? ' compared with no extra payment' : ''}. Use arrow keys to explore.">${grid}<polygon points="${left},${bottom} ${points(selected)} ${endX},${bottom}" fill="var(--accent)" opacity=".2"/>${showBaseline ? `<polyline points="${points(without)}" class="chart-baseline"/>` : ''}<polyline points="${points(selected)}" class="chart-selected"/><text x="${left}" y="${bottom + 30}" text-anchor="start">This month</text>${ticks.join('')}${finish}${hover}<circle class="chart-hover-marker" r="5" fill="var(--blush)" stroke="var(--ink)" visibility="hidden"/>${showBaseline ? '<circle class="chart-baseline-marker" r="4" fill="white" stroke="#8b8994" visibility="hidden"/>' : ''}</svg><output class="debt-chart-tooltip" aria-live="polite" hidden></output></div>`;
     };
+    redrawDebtPlot = () => renderPlot(false);
     return `<div class="debt-chart enhanced-debt-chart">${renderPlot(false)}${renderPlot(true)}${showBaseline && !baseline.paidOff ? '<p class="hint">Without extra: not paid off within the 100-year projection.</p>' : ''}</div>`;
+  }
+  // Beside the strategy panel, stretch the desktop chart to match that panel's height.
+  function fitDebtChart() {
+    const overview = document.querySelector('.debt-overview'),
+      [side, chart] = overview?.children || [],
+      plot = chart?.querySelector('.chart-desktop');
+    if (!plot?.getBoundingClientRect || !redrawDebtPlot) return;
+    let bottom = 380;
+    if (side.offsetTop === chart.offsetTop && plot.offsetWidth) {
+      // The side panel's natural height, ignoring the grid stretch.
+      const top = side.getBoundingClientRect().top,
+        sideStyle = getComputedStyle(side),
+        chartStyle = getComputedStyle(chart),
+        sideHeight =
+          Math.max(...[...side.children].map((c) => c.getBoundingClientRect().bottom)) -
+          top +
+          parseFloat(sideStyle.paddingBottom) +
+          parseFloat(sideStyle.borderBottomWidth),
+        slot = plot.parentElement,
+        extras = [...slot.children]
+          .filter((c) => c !== plot)
+          .reduce((sum, c) => sum + c.offsetHeight, 0),
+        available =
+          sideHeight -
+          (slot.getBoundingClientRect().top - chart.getBoundingClientRect().top) -
+          parseFloat(chartStyle.paddingBottom) -
+          parseFloat(chartStyle.borderBottomWidth) -
+          extras;
+      bottom = Math.max(380, (available * 940) / plot.offsetWidth - 52);
+    }
+    if (Math.abs(bottom - debtChartBottom) < 2) return;
+    debtChartBottom = bottom;
+    plot.outerHTML = redrawDebtPlot();
   }
   function showDebtHover(hit) {
     const plot = hit.closest('.debt-chart-plot'),
@@ -961,6 +998,7 @@
         Savings: savingsScreen,
         Setup: setupScreen,
       }[screen]();
+    if (screen === 'Debt Payoff') fitDebtChart();
   }
   const collections = {
     transaction: 'transactions',
@@ -2512,6 +2550,10 @@
       }
     }
   });
+  globalThis.addEventListener?.('resize', () => {
+    if (screen === 'Debt Payoff') fitDebtChart();
+  });
+  document.fonts?.ready.then(() => screen === 'Debt Payoff' && fitDebtChart());
   document.addEventListener('pointermove', (event) => {
     const hit = event.target.closest?.('[data-chart-tip]');
     if (hit) showDebtHover(hit);

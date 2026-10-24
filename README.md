@@ -91,7 +91,7 @@ Each debt has a Name, Type, Starting balance, Start date, APR, Minimum payment, 
 
 **Current balance** = starting balance − paid transfers to the debt ± dated balance adjustments. **Update Balance** records a reconciliation adjustment (for example, bank interest or fees); it is never a payment and never touches an account. **Paid** counts payments only, not adjustments. **Set recurring payment** opens a Monthly transfer prefilled with the debt and its minimum; choose the source account and save it in Recurring.
 
-**Layout.** The left panel, **Choose your strategy**, holds the extra monthly payment and the strategy list. The right panel, **Balance over time**, holds the chart. Below 1100 px the panels stack.
+**Layout.** The left panel, **Choose your strategy**, holds the extra monthly payment and the strategy list. The right panel, **Balance over time**, holds the chart. When the panels sit side by side, the chart grows to the height of the strategy panel and refits when the window is resized. Below 1100 px the panels stack.
 
 **Strategy.** Pick Snowball (smallest balance first), Avalanche (highest APR first) or Custom (your priority order) from the list. Each row shows total interest and one concrete benefit: Snowball shows when the first debt is paid off, Avalanche shows how much interest it saves compared with Snowball, and Custom names the debt it pays first. Debt-free dates appear in the rows only when they differ between strategies. If the selected plan costs more than the cheapest one, a note under the list says by how much. Debts are listed in payment order.
 
