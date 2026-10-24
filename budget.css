@@ -1595,3 +1595,8 @@ td:not(:first-child) {
     display: inline;
   }
 }
+
+/* Debt balances in the brand pink. */
+.debt-list .large-value {
+  color: var(--blush-ink);
+}
