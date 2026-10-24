@@ -1055,7 +1055,7 @@
     if (!c) return;
     editing = { kind: 'month-budget', id, record: c };
     $('#editor').innerHTML =
-      `<form id="month-budget-form"><div class="dialog-head"><h2>${esc(c.name)}</h2>${btn('×', 'close', '', 'icon-btn')}</div><h3>${debtMonth(state.month)}</h3><div class="form-grid">${input('Budget', 'amount', B.budgetFor(c, state.month), 'number', 'required min="0" max="1000000000" step="0.01"')}</div><p id="form-error" class="form-error" role="alert"></p><div class="dialog-actions">${btn('Cancel', 'close', '', 'btn ghost')}<button type="submit" class="btn" value="month">This month only</button><button type="submit" class="btn primary" value="following">Apply to following months</button></div></form>`;
+      `<form id="month-budget-form"><div class="dialog-head"><h2>${esc(c.name)}</h2>${btn('×', 'close', '', 'icon-btn')}</div><h3>${debtMonth(state.month)}</h3><div class="form-grid">${input('Edit budget', 'amount', B.budgetFor(c, state.month), 'number', 'required min="0" max="1000000000" step="0.01"')}</div><p id="form-error" class="form-error" role="alert"></p><div class="dialog-actions">${btn('Cancel', 'close', '', 'btn ghost')}<button type="submit" class="btn" value="month">This month only</button><button type="submit" class="btn primary" value="following">Apply to following months</button></div></form>`;
     $('#editor').showModal();
     $('[name="amount"]')?.select?.();
   }
