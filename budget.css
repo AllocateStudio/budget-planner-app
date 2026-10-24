@@ -2254,3 +2254,15 @@ td .transaction-type-badge,
     font-size: 13px;
   }
 }
+/* When Spending breakdown is stretched to match its neighbour, centre the chart and legend vertically. */
+.panel:has(> .donut-wrap) {
+  display: flex;
+  flex-direction: column;
+}
+.panel > .donut-wrap {
+  margin-top: auto;
+}
+.panel > .donut-wrap:last-child,
+.panel > .donut-wrap + .breakdown-actions {
+  margin-bottom: auto;
+}
