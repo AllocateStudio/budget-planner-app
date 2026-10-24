@@ -1751,7 +1751,22 @@ td:not(:first-child) {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 6px;
-  height: 220px;
+  height: 260px;
+}
+.year-num {
+  min-height: 15px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.year-num.in {
+  color: var(--mint-ink);
+}
+.year-num.out {
+  color: var(--blush-ink);
+  margin-top: -6px;
 }
 .year-col {
   display: flex;
@@ -1761,12 +1776,9 @@ td:not(:first-child) {
   padding: 6px 2px 4px;
   border: 0;
   border-radius: 10px;
-  background: none;
-  cursor: pointer;
-  font: inherit;
+  text-align: center;
   color: var(--ink);
 }
-.year-col:hover,
 .year-col.is-current {
   background: #f3f1e9;
 }
@@ -1825,7 +1837,13 @@ td:not(:first-child) {
   }
   .year-chart {
     gap: 2px;
-    height: 180px;
+    height: 220px;
+  }
+  .year-num {
+    font-size: 9px;
+  }
+  .year-cur {
+    display: none;
   }
   .year-bars {
     gap: 1px;
@@ -1840,4 +1858,19 @@ td:not(:first-child) {
 .delete-move > label,
 .delete-move > div {
   grid-column: 1 / -1;
+}
+.amt-short {
+  display: none;
+}
+@media (max-width: 600px) {
+  .expected-table .amt-full {
+    display: none;
+  }
+  .expected-table .amt-short {
+    display: inline;
+  }
+  .expected-table th,
+  .expected-table td {
+    padding-inline: 6px;
+  }
 }

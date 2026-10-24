@@ -393,8 +393,11 @@
     );
   }
   function expectedPanel(s) {
-    const line = (label, expected, actual) =>
-      `<tr><th>${label}</th><td>${money(expected)}</td><td>${money(actual)}</td><td>${B.round(actual - expected) > 0 ? '+' : ''}${money(actual - expected)}</td></tr>`;
+    // Phones get rounded amounts so all four columns fit.
+    const cell = (v, sign = '') =>
+        `<td><span class="amt-full">${sign}${money(v)}</span><span class="amt-short">${sign}${shortMoney(v)}</span></td>`,
+      line = (label, expected, actual) =>
+        `<tr><th>${label}</th>${cell(expected)}${cell(actual)}${cell(actual - expected, B.round(actual - expected) > 0 ? '+' : '')}</tr>`;
     return panel(
       'Expected vs Actual',
       `<div class="table-wrap"><table class="expected-table"><thead><tr><th></th><th>Expected</th><th>Actual</th><th>Difference</th></tr></thead><tbody>${line('Income', s.expectedIncome, s.income)}${line('Expenses', s.expectedExpense, s.expense)}${line('Left to spend', s.expectedIncome - s.expectedExpense, s.left)}</tbody></table></div>`,
@@ -446,6 +449,17 @@
       overrides ? btn('Apply to following months', 'budget-apply', month, 'btn') : '',
     );
   }
+  // Chart labels: $950, $3.6k, $12k; the currency hides on phones to fit 12 columns.
+  const kMoney = (v) => {
+    const n = Math.abs(v),
+      text =
+        n >= 1000
+          ? (n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, '') + 'k'
+          : Math.round(n);
+    return n
+      ? `${v < 0 ? '−' : ''}<span class="year-cur">${esc(state.currency)}</span>${text}`
+      : '';
+  };
   function yearChart(y) {
     const top = Math.max(1, ...y.months.map((m) => Math.max(m.income, m.expense)));
     return panel(
@@ -453,7 +467,7 @@
       `<div class="year-chart">${y.months
         .map(
           (m, i) =>
-            `<button type="button" class="year-col ${m.month === state.month ? 'is-current' : ''}" data-action="dash-month" data-id="${m.month}" aria-label="${monthNames[i]}: income ${money(m.income)}, expenses ${money(m.expense)}" title="Income ${money(m.income)} · Expenses ${money(m.expense)}"><span class="year-bars"><i class="year-in" style="height:${(m.income / top) * 100}%"></i><i class="year-out" style="height:${(m.expense / top) * 100}%"></i></span><span class="year-label">${monthNames[i]}</span></button>`,
+            `<div class="year-col ${m.month === state.month ? 'is-current' : ''}" role="img" aria-label="${monthNames[i]}: income ${money(m.income)}, expenses ${money(m.expense)}" title="Income ${money(m.income)} · Expenses ${money(m.expense)}"><span class="year-bars"><i class="year-in" style="height:${(m.income / top) * 100}%"></i><i class="year-out" style="height:${(m.expense / top) * 100}%"></i></span><span class="year-label">${monthNames[i]}</span><span class="year-num in">${kMoney(m.income)}</span><span class="year-num out">${kMoney(m.expense)}</span></div>`,
         )
         .join(
           '',
@@ -2750,10 +2764,6 @@
       const m = B.monthShift(state.month, Number(id) * 12);
       filters.month = m;
       mutate((n) => (n.month = m));
-    } else if (a === 'dash-month') {
-      dashMode = 'Month';
-      filters.month = id;
-      mutate((n) => (n.month = id));
     } else if (a === 'toggle-budget-group') {
       if (!openBudgetGroups.delete(id)) openBudgetGroups.add(id);
       render();
