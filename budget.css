@@ -2161,14 +2161,10 @@ td .transaction-type-badge,
   justify-self: end;
 }
 .setup-group-total {
+  padding-right: 11px;
   text-align: right;
   font-weight: 700;
   white-space: nowrap;
-}
-.setup-group-total small {
-  color: var(--muted);
-  font-weight: 400;
-  font-size: 12px;
 }
 .setup-categories {
   padding: 0 0 12px 26px;
@@ -2218,7 +2214,7 @@ td .transaction-type-badge,
 }
 .setup-account > b {
   text-align: right;
-  padding-right: 10px;
+  padding-right: 11px;
 }
 .setup-account-head {
   padding: 0 0 6px;
@@ -2226,7 +2222,7 @@ td .transaction-type-badge,
 }
 .setup-account-head span {
   text-align: right;
-  padding-right: 10px;
+  padding-right: 11px;
   font-size: 12px;
   font-weight: 600;
   color: var(--muted);
@@ -2253,12 +2249,6 @@ td .transaction-type-badge,
   }
   .setup-group-name {
     font-size: 15px;
-  }
-  .setup-group-total {
-    padding-right: 11px;
-  }
-  .setup-group-total small {
-    display: none;
   }
   .setup-cat-name {
     font-size: 13px;

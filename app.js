@@ -1251,7 +1251,7 @@
     const rowsHtml = open
       ? `<div class="setup-categories">${cats.map((c) => `<div class="setup-category ${c.hidden ? 'is-hidden' : ''}"><span class="setup-cat-name">${esc(c.name)}${c.hidden ? '<small>Hidden</small>' : ''}</span>${editingBudget === c.id ? `<input id="active-budget-input" type="number" min="0" max="1000000000" step="0.01" data-category-budget="${esc(c.id)}" value="${B.budgetFor(c, month)}" aria-label="${esc(c.name)} monthly budget">` : `<button type="button" class="budget-value" data-action="edit-budget" data-id="${esc(c.id)}" aria-label="Edit ${esc(c.name)} monthly budget">${money(B.budgetFor(c, month))}</button>`}${edit('category', c.id, 'Edit', 'textbtn')}</div>`).join('')}${edit('category', '', '+ Add category', 'textbtn setup-add').replace('data-edit="category"', `data-edit="category" data-group="${esc(g.id)}"`)}</div>`
       : '';
-    return `<section class="setup-group ${open ? 'is-open' : ''}"><div class="setup-group-head"><button type="button" class="setup-toggle" data-action="toggle-setup-group" data-id="${esc(g.id)}" aria-expanded="${open}"><i class="budget-chevron" aria-hidden="true">›</i><span class="setup-group-name">${esc(g.name)}</span><span class="setup-group-total">${money(total(cats, (c) => B.budgetFor(c, month)))}<small> / month</small></span></button>${edit('group', g.id, 'Edit', 'textbtn')}</div>${rowsHtml}</section>`;
+    return `<section class="setup-group ${open ? 'is-open' : ''}"><div class="setup-group-head"><button type="button" class="setup-toggle" data-action="toggle-setup-group" data-id="${esc(g.id)}" aria-expanded="${open}"><i class="budget-chevron" aria-hidden="true">›</i><span class="setup-group-name">${esc(g.name)}</span><span class="setup-group-total">${money(total(cats, (c) => B.budgetFor(c, month)))}</span></button>${edit('group', g.id, 'Edit', 'textbtn')}</div>${rowsHtml}</section>`;
   }
 
   function setupScreen() {
@@ -1263,7 +1263,7 @@
       ) +
       panel(
         'Categories',
-        `<div class="screen-switch">${['Income', 'Expenses'].map((t) => btn(t, 'setup-tab', t, 'switch-pill ' + (setupTab === t ? 'active' : ''))).join('')}</div><div class="setup-groups">${state.groups
+        `<div class="screen-switch">${['Income', 'Expenses'].map((t) => btn(t, 'setup-tab', t, 'switch-pill ' + (setupTab === t ? 'active' : ''))).join('')}</div><div class="setup-groups"><div class="setup-account setup-account-head"><span></span><span>Monthly budget</span><span></span></div>${state.groups
           .filter((g) => g.type === (setupTab === 'Income' ? 'Income' : 'Expense'))
           .map(groupPanel)
           .join('')}</div>`,

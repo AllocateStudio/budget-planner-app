@@ -422,7 +422,8 @@ test('Subcategory budgets sum on dashboard; Setup is continuous and excludes rec
   assert.ok(html.includes('<h2>Categories</h2>'));
   assert.ok(html.includes('data-action="setup-tab" data-id="Income"'));
   assert.ok(html.includes('data-action="toggle-setup-group" data-id="group-food"'));
-  assert.ok(html.includes('$550.00<small> / month</small>'));
+  assert.ok(html.includes('$550.00</span>'));
+  assert.ok(html.includes('<span>Monthly budget</span>'));
   assert.ok(html.includes('preferences-actions'));
   assert.ok(!html.includes('data-action="edit-budget" data-id="Needs-2"'));
   h.api.openSetupGroup('group-food');
