@@ -1874,3 +1874,32 @@ td:not(:first-child) {
     padding-inline: 6px;
   }
 }
+/* A wide Spending breakdown keeps names next to their amounts in two columns. */
+.donut-wrap {
+  container-type: inline-size;
+}
+@container (min-width: 720px) {
+  .donut-layout {
+    flex-wrap: nowrap;
+    gap: 56px;
+    padding-left: 12px;
+  }
+  .donut {
+    width: 210px;
+    height: 210px;
+  }
+  .donut > div {
+    width: 146px;
+    height: 146px;
+  }
+  .chart-legend {
+    columns: 3 190px;
+    column-gap: 40px;
+    max-width: 740px;
+  }
+  .chart-legend li {
+    break-inside: avoid;
+    margin: 0;
+    padding: 6px 0;
+  }
+}
