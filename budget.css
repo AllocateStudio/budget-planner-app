@@ -1862,7 +1862,11 @@ td:not(:first-child) {
 .amt-short {
   display: none;
 }
-@media (max-width: 600px) {
+/* Rounded amounts whenever the table is narrow, e.g. half width on a tablet. */
+.expected-wrap {
+  container-type: inline-size;
+}
+@container (max-width: 480px) {
   .expected-table .amt-full {
     display: none;
   }
@@ -1901,5 +1905,16 @@ td:not(:first-child) {
     break-inside: avoid;
     margin: 0;
     padding: 6px 0;
+  }
+}
+/* Full-width Upcoming Bills: entries in columns instead of stretched rows. */
+.upcoming-wrap {
+  container-type: inline-size;
+}
+@container (min-width: 720px) {
+  .upcoming-wrap .record-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    column-gap: 28px;
   }
 }

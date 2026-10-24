@@ -17,7 +17,7 @@ A standalone budgeting app that runs entirely in the browser. There is nothing t
 
 ## Screens
 
-- **Dashboard:** a Month / Year switch. Month shows income, expenses, left to spend and savings rate, Expected vs Actual with the difference, the spending breakdown, upcoming bills and group budgets that can be edited for that month. Year shows the same totals for the calendar year, income vs expenses by month with the amounts under each month, the yearly spending breakdown and yearly group budgets.
+- **Dashboard:** a Month / Year switch. Month shows income, expenses, left to spend and savings rate, Expected vs Actual (with the difference) next to the spending breakdown, upcoming bills and group budgets that can be edited for that month. Year shows the same totals for the calendar year, Expected vs Actual next to the yearly spending breakdown, income vs expenses by month with the amounts under each month, and yearly group budgets.
 - **Transactions:** one journal for income, expenses and transfers. Filter by month, category, account and type, or search by name and notes. Choosing "—" clears a filter. Only saved transactions appear here; a recurring payment shows up once it is marked Paid.
 - **Recurring:** create and edit schedules. The Payment Schedule tab lists the occurrences for the selected month.
 - **Bill Calendar:** recurring payments and income only, including occurrences that were already paid. One-off transactions stay in the journal. Click an entry to open it; Paid / Received is always set by hand. Unpaid entries past their date are highlighted. Up to 1000 px wide, entries show a one-line name and a whole amount (for example $1,800); the status is shown by colour and the paid check.

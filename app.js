@@ -400,7 +400,7 @@
         `<tr><th>${label}</th>${cell(expected)}${cell(actual)}${cell(actual - expected, B.round(actual - expected) > 0 ? '+' : '')}</tr>`;
     return panel(
       'Expected vs Actual',
-      `<div class="table-wrap"><table class="expected-table"><thead><tr><th></th><th>Expected</th><th>Actual</th><th>Difference</th></tr></thead><tbody>${line('Income', s.expectedIncome, s.income)}${line('Expenses', s.expectedExpense, s.expense)}${line('Left to spend', s.expectedIncome - s.expectedExpense, s.left)}</tbody></table></div>`,
+      `<div class="table-wrap expected-wrap"><table class="expected-table"><thead><tr><th></th><th>Expected</th><th>Actual</th><th>Difference</th></tr></thead><tbody>${line('Income', s.expectedIncome, s.income)}${line('Expenses', s.expectedExpense, s.expense)}${line('Left to spend', s.expectedIncome - s.expectedExpense, s.left)}</tbody></table></div>`,
     );
   }
   // Group budgets for the given months; a single month can be edited per category.
@@ -481,9 +481,8 @@
     let body;
     if (dashMode === 'Year')
       body =
-        expectedPanel(s) +
+        `<div class="dashboard-grid">${expectedPanel(s)}${spendingPanel(s)}</div>` +
         yearChart(s) +
-        spendingPanel(s) +
         budgetPanel(s.rows, budgetMonthsOf(year), false);
     else {
       const end = B.date(B.today());
@@ -493,8 +492,11 @@
         .sort((a, b) => a.date.localeCompare(b.date))
         .slice(0, 5);
       body =
-        expectedPanel(s) +
-        `<div class="dashboard-grid">${spendingPanel(s)}${panel('Upcoming Bills', rows(upcoming, 'No upcoming bills.'))}</div>` +
+        `<div class="dashboard-grid">${expectedPanel(s)}${spendingPanel(s)}</div>` +
+        panel(
+          'Upcoming Bills',
+          `<div class="upcoming-wrap">${rows(upcoming, 'No upcoming bills.')}</div>`,
+        ) +
         budgetPanel(s.rows, [state.month], true);
     }
     return (
