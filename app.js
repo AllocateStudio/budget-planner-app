@@ -2003,8 +2003,13 @@
       id: '__new',
       name: d.kind === 'group' ? '+ Create a new group' : '+ Create a new subcategory',
     });
+    const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`,
+      linked =
+        d.kind === 'group'
+          ? `It has ${plural(d.cats.length, 'subcategory').replace('ys', 'ies')}.`
+          : `It has ${plural(d.transactions.length, 'transaction')}${d.recurring.length ? ` and ${plural(d.recurring.length, 'recurring payment')}` : ''}.`;
     $('#editor').innerHTML =
-      `<div class="dialog-head"><h2 id="editor-title">Delete ${esc(d.source.name)}?</h2></div><p>${d.transactions.length} saved entries · ${d.recurring.length} recurring schedules</p>${d.kind === 'group' ? `<p class="settings-note">${d.cats.length} subcategories will move with their budgets and linked records. Only this group will be deleted.</p>` : '<p class="settings-note">Linked entries and recurring schedules will move to the selected subcategory. Its monthly budget will include the deleted subcategory’s budget.</p>'}${d.needsTarget ? `<div class="form-grid">${select(d.kind === 'group' ? 'Move subcategories to' : 'Move entries to', 'deleteTarget', choices, '', true)}${input('New name (only when creating a destination)', 'deleteNewName', '', 'text', 'maxlength="60"')}</div>` : '<p class="settings-note">No linked records. The category and its monthly budget will be removed.</p>'}<p id="delete-error" class="form-error" role="alert"></p><div class="dialog-actions">${btn('Cancel', 'delete-cancel')}${btn(d.needsTarget ? 'Move & delete' : 'Delete', 'delete-confirm', '', 'btn danger')}</div>`;
+      `<div class="dialog-head"><h2 id="editor-title">Delete ${esc(d.source.name)}?</h2></div>${d.needsTarget ? `<p>${linked}</p><div class="form-grid delete-move">${select('Move them to', 'deleteTarget', choices, '', true)}<div class="full" id="delete-new-name" hidden>${input(d.kind === 'group' ? 'New group name' : 'New category name', 'deleteNewName', '', 'text', 'maxlength="60"')}</div></div>` : ''}<p id="delete-error" class="form-error" role="alert"></p><div class="dialog-actions">${btn('Cancel', 'delete-cancel')}${btn(d.needsTarget ? 'Move & delete' : 'Delete', 'delete-confirm', '', 'btn danger')}</div>`;
   }
   function finishCategoryDeletion() {
     try {
@@ -2898,6 +2903,9 @@
     const e = event.target;
     if (e.id === 'extra-payment') {
       queueDebtPlan(e);
+    } else if (e.name === 'deleteTarget') {
+      const box = $('#delete-new-name');
+      if (box) box.hidden = e.value !== '__new';
     } else if (e.id === 'budget-month') {
       const m = e.value;
       filters.month = m;

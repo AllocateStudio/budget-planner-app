@@ -459,7 +459,7 @@ test('Deleting a linked subcategory requires a valid destination and moves histo
   const before = B.accountBalance(h.api.get(), t.accountId);
   h.api.editor('category', source.id);
   h.api.deleteRecord();
-  assert.ok(h.node('#editor').innerHTML.includes('Move entries to'));
+  assert.ok(h.node('#editor').innerHTML.includes('Move them to'));
   h.api.removeRecord();
   assert.ok(h.api.get().categories.some((c) => c.id === source.id));
   h.node('[name="deleteTarget"]').value = 'Income-0';

@@ -1834,3 +1834,10 @@ td:not(:first-child) {
     font-size: 10px;
   }
 }
+.delete-move {
+  margin-top: 14px;
+}
+.delete-move > label,
+.delete-move > div {
+  grid-column: 1 / -1;
+}
