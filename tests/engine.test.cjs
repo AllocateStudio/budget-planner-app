@@ -384,3 +384,8 @@ test('Snowball fixes priority before minimum payments change relative balances',
   assert.equal(oldPlan.months,plan.months);
   assert.equal(oldPlan.interest,plan.interest);
 });
+test('Monthly due-day anchor survives short months', () => {
+  const s = base();
+  s.recurring = [{id:'r',name:'Debt',type:'Transfer',start:'2091-02-28',monthDay:31,frequency:'Monthly',active:true,expected:100}];
+  assert.deepEqual(B.generated(s,'2091-05-31').map(t=>t.date),['2091-02-28','2091-03-31','2091-04-30','2091-05-31']);
+});

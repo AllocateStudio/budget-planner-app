@@ -23,7 +23,7 @@
     'Every 6 Months': 'Semi-annually',
     Yearly: 'Annually',
   };
-  function occurrence(start, frequency, n) {
+  function occurrence(start, frequency, n, anchorDay) {
     frequency = frequencyAliases[frequency] || frequency;
     const d = date(start),
       days = { Weekly: 7, 'Bi-weekly': 14, 'Every 4 Weeks': 28 }[frequency];
@@ -47,7 +47,7 @@
       Annually: 12,
     }[frequency];
     if (!step) throw Error('Unknown frequency');
-    const day = d.getDate();
+    const day = anchorDay || d.getDate();
     d.setDate(1);
     d.setMonth(d.getMonth() + step * n);
     d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()));
@@ -68,7 +68,7 @@
     for (const r of state.recurring) {
       if (!r.active) continue;
       for (let n = 0; n < 16000; n++) {
-        const when = occurrence(r.start, r.frequency, n);
+        const when = occurrence(r.start, r.frequency, n, r.monthDay);
         if (when > through || (r.end && when > r.end)) break;
         if (r.effectiveFrom && when < r.effectiveFrom) continue;
         const id = `${r.id}@${when}`;

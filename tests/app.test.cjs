@@ -842,3 +842,19 @@ test('Debt form, statement reconciliation and recurring shortcut keep the ledger
   invalid.debts[0].dueDay = 32;
   assert.throws(() => h.api.validateImport(invalid));
 });
+
+test('Debt recurring uses the first due day on or after debt start, retaining the monthly anchor', () => {
+  const h=harness();
+  save(h,'account','',{name:'Checking',kind:'Checking',opening:'2000'});
+  const accountId=h.api.get().accounts[0].id;
+  h.api.mutate(n=>n.debts.push({id:'future',name:'Future loan',balance:1000,original:1000,start:'2090-11-20',dueDay:5,minimum:100,apr:0,order:1}));
+  h.api.debtRecurring('future');
+  assert.ok(h.node('#editor').innerHTML.includes('value="2090-12-05"'));
+  h.api.mutate(n=>{n.debts[0].start='2091-02-20';n.debts[0].dueDay=31;});
+  h.api.debtRecurring('future');
+  assert.ok(h.node('#editor').innerHTML.includes('value="2091-02-28"'));
+  h.api.saveRecord({preventDefault(){},target:{data:{type:'Transfer',name:'Future loan',expected:'100',frequency:'Monthly',start:'2091-02-28',end:'',accountId,destination:'debt:future',notes:''}}});
+  assert.equal(h.api.get().recurring[0].monthDay,31);
+  assert.deepEqual(B.generated(h.api.get(),'2091-03-31').map(t=>t.date),['2091-02-28','2091-03-31']);
+  assert.doesNotThrow(()=>h.api.validateImport(h.api.get()));
+});

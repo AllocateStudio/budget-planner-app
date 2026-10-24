@@ -627,24 +627,21 @@
       editor('recurring', existing.id);
       return;
     }
-    let start = B.today(),
-      day = Number(d.dueDay || start.slice(-2));
-    let stamp =
-      start.slice(0, 7) +
-      '-' +
-      String(
-        Math.min(
-          day,
-          new Date(B.date(start).getFullYear(), B.date(start).getMonth() + 1, 0).getDate(),
-        ),
-      ).padStart(2, '0');
-    if (stamp < start) stamp = B.occurrence(stamp, 'Monthly', 1);
-    if (d.start && stamp < d.start) stamp = d.start;
+    const today = B.today(), start = d.start && d.start > today ? d.start : today;
+    const day = Number(d.dueDay || start.slice(-2));
+    const dueInMonth = month => {
+      const first = B.date(month + '-01');
+      const last = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+      return month + '-' + String(Math.min(day, last)).padStart(2, '0');
+    };
+    let stamp = dueInMonth(start.slice(0, 7));
+    if (stamp < start) stamp = dueInMonth(B.monthShift(start.slice(0, 7), 1));
     editor('recurring', '', {
       type: 'Transfer',
       name: d.name,
       expected: d.minimum,
       start: stamp,
+      monthDay: day,
       frequency: 'Monthly',
       toKind: 'debt',
       toId: id,
@@ -1112,6 +1109,7 @@
       notes: get('notes'),
       active: record.active !== false,
     };
+    if (x.frequency !== 'Monthly' || x.start !== record.start) delete x.monthDay;
     delete x.categoryId;
     delete x.goalId;
     delete x.debtId;
@@ -2008,6 +2006,9 @@
         (r.effectiveFrom && !validDate(r.effectiveFrom))
       )
         throw Error('Invalid schedule.');
+    for (const r of s.recurring)
+      if (r.monthDay != null && (!Number.isInteger(r.monthDay) || r.monthDay < 1 || r.monthDay > 31))
+        throw Error('Invalid monthly due day.');
     for (const t of s.scheduled)
       if (!validDate(t.date) || !t.recurringId || t.paid || !finite(t.actual))
         throw Error('Invalid scheduled payment.');
