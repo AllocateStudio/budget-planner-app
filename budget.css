@@ -1067,7 +1067,8 @@ td:not(:first-child) {
   margin-right: 6px;
   border: 1.5px solid var(--ink);
   border-radius: 8px;
-  background: var(--accent);
+  /* Same pink as the active Recurring / Payment Schedule switch. */
+  background: var(--blush);
   font-size: 14px;
   vertical-align: middle;
 }
@@ -1594,9 +1595,4 @@ td:not(:first-child) {
   .calendar-entry .cal-amount-short {
     display: inline;
   }
-}
-
-/* Debt balances in the brand pink. */
-.debt-list .large-value {
-  color: var(--blush-ink);
 }
