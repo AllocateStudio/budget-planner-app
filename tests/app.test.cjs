@@ -955,7 +955,7 @@ test('Accounts reconcile with a statement and the screen sums accounts, goals an
   const html = h.node('#main').innerHTML;
   assert.ok(html.includes('In accounts') && html.includes('$1,230.00'));
   assert.ok(html.includes('In goals') && html.includes('Net worth'));
-  assert.ok(html.includes('large-value is-negative">'));
+  assert.ok(html.includes('large-value is-negative">−$120.00'));
   assert.ok(html.includes('This month: +$100.00 in · −$0.00 out'));
   // Checking is listed before Investment.
   assert.ok(html.indexOf('>Everyday<') < html.indexOf('>Brokerage<'));

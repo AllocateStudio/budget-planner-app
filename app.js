@@ -207,16 +207,24 @@
     'Savings',
     'Setup',
   ];
+  // Negative amounts put the sign before the currency: −$120.00, not $-120.00.
+  const signed = (value, format) =>
+    (B.round(value) < 0 && format(Math.abs(value)) !== format(0) ? '−' : '') +
+    esc(state.currency) +
+    format(Math.abs(value));
   const money = (n) =>
-    `${esc(state.currency)}${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    signed(Number(n || 0), (v) =>
+      v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    );
   // Whole units for tight spaces such as phone calendar cells: $39, $1,800, $12k.
   const shortMoney = (n) =>
-    esc(state.currency) +
-    (Math.abs(n) >= 10000
-      ? new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 })
-          .format(n)
-          .toLowerCase()
-      : Math.round(n || 0).toLocaleString('en-US'));
+    signed(Number(n || 0), (v) =>
+      v >= 10000
+        ? new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 })
+            .format(v)
+            .toLowerCase()
+        : Math.round(v).toLocaleString('en-US'),
+    );
   const name = (list, id) => esc(state[list].find((x) => x.id === id)?.name || '—');
   const total = (rows, fn) => B.sum(rows, fn),
     pct = (a, b) => (b > 0 ? Math.min(100, Math.max(0, (a / b) * 100)) : 0);
