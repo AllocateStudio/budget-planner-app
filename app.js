@@ -1255,17 +1255,8 @@
   }
 
   function setupScreen() {
-    const month = thisMonth(),
-      planned = (type) =>
-        total(
-          state.categories.filter((c) => c.type === type),
-          (c) => B.budgetFor(c, month),
-        ),
-      income = planned('Income'),
-      expense = planned('Expense');
     return (
       heading('Setup') +
-      `<div class="stats-strip">${stat('Planned income', money(income), '', 'tone-mint')}${stat('Planned expenses', money(expense), '', 'tone-blush')}${stat('Left to assign', money(income - expense), '', 'tone-sky')}${stat('In accounts', money(total(state.accounts, (a) => B.accountBalance(state, a.id))), '', 'tone-ink')}</div>` +
       panel(
         'Preferences',
         `<form id="preferences" class="form-grid preferences-row"><label>Currency<select name="currency" id="setup-currency">${currencyOptions.replace(`value="${currencySymbols.includes(state.currency) ? esc(state.currency) : 'custom'}"`, `value="${currencySymbols.includes(state.currency) ? esc(state.currency) : 'custom'}" selected`)}</select></label><label id="setup-custom-currency" ${currencySymbols.includes(state.currency) ? 'hidden' : ''}>Custom symbol<input name="currencyCustom" value="${esc(state.currency)}" maxlength="8"></label><label>Budget start date<input name="budgetStart" type="date" value="${esc(state.budgetStart)}" min="1900-01-01" max="2199-12-31" required></label><div class="preferences-actions"><button class="btn primary" type="submit">Save preferences</button></div></form>`,

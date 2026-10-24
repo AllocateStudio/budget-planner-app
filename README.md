@@ -24,7 +24,7 @@ A standalone budgeting app that runs entirely in the browser. There is nothing t
 - **Accounts:** tiles for money in accounts, money in goals, debt and Net worth, then one card per account (grouped by type, same layout as debt cards). Each card shows a badge with the account's initial coloured by type, the balance, Transfer and Update Balance, this month's money in and out, and View transactions (the journal filtered to that account). Update Balance reconciles an account with a bank statement as of the statement date; the difference is an adjustment, never income or an expense.
 - **Debt Payoff:** Snowball, Avalanche and Custom strategies, extra monthly payment, debt-free date, projected interest and a per-debt schedule.
 - **Savings:** totals across goals, then one card per goal with progress, the monthly amount needed by its target date, and Add money / Withdraw / Set recurring actions.
-- **Setup:** tiles for planned income, planned expenses, left to assign and money in accounts, then preferences, categories with monthly budgets, accounts with opening balances, and data (backups, sample data).
+- **Setup:** preferences, categories with monthly budgets, accounts with opening balances, and data (backups, sample data).
 
 Any entry opened from Upcoming, the calendar or a list uses the same form, with create, edit and delete. An account, goal or debt that still has linked entries can only be deleted after those links are moved or removed.
 
