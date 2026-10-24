@@ -374,7 +374,7 @@
       `<div class="stats-strip">${stat('Income', money(s.income), 'Expected ' + money(s.expectedIncome), 'tone-mint')}${stat('Expenses', money(s.expense), 'Expected ' + money(s.expectedExpense), 'tone-blush')}${stat('Left to spend', money(s.left), 'Expected ' + money(s.expectedIncome - s.expectedExpense), 'tone-sky')}${stat('Savings rate', `${s.rate.toFixed(1)}%`, 'Savings goal contributions ÷ actual income', 'tone-ink')}</div><div class="dashboard-grid">` +
       panel(
         'Expected vs Actual',
-        `<div class="table-wrap"><table><thead><tr><th></th><th>Expected</th><th>Actual</th></tr></thead><tbody><tr><th>Income</th><td>${money(s.expectedIncome)}</td><td>${money(s.income)}</td></tr><tr><th>Expenses</th><td>${money(s.expectedExpense)}</td><td>${money(s.expense)}</td></tr><tr><th>Left to spend</th><td>${money(s.expectedIncome - s.expectedExpense)}</td><td>${money(s.left)}</td></tr></tbody></table></div><p class="hint">Expenses include savings allocations. Actual includes Paid / Received entries only.</p>`,
+        `<div class="table-wrap"><table><thead><tr><th></th><th>Expected</th><th>Actual</th></tr></thead><tbody><tr><th>Income</th><td>${money(s.expectedIncome)}</td><td>${money(s.income)}</td></tr><tr><th>Expenses</th><td>${money(s.expectedExpense)}</td><td>${money(s.expense)}</td></tr><tr><th>Left to spend</th><td>${money(s.expectedIncome - s.expectedExpense)}</td><td>${money(s.left)}</td></tr></tbody></table></div>`,
       ) +
       panel(
         'Spending breakdown',
@@ -428,7 +428,7 @@
     );
     return (
       heading('Transactions', '', edit('transaction', '', '+ Add transaction', 'btn primary')) +
-      `<section class="panel"><div class="filters"><label>Month<div class="month-filter"><input type="month" id="filter-month" value="${esc(filters.month)}">${btn('—', 'reset-month', '', 'icon-btn')}</div></label><label>Category<select data-filter="category">${options(state.categories, filters.category, true)}</select></label><label>Account<select data-filter="account">${options(state.accounts, filters.account, true)}</select></label><label>Type<select data-filter="type">${options(['Income', 'Expense', 'Transfer'], filters.type, true)}</select></label><label class="search-field">Search<input id="search" value="${esc(filters.search)}" placeholder="Name or note"></label></div><p class="hint">${list.length} entries · “—” removes a filter. Recurring payments appear here after they are marked paid.</p><div class="table-wrap"><table><thead><tr><th>Entry</th><th>Date</th><th>Category / Account</th><th>Expected</th><th>Actual</th><th>Status</th></tr></thead><tbody>${list.map((t) => `<tr><td>${edit('transaction', t.id, esc(t.name), 'table-link')}<small>${esc(t.type)}</small></td><td>${esc(t.date)}</td><td>${entryCategory(t)}<small>${entrySource(t)}</small></td><td>${money(t.expected)}</td><td>${t.paid ? money(t.actual) : '—'}</td><td class="${status(t) === 'Overdue' ? 'terracotta' : ''}">${status(t)}</td></tr>`).join('') || '<tr><td colspan="6">No matching entries.</td></tr>'}</tbody></table></div></section>`
+      `<section class="panel"><div class="filters"><label>Month<div class="month-filter"><input type="month" id="filter-month" value="${esc(filters.month)}">${btn('—', 'reset-month', '', 'icon-btn')}</div></label><label>Category<select data-filter="category">${options(state.categories, filters.category, true)}</select></label><label>Account<select data-filter="account">${options(state.accounts, filters.account, true)}</select></label><label>Type<select data-filter="type">${options(['Income', 'Expense', 'Transfer'], filters.type, true)}</select></label><label class="search-field">Search<input id="search" value="${esc(filters.search)}" placeholder="Name or note"></label></div><div class="table-wrap"><table><thead><tr><th>Entry</th><th>Date</th><th>Category / Account</th><th>Expected</th><th>Actual</th><th>Status</th></tr></thead><tbody>${list.map((t) => `<tr><td>${edit('transaction', t.id, esc(t.name), 'table-link')}<small>${esc(t.type)}</small></td><td>${esc(t.date)}</td><td>${entryCategory(t)}<small>${entrySource(t)}</small></td><td>${money(t.expected)}</td><td>${t.paid ? money(t.actual) : '—'}</td><td class="${status(t) === 'Overdue' ? 'terracotta' : ''}">${status(t)}</td></tr>`).join('') || '<tr><td colspan="6">No matching entries.</td></tr>'}</tbody></table></div></section>`
     );
   }
   function recurringScreen() {
@@ -509,9 +509,7 @@
             )
             .join('')}</div></div>`;
         },
-      ).join(
-        '',
-      )}</div></div><p class="hint">Click any entry to open it. Mark Paid manually inside the record.</p>`
+      ).join('')}</div></div>`
     );
   }
   function accountsScreen() {
@@ -522,7 +520,7 @@
       `<div class="cards-grid">${state.accounts.map((a) => panel(esc(a.name), `<span class="eyebrow">${esc(a.kind)}</span><strong class="large-value">${money(B.accountBalance(state, a.id))}</strong><p class="hint">Opening balance ${money(a.opening)}</p>`, edit('account', a.id, 'Edit', 'textbtn'))).join('') || panel('Your accounts', '<p class="empty-copy">Add your first account and opening balance.</p>')}</div>` +
       panel(
         'Net Worth',
-        `<div class="net-worth"><div><small>Assets</small><b>${money(assets)}</b></div><span>−</span><div><small>Outstanding debt</small><b>${money(debt)}</b></div><span>=</span><div><small>Net worth</small><strong>${money(assets - debt)}</strong></div></div><p class="hint">Accounts plus money held in goals, minus outstanding debts. Transfers do not count as income or expenses.</p>`,
+        `<div class="net-worth"><div><small>Assets</small><b>${money(assets)}</b></div><span>−</span><div><small>Outstanding debt</small><b>${money(debt)}</b></div><span>=</span><div><small>Net worth</small><strong>${money(assets - debt)}</strong></div></div>`,
       )
     );
   }
