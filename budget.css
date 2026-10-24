@@ -1950,5 +1950,12 @@ button.budget-input:hover {
 }
 /* The budget dialog's amount field only needs room for a money amount. */
 #month-budget-form input[name='amount'] {
-  max-width: 180px;
+  max-width: 120px;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+#month-budget-form input[name='amount']::-webkit-inner-spin-button,
+#month-budget-form input[name='amount']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
