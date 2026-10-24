@@ -539,8 +539,9 @@
       Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const renderPlot = (compact) => {
       const width = compact ? 320 : 940,
-        left = compact ? 58 : 90,
-        right = width - (compact ? 14 : 30);
+        // Y labels start at the panel's content edge; the plot runs to the right edge.
+        left = compact ? 44 : 64,
+        right = width;
       const top = 62,
         bottom = compact ? 280 : 380,
         plotWidth = right - left;
@@ -552,7 +553,7 @@
       const grid = [0, 1, 2, 3]
         .map((i) => {
           const value = step * i;
-          return `<line x1="${left}" y1="${y(value)}" x2="${right}" y2="${y(value)}" class="chart-gridline"/><text x="${left - 10}" y="${y(value) + 4}" text-anchor="end">${tickLabel(value)}</text>`;
+          return `<line x1="${left}" y1="${y(value)}" x2="${right}" y2="${y(value)}" class="chart-gridline"/><text x="0" y="${y(value) + 4}" text-anchor="start">${tickLabel(value)}</text>`;
         })
         .join('');
       const ticks = [];
@@ -587,7 +588,7 @@
         return `<rect x="${start}" y="${top}" width="${end - start}" height="${bottom - top + 8}" fill="transparent" class="debt-chart-hit" data-index="${i}" data-x="${x(i)}" data-y="${y(primary)}" data-baseline-y="${y(secondary)}" data-chart-tip="${esc(label)}"/>`;
       }).join('');
       const finish = plan.paidOff
-        ? `<circle cx="${endX}" cy="${endY}" r="5" fill="var(--blush)" stroke="var(--ink)"/><text x="${compact ? left : Math.max(left + 110, Math.min(right - 110, endX))}" y="28" text-anchor="${compact ? 'start' : 'middle'}" class="chart-finish">Debt-free · ${debtMonth(plan.end)}</text>`
+        ? `<circle cx="${endX}" cy="${endY}" r="5" fill="var(--blush)" stroke="var(--ink)"/><text x="${right}" y="28" text-anchor="end" class="chart-finish">Debt-free · ${debtMonth(plan.end)}</text>`
         : '';
       return `<div class="debt-chart-plot ${compact ? 'chart-mobile' : 'chart-desktop'}"><svg data-debt-chart tabindex="0" viewBox="0 0 ${width} ${bottom + 52}" role="img" aria-label="${esc(state.strategy)} monthly debt balance${showBaseline ? ' compared with no extra payment' : ''}. Use arrow keys to explore.">${grid}<polygon points="${left},${bottom} ${points(selected)} ${endX},${bottom}" fill="var(--accent)" opacity=".2"/>${showBaseline ? `<polyline points="${points(without)}" class="chart-baseline"/>` : ''}<polyline points="${points(selected)}" class="chart-selected"/><text x="${left}" y="${bottom + 30}" text-anchor="start">This month</text>${ticks.join('')}${finish}${hover}<circle class="chart-hover-marker" r="5" fill="var(--blush)" stroke="var(--ink)" visibility="hidden"/>${showBaseline ? '<circle class="chart-baseline-marker" r="4" fill="white" stroke="#8b8994" visibility="hidden"/>' : ''}</svg><output class="debt-chart-tooltip" aria-live="polite" hidden></output></div>`;
     };
@@ -770,8 +771,7 @@
           ) +
           panel(
             'Balance over time',
-            debtChart(plan, totalDebt, baseline) +
-              '<details class="debt-assumptions"><summary>ⓘ Projection assumptions</summary><p>Fixed APRs, monthly interest, no new borrowing or fees. Freed minimums roll into the next debt. Without extra uses the same strategy and minimums with zero extra payment.</p></details>',
+            debtChart(plan, totalDebt, baseline),
             `<div class="chart-legend-inline"><span><i class="chart-line-key"></i>${esc(state.strategy)}</span>${state.extra > 0 ? '<span><i class="chart-line-key dashed"></i>Without extra</span>' : ''}</div>`,
           ) +
           '</div>'
