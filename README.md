@@ -89,13 +89,15 @@ Calendar colours distinguish Upcoming, Due, Overdue, Paid and Skipped. Payment S
 
 Each debt has a Name, Type, Starting balance, Start date, APR, Minimum payment, optional Due day and a Custom priority (used by the Custom strategy).
 
-**Current balance** = starting balance − paid transfers to the debt ± dated balance adjustments. **Update Balance** records a reconciliation adjustment (for example, bank interest or fees); it is never a payment and never touches an account. **Paid so far** counts payments only, not adjustments. **Set recurring payment** opens a Monthly transfer prefilled with the debt and its minimum; choose the source account and save it in Recurring.
+**Current balance** = starting balance − paid transfers to the debt ± dated balance adjustments. **Update Balance** records a reconciliation adjustment (for example, bank interest or fees); it is never a payment and never touches an account. **Paid** counts payments only, not adjustments. **Set recurring payment** opens a Monthly transfer prefilled with the debt and its minimum; choose the source account and save it in Recurring.
 
-**Strategy.** Pick Snowball (smallest balance first), Avalanche (highest APR first) or Custom (your priority order) by clicking its card. Each card shows total interest and the debt-free date. Every strategy tied for the lowest interest gets a **Lowest interest** badge, and one sentence compares your choice with the cheapest plan. Debts are listed in payment order.
+**Layout.** The left panel, **Choose your strategy**, holds the extra monthly payment and the strategy list. The right panel, **Balance over time**, holds the chart. Below 900 px the panels stack.
+
+**Strategy.** Pick Snowball (smallest balance first), Avalanche (highest APR first) or Custom (your priority order) from the list. Each row shows total interest and the debt-free date. A **Lowest interest** badge appears only when one strategy is strictly cheapest; when strategies tie, no badge is shown and the note under the list says which ones cost the same. The note also says how much more the selected plan costs than the cheapest one. Debts are listed in payment order.
 
 **Extra monthly payment** applies 350 ms after you stop typing. Invalid or empty input never overwrites the saved amount. The +50 / +100 / +200 buttons and strategy cards apply immediately.
 
-**Chart.** Total balance by month, starting from the first projected month-end. When extra is above zero, a dashed "Without extra" line shows the same strategy with no extra payment. Hover or use the arrow keys (Home / End, Escape) to see monthly values. Below 600 px the chart is shown above compact strategy rows.
+**Chart.** Total balance by month, starting from the first projected month-end. When extra is above zero, a dashed "Without extra" line shows the same strategy with no extra payment. Hover or use the arrow keys (Home / End, Escape) to see monthly values.
 
 **Projection rules:**
 

@@ -862,7 +862,7 @@ test('Debt form, statement reconciliation and recurring shortcut keep the ledger
   h.api.renderScreen('Debt Payoff');
   for (const label of [
     'Total debt',
-    'Paid so far',
+    'Paid',
     'Debt-free date',
     'Total interest',
     'Balance over time',
@@ -986,10 +986,11 @@ test('Strategy selection and quick extra increments update state and comparison 
   let html = h.node('#main').innerHTML;
   assert.ok(
     html.includes(
-      'class="strategy-card is-selected" data-action="choose-debt-strategy" data-id="Avalanche" aria-pressed="true"',
+      'class="strategy-option is-selected" data-action="choose-debt-strategy" data-id="Avalanche" aria-pressed="true"',
     ),
   );
-  assert.ok(html.includes('Lowest interest'));
+  assert.equal((html.match(/>Lowest interest</g) || []).length, 1);
+  assert.ok(!html.includes('Paid so far'));
   assert.ok(html.includes('Without extra'));
   assert.ok(html.includes('Debt-free ·'));
   const expected = B.debtProjection(h.api.get(), 'Avalanche').interest;
@@ -1047,7 +1048,7 @@ test('Zero extra hides the comparison line and legend; entering extra restores t
   assert.equal(h.api.get().extra, 50);
   assert.equal(field['aria-invalid'], undefined);
 });
-test('All tied strategies receive Lowest interest and only the selected-plan comparison is shown', () => {
+test('Tied strategies get no Lowest interest badge and the note names the tie', () => {
   const h = harness();
   h.api.mutate((n) => {
     n.extra = 0;
@@ -1065,8 +1066,8 @@ test('All tied strategies receive Lowest interest and only the selected-plan com
   });
   h.api.renderScreen('Debt Payoff');
   let html = h.node('#main').innerHTML;
-  assert.equal((html.match(/>Lowest interest</g) || []).length, 3);
-  assert.ok(html.includes('This is the lowest-interest plan'));
+  assert.equal((html.match(/>Lowest interest</g) || []).length, 0);
+  assert.ok(html.includes('Same total interest as Avalanche and Custom.'));
   assert.ok(!html.includes('vs Custom'));
   assert.equal((html.match(/class="strategy-comparison-note"/g) || []).length, 1);
   assert.ok(html.includes('$24k'));
@@ -1079,7 +1080,7 @@ test('All tied strategies receive Lowest interest and only the selected-plan com
   for (const strategy of ['Avalanche', 'Custom']) {
     h.node('#extra-payment').value = '0';
     h.api.applyDebtPlan(strategy);
-    assert.ok(h.node('#main').innerHTML.includes('This is the lowest-interest plan'));
+    assert.ok(h.node('#main').innerHTML.includes('Same total interest as'));
   }
 });
 test('Hover positions a marker on the line and anchors the tooltip near that point', () => {

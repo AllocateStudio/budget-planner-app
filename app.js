@@ -542,7 +542,7 @@
         left = compact ? 58 : 90,
         right = width - (compact ? 14 : 30);
       const top = 62,
-        bottom = compact ? 280 : 270,
+        bottom = compact ? 280 : 380,
         plotWidth = right - left;
       const x = (i) => left + (i / count) * plotWidth,
         y = (v) => bottom - (v / ceiling) * (bottom - top);
@@ -589,9 +589,9 @@
       const finish = plan.paidOff
         ? `<circle cx="${endX}" cy="${endY}" r="5" fill="var(--blush)" stroke="var(--ink)"/><text x="${compact ? left : Math.max(left + 110, Math.min(right - 110, endX))}" y="28" text-anchor="${compact ? 'start' : 'middle'}" class="chart-finish">Debt-free · ${debtMonth(plan.end)}</text>`
         : '';
-      return `<div class="debt-chart-plot ${compact ? 'chart-mobile' : 'chart-desktop'}"><svg data-debt-chart tabindex="0" viewBox="0 0 ${width} ${bottom + 52}" role="img" aria-label="Monthly debt balance. Use arrow keys to explore."><title>${esc(state.strategy)} monthly debt balance${showBaseline ? ' compared with no extra payment' : ''}</title>${grid}<polygon points="${left},${bottom} ${points(selected)} ${endX},${bottom}" fill="var(--accent)" opacity=".2"/>${showBaseline ? `<polyline points="${points(without)}" class="chart-baseline"/>` : ''}<polyline points="${points(selected)}" class="chart-selected"/><text x="${left}" y="${bottom + 30}" text-anchor="start">This month</text>${ticks.join('')}${finish}${hover}<circle class="chart-hover-marker" r="5" fill="var(--blush)" stroke="var(--ink)" visibility="hidden"/>${showBaseline ? '<circle class="chart-baseline-marker" r="4" fill="white" stroke="#8b8994" visibility="hidden"/>' : ''}</svg><output class="debt-chart-tooltip" aria-live="polite" hidden></output></div>`;
+      return `<div class="debt-chart-plot ${compact ? 'chart-mobile' : 'chart-desktop'}"><svg data-debt-chart tabindex="0" viewBox="0 0 ${width} ${bottom + 52}" role="img" aria-label="${esc(state.strategy)} monthly debt balance${showBaseline ? ' compared with no extra payment' : ''}. Use arrow keys to explore.">${grid}<polygon points="${left},${bottom} ${points(selected)} ${endX},${bottom}" fill="var(--accent)" opacity=".2"/>${showBaseline ? `<polyline points="${points(without)}" class="chart-baseline"/>` : ''}<polyline points="${points(selected)}" class="chart-selected"/><text x="${left}" y="${bottom + 30}" text-anchor="start">This month</text>${ticks.join('')}${finish}${hover}<circle class="chart-hover-marker" r="5" fill="var(--blush)" stroke="var(--ink)" visibility="hidden"/>${showBaseline ? '<circle class="chart-baseline-marker" r="4" fill="white" stroke="#8b8994" visibility="hidden"/>' : ''}</svg><output class="debt-chart-tooltip" aria-live="polite" hidden></output></div>`;
     };
-    return `<div class="debt-chart enhanced-debt-chart"><div class="chart-legend-inline"><span><i class="chart-line-key"></i>${esc(state.strategy)}</span>${showBaseline ? '<span><i class="chart-line-key dashed"></i>Without extra</span>' : ''}</div>${renderPlot(false)}${renderPlot(true)}${showBaseline && !baseline.paidOff ? '<p class="hint">Without extra: not paid off within the 100-year projection.</p>' : ''}</div>`;
+    return `<div class="debt-chart enhanced-debt-chart">${renderPlot(false)}${renderPlot(true)}${showBaseline && !baseline.paidOff ? '<p class="hint">Without extra: not paid off within the 100-year projection.</p>' : ''}</div>`;
   }
   function showDebtHover(hit) {
     const plot = hit.closest('.debt-chart-plot'),
@@ -633,33 +633,37 @@
       .querySelectorAll('.chart-hover-marker,.chart-baseline-marker')
       .forEach((marker) => marker.setAttribute('visibility', 'hidden'));
   }
-  function debtComparison(plans) {
+  const strategyHints = {
+    Snowball: 'Smallest balance first',
+    Avalanche: 'Highest APR first',
+    Custom: 'Your priority order',
+  };
+  function debtStrategies(plans) {
     const successful = plans.filter(([, p]) => p.paidOff),
-      bestInterest = successful.length ? Math.min(...successful.map(([, p]) => p.interest)) : null;
-    const best =
-      successful.find(([label, p]) => label === 'Avalanche' && p.interest === bestInterest) ||
-      successful.find(([, p]) => p.interest === bestInterest);
-    const sameDate =
-      successful.length === plans.length && new Set(plans.map(([, p]) => p.end)).size === 1;
-    const cards = plans
+      bestInterest = successful.length ? Math.min(...successful.map(([, p]) => p.interest)) : null,
+      cheapest = successful.filter(([, p]) => p.interest === bestInterest).map(([label]) => label);
+    // Badge only a clear winner; tied plans are explained in the note instead.
+    const winner = cheapest.length === 1 ? cheapest[0] : null;
+    const options = plans
       .map(([label, p]) => {
-        const date = p.paidOff
-            ? p.months === 0
-              ? 'Paid off'
-              : debtMonth(p.end)
-            : 'Increase payment',
+        const selected = label === state.strategy,
+          date = p.paidOff ? (p.months === 0 ? 'Paid off' : debtMonth(p.end)) : 'Not paid off',
           interest = p.paidOff ? money(p.interest) : '—';
-        return `<button type="button" class="strategy-card ${label === state.strategy ? 'is-selected' : ''}" data-action="choose-debt-strategy" data-id="${label}" aria-pressed="${label === state.strategy}"><span class="strategy-card-title">${label}</span><span class="strategy-badge ${p.paidOff && p.interest === bestInterest ? 'has-badge' : ''}">${p.paidOff && p.interest === bestInterest ? 'Lowest interest' : '&nbsp;'}</span><span class="strategy-main-label">${sameDate ? 'Total interest' : 'Debt-free date'}</span><strong class="strategy-main-value">${sameDate ? interest : date}</strong><strong class="strategy-mobile-interest">${interest}</strong><span class="strategy-mobile-interest-label">Total interest</span><span class="strategy-mobile-date">Debt-free date · ${date}</span><span class="strategy-secondary">${sameDate ? 'Debt-free date · ' + date : interest + ' total interest'}</span></button>`;
+        return `<button type="button" class="strategy-option${selected ? ' is-selected' : ''}" data-action="choose-debt-strategy" data-id="${label}" aria-pressed="${selected}"><span class="strategy-option-text"><span class="strategy-option-name">${label}${label === winner ? '<span class="strategy-badge">Lowest interest</span>' : ''}</span><span class="strategy-option-hint">${strategyHints[label]}</span></span><span class="strategy-option-figures"><strong>${interest}</strong><span>${date}</span></span></button>`;
       })
       .join('');
     const selected = plans.find(([label]) => label === state.strategy)[1];
-    const cost = best && selected.paidOff ? B.round(selected.interest - bestInterest) : 0;
-    const comparison = !selected.paidOff
+    const others = cheapest.filter((label) => label !== state.strategy);
+    const cost =
+      selected.paidOff && bestInterest !== null ? B.round(selected.interest - bestInterest) : 0;
+    const note = !selected.paidOff
       ? 'Increase the monthly payment to complete this plan.'
       : cost > 0
-        ? `Your ${state.strategy} plan costs ${money(cost)} more than ${best[0]}`
-        : 'This is the lowest-interest plan';
-    return `<div class="debt-strategy-section"><div class="debt-comparison" role="group" aria-label="Payoff strategy">${cards}</div><p class="strategy-comparison-note">${comparison}</p></div>`;
+        ? `Your ${state.strategy} plan costs ${money(cost)} more in interest than ${cheapest.includes('Avalanche') ? 'Avalanche' : cheapest[0]}.`
+        : others.length
+          ? `Same total interest as ${others.join(' and ')}.`
+          : 'This is the lowest-interest plan.';
+    return `<p class="field-label">Strategy</p><div class="strategy-options" role="group" aria-label="Payoff strategy">${options}</div><p class="strategy-comparison-note">${note}</p>`;
   }
   let extraPaymentTimer;
   function queueDebtPlan(field) {
@@ -727,22 +731,26 @@
     );
     return (
       heading('Debt Payoff', '', edit('debt', '', '+ Add Debt', 'btn primary')) +
-      `<div class="stats-strip debt-stats">${stat('Total debt', money(totalDebt), '', 'tone-sky')}${stat('Paid so far', money(paid), '', 'tone-mint')}${stat('Debt-free date', finish(plan), '', 'tone-ink')}${stat('Total interest', plan.paidOff ? money(plan.interest) : '—', '', 'tone-blush')}</div>` +
-      panel(
-        'Balance over time',
-        `<div class="debt-plan-toolbar"><div class="extra-payment-control"><label for="extra-payment">Extra monthly payment</label><div class="extra-payment-input"><span>${esc(state.currency)}</span><input id="extra-payment" type="number" min="0" max="1000000000" step="0.01" value="${state.extra}"><span>/ month</span></div></div><div class="extra-payment-quick">${[50, 100, 200].map((amount) => btn('+' + amount, 'extra-debt-payment', String(amount), 'btn')).join('')}</div></div>` +
-          (debts.length
-            ? '<div class="debt-visuals">' +
-              debtComparison([
+      `<div class="stats-strip debt-stats">${stat('Total debt', money(totalDebt), '', 'tone-sky')}${stat('Paid', money(paid), '', 'tone-mint')}${stat('Debt-free date', finish(plan), '', 'tone-ink')}${stat('Total interest', plan.paidOff ? money(plan.interest) : '—', '', 'tone-blush')}</div>` +
+      (debts.length
+        ? '<div class="debt-overview">' +
+          panel(
+            'Choose your strategy',
+            `<div class="extra-payment-control"><label for="extra-payment" class="field-label">Extra monthly payment</label><div class="extra-payment-input"><span>${esc(state.currency)}</span><input id="extra-payment" type="number" min="0" max="1000000000" step="0.01" value="${state.extra}"><span>/ month</span></div><div class="extra-payment-quick">${[50, 100, 200].map((amount) => btn('+' + amount, 'extra-debt-payment', String(amount), 'btn')).join('')}</div></div>` +
+              debtStrategies([
                 ['Snowball', snow],
                 ['Avalanche', avalanche],
                 ['Custom', custom],
-              ]) +
-              debtChart(plan, totalDebt, baseline) +
-              '</div>'
-            : '<p class="empty-copy">Add a debt to see your payment forecast.</p>') +
-          '<details class="debt-assumptions"><summary>ⓘ Projection assumptions</summary><p>Fixed APRs, monthly interest, no new borrowing or fees. Freed minimums roll into the next debt. Without extra uses the same strategy and minimums with zero extra payment.</p></details>',
-      ) +
+              ]),
+          ) +
+          panel(
+            'Balance over time',
+            debtChart(plan, totalDebt, baseline) +
+              '<details class="debt-assumptions"><summary>ⓘ Projection assumptions</summary><p>Fixed APRs, monthly interest, no new borrowing or fees. Freed minimums roll into the next debt. Without extra uses the same strategy and minimums with zero extra payment.</p></details>',
+            `<div class="chart-legend-inline"><span><i class="chart-line-key"></i>${esc(state.strategy)}</span>${state.extra > 0 ? '<span><i class="chart-line-key dashed"></i>Without extra</span>' : ''}</div>`,
+          ) +
+          '</div>'
+        : '') +
       '<div class="debt-list">' +
       (debts
         .map((d, index) => {
