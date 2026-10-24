@@ -1704,7 +1704,7 @@ td:not(:first-child) {
 }
 .budget-cat {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 120px;
+  grid-template-columns: minmax(0, 1fr) auto 96px;
   align-items: center;
   gap: 14px;
   padding: 6px 0;
@@ -1730,13 +1730,13 @@ td:not(:first-child) {
 }
 .budget-input {
   width: 100%;
-  min-height: 36px;
-  padding: 4px 10px;
+  min-height: 30px;
+  padding: 3px 6px;
   border: 1.5px solid var(--line);
   border-radius: 9px;
   background: var(--card);
   font: inherit;
-  text-align: right;
+  text-align: center;
   font-variant-numeric: tabular-nums;
 }
 .budget-input:focus {
@@ -1831,7 +1831,7 @@ td:not(:first-child) {
     margin-left: 0;
   }
   .budget-cat {
-    grid-template-columns: minmax(0, 1fr) auto 96px;
+    grid-template-columns: minmax(0, 1fr) auto 86px;
     gap: 10px;
     font-size: 12px;
   }
@@ -1936,8 +1936,9 @@ td:not(:first-child) {
   text-align: right;
 }
 /* Line the Budget caption up with the amount inside the button below it. */
-.budget-cat-head span:last-child {
-  padding-right: 11.5px;
+.budget-cat-head span:last-child,
+.budget-cat-plan {
+  text-align: center;
 }
 button.budget-input {
   cursor: pointer;
