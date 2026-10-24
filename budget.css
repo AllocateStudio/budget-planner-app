@@ -284,6 +284,7 @@ td:not(:first-child) {
   gap: 8px;
   font-size: 12px;
   margin: 9px 0;
+  padding-right: 16px;
 }
 .chart-legend i {
   width: 14px;
@@ -1780,9 +1781,6 @@ td:not(:first-child) {
   text-align: center;
   color: var(--ink);
 }
-.year-col.is-current {
-  background: #f3f1e9;
-}
 .year-bars {
   flex: 1;
   display: flex;
@@ -1809,6 +1807,17 @@ td:not(:first-child) {
 .year-col.is-current .year-label {
   color: var(--ink);
   font-weight: 700;
+  position: relative;
+  align-self: center;
+}
+.year-col.is-current .year-label::after {
+  content: '';
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  height: 2px;
+  background: var(--blush);
 }
 .year-legend {
   display: flex;
@@ -1879,15 +1888,14 @@ td:not(:first-child) {
     padding-inline: 6px;
   }
 }
-/* A wide Spending breakdown keeps names next to their amounts in two columns. */
+/* Wide breakdowns use the full panel width with evenly spaced legend columns. */
 .donut-wrap {
   container-type: inline-size;
 }
 @container (min-width: 720px) {
   .donut-layout {
     flex-wrap: nowrap;
-    gap: 56px;
-    padding-left: 12px;
+    gap: 40px;
   }
   .donut {
     width: 210px;
@@ -1899,13 +1907,19 @@ td:not(:first-child) {
   }
   .chart-legend {
     columns: 3 190px;
-    column-gap: 40px;
-    max-width: 740px;
+    column-gap: 32px;
+    min-width: 0;
+    max-width: none;
   }
   .chart-legend li {
+    display: grid;
+    grid-template-columns: 14px minmax(0, 1fr) auto;
     break-inside: avoid;
     margin: 0;
-    padding: 6px 0;
+    padding: 6px 16px 6px 0;
+  }
+  .chart-legend b {
+    text-align: right;
   }
 }
 .record-date {
@@ -2024,4 +2038,57 @@ button.budget-input:hover {
   margin-top: 4px;
   padding-top: 4px;
   border-top: 1px solid var(--line);
+}
+
+/* The full lime date band is the payment button, including its padding. */
+.day-heading.payday-band {
+  width: 100%;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.payday-band .calendar-paydays {
+  flex: 1;
+}
+.payday-band:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* Compact type labels in the transaction journal. */
+td .transaction-type-badge,
+.schedule-record .transaction-type-badge {
+  display: block;
+  width: fit-content;
+  margin-top: 7px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.transaction-type-badge.type-income {
+  background: var(--mint);
+}
+.transaction-type-badge.type-expense {
+  background: var(--blush);
+}
+.transaction-type-badge.type-transfer {
+  background: var(--sky);
+}
+
+.schedule-record .record-amount .transaction-type-badge {
+  margin-left: auto;
+}
+
+/* Paid occurrences remain readable and editable, matching the calendar. */
+.schedule-record.is-paid > .row-link {
+  color: var(--muted);
+}
+.schedule-record.is-paid .record-name,
+.schedule-record.is-paid .record-amount {
+  color: var(--muted);
+  text-decoration: none;
 }

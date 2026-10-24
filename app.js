@@ -197,7 +197,7 @@
     dashMode = 'Month';
   const openBudgetGroups = new Set();
   let screen = 'Dashboard',
-    tab = 'Recurring',
+    tab = 'Payment Schedule',
     filters = { month: state.month, category: '', account: '', type: '', search: '' };
   const screens = [
     'Dashboard',
@@ -306,11 +306,11 @@
   }
   const dayLabel = (d) =>
     B.date(d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-  function row(t, dated = false) {
+  function row(t, dated = false, showPaidCheck = false) {
     return edit(
       'transaction',
       t.id,
-      `<span class="record-name">${esc(t.name)}${dated ? `<span class="record-date">${dayLabel(t.date)}</span>` : ''}<small>${esc(t.date)} · ${entryCategory(t)} · ${entrySource(t)}</small></span><span class="record-amount">${money(t.paid ? t.actual : t.expected)}<small class="${status(t) === 'Overdue' ? 'terracotta' : ''}">${status(t)}</small></span>`,
+      `<span class="record-name">${esc(t.name)}${dated ? `<span class="record-date">${dayLabel(t.date)}</span>` : ''}<small>${esc(t.date)} · ${entryCategory(t)} · ${entrySource(t)}</small></span><span class="record-amount">${money(t.paid ? t.actual : t.expected)}<small class="${status(t) === 'Overdue' ? 'terracotta' : ''}">${showPaidCheck && t.paid ? '<i class="calendar-paid-check" aria-hidden="true">✓</i>Paid' : status(t)}</small></span>`,
     );
   }
   function rows(list, emptyText = 'No entries yet.') {
@@ -538,8 +538,32 @@
     );
     return (
       heading('Transactions', '', edit('transaction', '', '+ Add transaction', 'btn primary')) +
-      `<section class="panel"><div class="filters"><label>Month<div class="month-filter"><input type="month" id="filter-month" value="${esc(filters.month)}">${btn('—', 'reset-month', '', 'icon-btn')}</div></label><label>Category<select data-filter="category">${options(state.categories, filters.category, true)}</select></label><label>Account<select data-filter="account">${options(state.accounts, filters.account, true)}</select></label><label>Type<select data-filter="type">${options(['Income', 'Expense', 'Transfer'], filters.type, true)}</select></label><label class="search-field">Search<input id="search" value="${esc(filters.search)}" placeholder="Name or note"></label></div><div class="table-wrap"><table><thead><tr><th>Entry</th><th>Date</th><th>Category / Account</th><th>Expected</th><th>Actual</th><th>Status</th></tr></thead><tbody>${list.map((t) => `<tr><td>${edit('transaction', t.id, esc(t.name), 'table-link')}<small>${esc(t.type)}</small></td><td>${esc(t.date)}</td><td>${entryCategory(t)}<small>${entrySource(t)}</small></td><td>${money(t.expected)}</td><td>${t.paid ? money(t.actual) : '—'}</td><td class="${status(t) === 'Overdue' ? 'terracotta' : ''}">${status(t)}</td></tr>`).join('') || '<tr><td colspan="6">No matching entries.</td></tr>'}</tbody></table></div></section>`
+      `<section class="panel"><div class="filters"><label>Month<div class="month-filter"><input type="month" id="filter-month" value="${esc(filters.month)}">${btn('—', 'reset-month', '', 'icon-btn')}</div></label><label>Type<select data-filter="type">${options(['Income', 'Expense', 'Transfer'], filters.type, true)}</select></label><label>Category<select data-filter="category">${options(state.categories, filters.category, true)}</select></label><label>Account<select data-filter="account">${options(state.accounts, filters.account, true)}</select></label><label class="search-field">Search<input id="search" value="${esc(filters.search)}" placeholder="Name or note"></label></div><div class="table-wrap"><table><thead><tr><th>Entry</th><th>Date</th><th>Category / Account</th><th>Expected</th><th>Actual</th><th>Status</th></tr></thead><tbody>${list.map((t) => `<tr><td>${edit('transaction', t.id, esc(t.name), 'table-link')}<small class="transaction-type-badge type-${esc(t.type.toLowerCase())}">${esc(t.type)}</small></td><td>${esc(t.date)}</td><td>${entryCategory(t)}<small>${entrySource(t)}</small></td><td>${money(t.expected)}</td><td>${t.paid ? money(t.actual) : '—'}</td><td class="${status(t) === 'Overdue' ? 'terracotta' : ''}">${status(t)}</td></tr>`).join('') || '<tr><td colspan="6">No matching entries.</td></tr>'}</tbody></table></div></section>`
     );
+  }
+  function nextRecurringLabel(r) {
+    if (!r.active) return 'Paused';
+    const today = B.today();
+    const excluded = new Set([...state.skipped, ...state.transactions.map((t) => t.id)]);
+    for (let i = 0; i < 16000; i++) {
+      const date = B.occurrence(r.start, r.frequency, i, r.monthDay);
+      if ((r.end && date > r.end) || date > '2199-12-31') break;
+      if (
+        date < today ||
+        (r.effectiveFrom && date < r.effectiveFrom) ||
+        excluded.has(`${r.id}@${date}`)
+      )
+        continue;
+      return (
+        'Next: ' +
+        B.date(date).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          ...(date.slice(0, 4) !== today.slice(0, 4) ? { year: 'numeric' } : {}),
+        })
+      );
+    }
+    return 'No upcoming payments';
   }
   function recurringScreen() {
     const list = B.paymentSchedule(state, state.month + '-31', state.month + '-01').filter(
@@ -555,7 +579,7 @@
       );
     return (
       heading('Recurring', '', edit('recurring', '', '+ Add recurring', 'btn primary')) +
-      `<div class="screen-switch">${['Recurring', 'Payment Schedule'].map((t) => btn(t, 'tab', t, 'switch-pill ' + (tab === t ? 'active' : ''))).join('')}</div>` +
+      `<div class="screen-switch">${['Payment Schedule', 'Recurring'].map((t) => btn(t, 'tab', t, 'switch-pill ' + (tab === t ? 'active' : ''))).join('')}</div>` +
       (tab === 'Payment Schedule'
         ? panel(
             'Payment Schedule',
@@ -569,7 +593,7 @@
             state.recurring
               .map(
                 (r) =>
-                  `<div class="schedule-record">${edit('recurring', r.id, `<span class="record-name">${esc(r.name)}<small>${esc(r.frequency)} · ${name('accounts', r.accountId)} · ${r.active ? 'Active' : 'Paused'}</small></span><span class="record-amount">${money(r.expected)}<small>${esc(r.type)}</small></span>`)}${btn(r.active ? 'Pause' : 'Resume', 'pause-recurring', r.id, 'textbtn')}</div>`,
+                  `<div class="schedule-record">${edit('recurring', r.id, `<span class="record-name">${esc(r.name)}<small>${esc(r.frequency)} · ${name('accounts', r.accountId)} · ${nextRecurringLabel(r)}</small></span><span class="record-amount">${money(r.expected)}<small class="transaction-type-badge type-${esc(r.type.toLowerCase())}">${esc(r.type)}</small></span>`)}${btn(r.active ? 'Pause' : 'Resume', 'pause-recurring', r.id, 'textbtn')}</div>`,
               )
               .join('') || '<p class="empty-copy">Add a recurring template.</p>',
           ))
@@ -599,7 +623,7 @@
             outside = !stamp.startsWith(state.month),
             payments = list.filter((t) => (t.scheduledDate || t.date) === stamp),
             income = payments.filter((t) => t.type === 'Income');
-          return `<div class="cal-day ${outside ? 'outside' : ''} ${stamp === B.today() ? 'is-today' : ''}"><div class="day-heading ${income.length ? 'has-payday' : ''}"><span class="day-num">${day.getDate()}</span><div class="calendar-paydays">${income.map((t) => edit('transaction', t.id, esc(t.name), 'payday-pill' + (t.skipped ? ' is-skipped' : '')).replace('type="button"', 'type="button" title="' + esc(t.name + ' · ' + money(t.paid ? t.actual : t.expected) + ' · ' + status(t)) + '"')).join('')}</div></div><div class="day-pills">${payments
+          return `<div class="cal-day ${outside ? 'outside' : ''} ${stamp === B.today() ? 'is-today' : ''}">${income.length ? income.map((t, i) => `<button type="button" class="day-heading has-payday payday-band" data-edit="transaction" data-id="${esc(t.id)}" title="${esc(t.name + ' · ' + money(t.paid ? t.actual : t.expected) + ' · ' + status(t))}"><span class="day-num">${i === 0 ? day.getDate() : ''}</span><span class="calendar-paydays"><span class="payday-pill">${esc(t.name)}</span></span></button>`).join('') : `<div class="day-heading"><span class="day-num">${day.getDate()}</span></div>`}<div class="day-pills">${payments
             .filter((t) => t.type !== 'Income')
             .map((t) =>
               edit(
@@ -699,16 +723,8 @@
         plotWidth = right - left;
       const x = (i) => left + (i / count) * plotWidth,
         y = (v) => bottom - (v / ceiling) * (bottom - top);
-      // A tiny final payment draws as a flat tail; let the line run straight to zero.
-      const points = (values) =>
-        values
-          .map((v, i) => [i, v])
-          .filter(
-            ([i, v]) =>
-              !(i === values.length - 2 && values.at(-1) === 0 && v > 0 && v < ceiling * 0.02),
-          )
-          .map(([i, v]) => `${x(i)},${y(v)}`)
-          .join(' ');
+      // Keep every month-end balance so hover markers match the plotted line.
+      const points = (values) => values.map((v, i) => `${x(i)},${y(v)}`).join(' ');
       const endX = x(selected.length - 1),
         endY = y(selected.at(-1));
       const grid = [0, 1, 2, 3]
@@ -1817,7 +1833,7 @@
   }
   function scheduleRow(t) {
     t = { ...t, date: t.scheduledDate || t.date };
-    return `<div class="schedule-record">${row(t)}<div class="schedule-actions">${t.paid ? btn('Edit', 'open-payment', t.id, 'textbtn') : t.skipped ? btn('Restore', 'restore-payment', t.id, 'textbtn') : btn('Mark as Paid', 'open-payment', t.id, 'btn primary') + btn('Skip this time', 'skip-payment', t.id, 'btn')}</div></div>`;
+    return `<div class="schedule-record ${t.paid ? 'is-paid' : ''}">${row(t, false, true)}<div class="schedule-actions">${t.paid ? btn('Edit', 'open-payment', t.id, 'textbtn') : t.skipped ? btn('Restore', 'restore-payment', t.id, 'textbtn') : btn('Mark as Paid', 'open-payment', t.id, 'btn primary') + btn('Skip this time', 'skip-payment', t.id, 'btn')}</div></div>`;
   }
   function editor(kind, id = '', preset = {}) {
     let record = state[collections[kind]].find((t) => t.id === id);
@@ -2127,9 +2143,10 @@
                 if (t.categoryId === d.id) t.categoryId = targetId;
               });
               const target = n.categories.find((c) => c.id === targetId);
+              const merged = B.mergeBudgets(target, d.source);
               delete target.budgetPlan;
               delete target.budgetMonths;
-              Object.assign(target, B.mergeBudgets(target, d.source));
+              Object.assign(target, merged);
               // A merged budget is now user-managed, independent of demo cleanup.
               delete target.sampleBudget;
               delete target.beforeSampleBudget;
@@ -2229,6 +2246,8 @@
     delete n.sampleDataVersion;
     delete n.extraSampleDebtsVersion;
     delete n.sampleDebtPaymentsVersion;
+    delete n.sampleIncomeVersion;
+    delete n.samplePaycheckVersion;
   }
   function addExtraSampleDebts(n) {
     if (n.extraSampleDebtsVersion === 1) return;
@@ -2298,6 +2317,76 @@
       );
     n.sampleDebtPaymentsVersion = 1;
   }
+  function addSampleIncome(n) {
+    if (n.sampleIncomeVersion === 1) return;
+    const checking = n.accounts.find((a) => a.sample && a.id.endsWith('-checking'));
+    if (!checking) return;
+    const savings = n.accounts.find((a) => a.sample && a.id.endsWith('-savings')) || checking;
+    let group = n.groups.find((g) => g.type === 'Income');
+    if (!group) {
+      group = { id: uid(), name: 'Income', type: 'Income' };
+      n.groups.push(group);
+    }
+    for (const [label, budget, account, day, amounts] of [
+      ['Freelance', 600, checking, '18', [450, 720, 550, 900, 650, 480, 800, 620, 1050, 750]],
+      [
+        'Interest',
+        15,
+        savings,
+        '20',
+        [10.4, 11.2, 12.15, 12.8, 13.65, 14.1, 15.25, 16.4, 17.1, 18.35],
+      ],
+    ]) {
+      let category = n.categories.find(
+        (c) => c.type === 'Income' && c.name.toLowerCase() === label.toLowerCase(),
+      );
+      if (!category) {
+        category = {
+          id: uid(),
+          name: label,
+          type: 'Income',
+          groupId: group.id,
+          hidden: false,
+          budget,
+          sampleBudget: budget,
+          beforeSampleBudget: 0,
+        };
+        n.categories.push(category);
+      }
+      amounts.forEach((amount, i) => {
+        const date = `2026-${String(i + 1).padStart(2, '0')}-${day}`;
+        const id = `sample-income-${label.toLowerCase()}-${account.id}@${date}`;
+        if (date > B.today() || n.transactions.some((t) => t.id === id)) return;
+        n.transactions.push({
+          id,
+          type: 'Income',
+          categoryId: category.id,
+          accountId: account.id,
+          name: label === 'Freelance' ? 'Freelance project payment' : 'Savings interest',
+          description: label === 'Freelance' ? 'Client project' : 'Monthly savings interest',
+          date,
+          expected: amount,
+          actual: amount,
+          paid: true,
+          sample: true,
+          notes: 'Fictional sample income',
+        });
+      });
+    }
+    n.sampleIncomeVersion = 1;
+  }
+  function renameSampleIncome(n) {
+    if (n.samplePaycheckVersion === 1) return;
+    const category = n.categories.find(
+      (c) =>
+        c.type === 'Income' &&
+        c.name === 'Income' &&
+        [...n.transactions, ...n.recurring].some((t) => t.sample && t.categoryId === c.id),
+    );
+    if (category && !n.categories.some((c) => c.name === 'Paycheck' && c.type === 'Income'))
+      category.name = 'Paycheck';
+    n.samplePaycheckVersion = 1;
+  }
   function sample() {
     mutate((n) => {
       cleanSamples(n);
@@ -2343,6 +2432,9 @@
         Fees: 180,
         Miscellaneous: 350,
       };
+      const paycheck = n.categories.find((c) => c.id === 'Income-0' && c.name === 'Paycheck');
+      if (paycheck && !n.categories.some((c) => c.type === 'Income' && c.name === 'Income'))
+        paycheck.name = 'Income';
       // Restore any missing starter categories without replacing custom categories.
       for (const g of defaultGroups()) if (!n.groups.some((x) => x.id === g.id)) n.groups.push(g);
       for (const c of defaultCategories())
@@ -2545,6 +2637,8 @@
       }
       addExtraSampleDebts(n);
       addSampleDebtPayments(n);
+      addSampleIncome(n);
+      renameSampleIncome(n);
     });
     filters.month = state.month;
     render();
@@ -3134,15 +3228,21 @@
       $('#search').setSelectionRange(cursor, cursor);
     }
   });
-  if (state.sampleProfile && state.sampleDataVersion !== 4 && !blocked) sample();
-  else if (
+  // A new demo version must never replace saved or edited records on page load.
+  // The latest dataset is available through the explicit Load sample data action.
+  if (
     state.sampleProfile &&
     !blocked &&
-    (state.extraSampleDebtsVersion !== 1 || state.sampleDebtPaymentsVersion !== 1)
+    (state.extraSampleDebtsVersion !== 1 ||
+      state.sampleDebtPaymentsVersion !== 1 ||
+      state.sampleIncomeVersion !== 1 ||
+      state.samplePaycheckVersion !== 1)
   )
     mutate((n) => {
       addExtraSampleDebts(n);
       addSampleDebtPayments(n);
+      addSampleIncome(n);
+      renameSampleIncome(n);
     });
   else render();
 })();

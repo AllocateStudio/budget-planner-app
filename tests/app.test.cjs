@@ -5,11 +5,12 @@ const test = require('node:test'),
   fs = require('node:fs'),
   path = require('node:path'),
   B = require('../engine.js');
-function harness() {
+function harness(startupState) {
   const nodes = new Map(),
     storage = new Map(),
     timers = new Map(),
     listeners = {};
+  if (startupState) storage.set('allocate-studio.ultimate-budget.v2', JSON.stringify(startupState));
   let timerId = 0;
   const node = (s) => {
     if (!nodes.has(s))
@@ -75,8 +76,10 @@ function harness() {
   vm.createContext(ctx);
   let source = fs.readFileSync(path.join(__dirname, '../app.js'), 'utf8');
   source = source.replace(
-    /if\s*\(state\.sampleProfile[\s\S]*?else render\(\);\s*\}\)\(\);\s*$/,
-    'globalThis.api={get:()=>state,editMonthBudget,saveMonthBudget,setDashMode:m=>{dashMode=m;render();},openBudgetGroup:id=>{openBudgetGroups.add(id);render();},setSpendingExpanded:value=>{spendingExpanded=value;render();},showDebtHover,hideDebtHover,applyDebtPlan,addSampleDebtPayments,updateDebtBalance,saveDebtBalance,updateAccountBalance,saveAccountBalance,debtRecurring,pauseRecurring,skipPayment,findPayment,mutate,empty,sample,cleanSamples,validateImport,editor,saveRecord,deleteRecord,removeRecord,commit,renderScreen:s=>{screen=s;render();},render};render();})();',
+    /if\s*\(\s*state\.sampleProfile[\s\S]*?else render\(\);\s*\}\)\(\);\s*$/,
+    (startup) =>
+      'globalThis.api={get:()=>state,nextRecurringLabel,scheduleRow,editMonthBudget,saveMonthBudget,setDashMode:m=>{dashMode=m;render();},openBudgetGroup:id=>{openBudgetGroups.add(id);render();},setSpendingExpanded:value=>{spendingExpanded=value;render();},showDebtHover,hideDebtHover,applyDebtPlan,addSampleDebtPayments,updateDebtBalance,saveDebtBalance,updateAccountBalance,saveAccountBalance,debtRecurring,pauseRecurring,skipPayment,findPayment,mutate,empty,sample,cleanSamples,validateImport,editor,saveRecord,deleteRecord,removeRecord,commit,renderScreen:s=>{screen=s;render();},render};' +
+      (startupState ? startup : 'render();})();'),
   );
   vm.runInContext(source, ctx);
   return {
@@ -258,7 +261,7 @@ test('Income monthly budget saves, displays progress and never flags higher inco
     /<div class="budget-line [^"]*">(?:(?!<div class="budget-line).)*data-id="group-income"[\s\S]*?<\/div><\/div>/,
   );
   assert.ok(row);
-  assert.ok(row[0].includes('3,000.00'));
+  assert.ok(row[0].includes('3,615.00')); // Income + Freelance + Interest targets
   assert.ok(!row[0].includes('over-budget'));
   assert.ok(row[0].includes('aria-valuenow="100"'));
   h.api.renderScreen('Setup');
@@ -454,7 +457,10 @@ test('Deleting a linked subcategory requires a valid destination and moves histo
   save(h, 'transaction', t.id, { ...t, actual: '60', principal: '0', paid: 'on' });
   h.api.mutate((n) => {
     n.categories.find((c) => c.id === source.id).budget = 65;
-    n.categories.find((c) => c.id === dest.id).budget = 20;
+    const target = n.categories.find((c) => c.id === dest.id);
+    target.budget = 20;
+    target.budgetPlan = [{ from: '2026-06', amount: 40 }];
+    target.budgetMonths = { '2026-07': 55 };
   });
   const before = B.accountBalance(h.api.get(), t.accountId);
   h.api.editor('category', source.id);
@@ -471,7 +477,10 @@ test('Deleting a linked subcategory requires a valid destination and moves histo
   assert.ok(!s.categories.some((c) => c.id === source.id));
   assert.equal(s.transactions.find((x) => x.id === t.id).categoryId, dest.id);
   assert.equal(s.recurring.find((x) => x.id === r.id).categoryId, dest.id);
-  assert.equal(s.categories.find((c) => c.id === dest.id).budget, 85);
+  const merged = s.categories.find((c) => c.id === dest.id);
+  assert.equal(merged.budget, 85);
+  assert.equal(B.budgetFor(merged, '2026-06'), 105);
+  assert.equal(B.budgetFor(merged, '2026-07'), 120);
   assert.equal(B.accountBalance(s, t.accountId), before);
   assert.doesNotThrow(() => h.api.validateImport(s));
 });
@@ -1401,4 +1410,96 @@ test('Imported per-month budgets are validated', () => {
   c.budgetPlan = undefined;
   c.budgetMonths = { '2026-04': -1 };
   assert.throws(() => h.api.validateImport(JSON.parse(JSON.stringify(data))));
+});
+
+test('Older demo versions are not replaced on startup', () => {
+  const h = harness();
+  h.api.sample();
+  const saved = structuredClone(h.api.get());
+  saved.sampleDataVersion = 2;
+  saved.transactions[0].notes = 'My edited sample record';
+  saved.budgetStart = '2026-03-01';
+  const loaded = harness(saved).api.get();
+  assert.equal(JSON.stringify(loaded.transactions), JSON.stringify(saved.transactions));
+  assert.equal(loaded.budgetStart, saved.budgetStart);
+});
+test('Small final debt balances remain on the line at their hover positions', () => {
+  const h = harness();
+  h.api.mutate((n) => {
+    n.extra = 0;
+    n.debts = [
+      {
+        id: 'tiny-tail',
+        name: 'Debt',
+        balance: 1001,
+        original: 1001,
+        minimum: 500,
+        apr: 0,
+        order: 1,
+      },
+    ];
+  });
+  h.api.renderScreen('Debt Payoff');
+  const html = h.node('#main').innerHTML;
+  const points = html.match(/<polyline points="([^"]+)" class="chart-selected"/)[1].split(' ');
+  const hits = [...html.matchAll(/data-index="\d+" data-x="([^"]+)" data-y="([^"]+)"/g)];
+  assert.equal(points.length, B.debtProjection(h.api.get()).rows.length);
+  points.forEach((point, i) => assert.equal(point, hits[i][1] + ',' + hits[i][2]));
+});
+
+test('Sample adds Freelance and Interest once and upgrades saved demos without replacing history', () => {
+  const h = harness();
+  h.api.sample();
+  const state = h.api.get();
+  for (const name of ['Freelance', 'Interest']) {
+    const category = state.categories.find((c) => c.name === name && c.type === 'Income');
+    const rows = state.transactions.filter((t) => t.categoryId === category.id);
+    assert.equal(rows.length, 10);
+    assert.ok(rows.every((t) => t.paid && t.sample && t.actual > 0));
+  }
+  const old = structuredClone(state);
+  old.transactions = old.transactions.filter((t) => !t.id.startsWith('sample-income-'));
+  delete old.sampleIncomeVersion;
+  const upgraded = harness(old).api.get();
+  assert.equal(upgraded.transactions.length, old.transactions.length + 20);
+  assert.equal(
+    JSON.stringify(upgraded.transactions.slice(0, old.transactions.length)),
+    JSON.stringify(old.transactions),
+  );
+  assert.equal(harness(upgraded).api.get().transactions.length, upgraded.transactions.length);
+  assert.doesNotThrow(() => h.api.validateImport(upgraded));
+});
+
+test('Recurring shows the next unpaid date and schedule marks paid records', () => {
+  const h = harness();
+  const today = B.today();
+  const r = { id: 'next-test', name: 'Rent', active: true, start: today, frequency: 'Monthly' };
+  const label = (d) =>
+    'Next: ' +
+    B.date(d).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      ...(d.slice(0, 4) !== today.slice(0, 4) ? { year: 'numeric' } : {}),
+    });
+  assert.equal(h.api.nextRecurringLabel(r), label(today));
+  h.api.mutate((n) => {
+    n.skipped.push(r.id + '@' + today);
+  });
+  assert.equal(h.api.nextRecurringLabel(r), label(B.occurrence(today, 'Monthly', 1)));
+  assert.equal(h.api.nextRecurringLabel({ ...r, active: false }), 'Paused');
+  assert.equal(h.api.nextRecurringLabel({ ...r, end: today }), 'No upcoming payments');
+  const html = h.api.scheduleRow({
+    id: 'p',
+    recurringId: 'r',
+    name: 'Rent',
+    type: 'Expense',
+    date: today,
+    actual: 100,
+    expected: 100,
+    paid: true,
+  });
+  assert.ok(html.includes('schedule-record is-paid'));
+  assert.ok(html.includes('calendar-paid-check'));
+  assert.ok(html.includes('>✓</i>Paid'));
+  assert.ok(html.includes('data-action="open-payment"'));
 });
