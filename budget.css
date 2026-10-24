@@ -1301,6 +1301,13 @@ td:not(:first-child) {
 .debt-overview .panel-head h2 {
   white-space: nowrap;
 }
+/* When the strategy panel is taller, center the chart in the free space. */
+.debt-overview .debt-chart {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 .field-label {
   display: block;
   margin: 0 0 8px;
