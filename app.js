@@ -1618,6 +1618,7 @@
     delete n.sampleProfile;
     delete n.sampleDataVersion;
     delete n.extraSampleDebtsVersion;
+    delete n.sampleDebtPaymentsVersion;
   }
   function addExtraSampleDebts(n) {
     if (n.extraSampleDebtsVersion === 1) return;
@@ -1645,6 +1646,30 @@
         });
     });
     n.extraSampleDebtsVersion = 1;
+  }
+  function addSampleDebtPayments(n) {
+    if (n.sampleDebtPaymentsVersion === 1) return;
+    const account = n.accounts.find(a => a.sample && a.id.endsWith('-checking'));
+    if (!account) return;
+    const add = (debt, date, amount) => {
+      if (!debt || !debt.sample || (debt.start && date < debt.start)) return;
+      const id = 'sample-payment-' + debt.id + '@' + date;
+      if (n.transactions.some(t => t.id === id)) return;
+      const actual = Math.min(amount, B.debtBalance(n, debt.id));
+      if (actual <= 0) return;
+      n.transactions.push({
+        id, type: 'Transfer', name: 'Transfer to ' + debt.name,
+        description: '', accountId: account.id, toKind: 'debt', toId: debt.id,
+        date, expected: amount, actual, paid: true, sample: true,
+        notes: 'Fictional sample debt payment',
+      });
+    };
+    const student = n.debts.find(d => d.sample && d.id.endsWith('-loan'));
+    for (let month = 1; month <= 10; month++)
+      add(student, '2026-' + String(month).padStart(2, '0') + '-15', 180);
+    for (const [key, amount] of [['auto', 260], ['personal', 140], ['store', 45]])
+      add(n.debts.find(d => d.id === 'sample-extra-debt-' + key), '2026-10-22', amount);
+    n.sampleDebtPaymentsVersion = 1;
   }
   function sample() {
     mutate((n) => {
@@ -1846,6 +1871,7 @@
         });
       }
       addExtraSampleDebts(n);
+      addSampleDebtPayments(n);
     });
     filters.month = state.month;
     render();
@@ -2294,7 +2320,7 @@
     }
   });
   if (state.sampleProfile && state.sampleDataVersion !== 2 && !blocked) sample();
-  else if (state.sampleProfile && state.extraSampleDebtsVersion !== 1 && !blocked)
-    mutate(addExtraSampleDebts);
+  else if (state.sampleProfile && !blocked && (state.extraSampleDebtsVersion !== 1 || state.sampleDebtPaymentsVersion !== 1))
+    mutate(n => { addExtraSampleDebts(n); addSampleDebtPayments(n); });
   else render();
 })();

@@ -54,7 +54,7 @@ function harness() {
   let source = fs.readFileSync(path.join(__dirname, '../app.js'), 'utf8');
   source = source.replace(
     /if\s*\(state\.sampleProfile[\s\S]*?else render\(\);\s*\}\)\(\);\s*$/,
-    'globalThis.api={get:()=>state,setSpendingExpanded:value=>{spendingExpanded=value;render();},updateDebtBalance,saveDebtBalance,debtRecurring,pauseRecurring,skipPayment,findPayment,mutate,empty,sample,cleanSamples,validateImport,editor,saveRecord,deleteRecord,removeRecord,commit,renderScreen:s=>{screen=s;render();},render};render();})();',
+    'globalThis.api={get:()=>state,setSpendingExpanded:value=>{spendingExpanded=value;render();},addSampleDebtPayments,updateDebtBalance,saveDebtBalance,debtRecurring,pauseRecurring,skipPayment,findPayment,mutate,empty,sample,cleanSamples,validateImport,editor,saveRecord,deleteRecord,removeRecord,commit,renderScreen:s=>{screen=s;render();},render};render();})();',
   );
   vm.runInContext(source, ctx);
   return { api: ctx.api, node, storage };
@@ -857,4 +857,21 @@ test('Debt recurring uses the first due day on or after debt start, retaining th
   assert.equal(h.api.get().recurring[0].monthDay,31);
   assert.deepEqual(B.generated(h.api.get(),'2091-03-31').map(t=>t.date),['2091-02-28','2091-03-31']);
   assert.doesNotThrow(()=>h.api.validateImport(h.api.get()));
+});
+
+test('Additional sample debt transfers update four debts once and clear with sample data', () => {
+  const h=harness();h.api.sample();const s=h.api.get();
+  const transfers=s.transactions.filter(t=>t.notes==='Fictional sample debt payment');
+  assert.equal(transfers.length,13);
+  const student=s.debts.find(d=>d.id.endsWith('-loan'));
+  assert.equal(B.debtBalance(s,student.id),10200);
+  assert.equal(B.debtBalance(s,'sample-extra-debt-auto'),7540);
+  assert.equal(B.debtBalance(s,'sample-extra-debt-personal'),2260);
+  assert.equal(B.debtBalance(s,'sample-extra-debt-store'),605);
+  const before=B.accountBalance(s,transfers[0].accountId);
+  h.api.mutate(h.api.addSampleDebtPayments);
+  assert.equal(h.api.get().transactions.length,s.transactions.length);
+  assert.equal(B.accountBalance(h.api.get(),transfers[0].accountId),before);
+  assert.doesNotThrow(()=>h.api.validateImport(h.api.get()));
+  h.api.mutate(h.api.cleanSamples);assert.equal(h.api.get().transactions.length,0);
 });
