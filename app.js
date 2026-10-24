@@ -195,7 +195,9 @@
   let editingBudget = null,
     spendingExpanded = false,
     dashMode = 'Month';
-  const openBudgetGroups = new Set();
+  const openBudgetGroups = new Set(),
+    openSetupGroups = new Set();
+  let setupTab = 'Expenses';
   let screen = 'Dashboard',
     tab = 'Payment Schedule',
     filters = { month: state.month, category: '', account: '', type: '', search: '' };
@@ -1241,50 +1243,55 @@
           ))
     );
   }
+  // Setup group: a collapsible header with the monthly total, then its subcategories.
   function groupPanel(g) {
-    const cats = state.categories.filter((c) => c.groupId === g.id);
-    return `<section class="setup-group"><div class="setup-group-head"><h3>${edit('group', g.id, esc(g.name), 'editable-heading')}</h3>${edit('category', '', '+ Add', 'textbtn').replace('data-edit="category"', `data-edit="category" data-group="${esc(g.id)}"`)}</div><div class="setup-categories">${cats.map((c) => `<div class="setup-category ${c.hidden ? 'is-hidden' : ''}">${edit('category', c.id, esc(c.name), 'table-link')}<div class="subcategory-budget"><span>Monthly budget</span>${editingBudget === c.id ? `<input id="active-budget-input" type="number" min="0" max="1000000000" step="0.01" data-category-budget="${esc(c.id)}" value="${B.budgetFor(c, thisMonth())}" aria-label="${esc(c.name)} monthly budget">` : `<button type="button" class="budget-value" data-action="edit-budget" data-id="${esc(c.id)}" aria-label="Edit ${esc(c.name)} monthly budget">${money(B.budgetFor(c, thisMonth()))}</button>`}</div>${edit('category', c.id, 'Edit', 'textbtn')}</div>`).join('')}</div></section>`;
+    const month = thisMonth(),
+      cats = state.categories.filter((c) => c.groupId === g.id),
+      open = openSetupGroups.has(g.id) || cats.some((c) => c.id === editingBudget);
+    const rowsHtml = open
+      ? `<div class="setup-categories">${cats.map((c) => `<div class="setup-category ${c.hidden ? 'is-hidden' : ''}"><span class="setup-cat-name">${esc(c.name)}${c.hidden ? '<small>Hidden</small>' : ''}</span>${editingBudget === c.id ? `<input id="active-budget-input" type="number" min="0" max="1000000000" step="0.01" data-category-budget="${esc(c.id)}" value="${B.budgetFor(c, month)}" aria-label="${esc(c.name)} monthly budget">` : `<button type="button" class="budget-value" data-action="edit-budget" data-id="${esc(c.id)}" aria-label="Edit ${esc(c.name)} monthly budget">${money(B.budgetFor(c, month))}</button>`}${edit('category', c.id, 'Edit', 'textbtn')}</div>`).join('')}${edit('category', '', '+ Add category', 'textbtn setup-add').replace('data-edit="category"', `data-edit="category" data-group="${esc(g.id)}"`)}</div>`
+      : '';
+    return `<section class="setup-group ${open ? 'is-open' : ''}"><div class="setup-group-head"><button type="button" class="setup-toggle" data-action="toggle-setup-group" data-id="${esc(g.id)}" aria-expanded="${open}"><i class="budget-chevron" aria-hidden="true">›</i><span class="setup-group-name">${esc(g.name)}</span><span class="setup-group-total">${money(total(cats, (c) => B.budgetFor(c, month)))}<small> / month</small></span></button>${edit('group', g.id, 'Edit', 'textbtn')}</div>${rowsHtml}</section>`;
   }
 
   function setupScreen() {
-    const income = state.groups.find((g) => g.type === 'Income');
+    const month = thisMonth(),
+      planned = (type) =>
+        total(
+          state.categories.filter((c) => c.type === type),
+          (c) => B.budgetFor(c, month),
+        ),
+      income = planned('Income'),
+      expense = planned('Expense');
     return (
       heading('Setup') +
+      `<div class="stats-strip">${stat('Planned income', money(income), '', 'tone-mint')}${stat('Planned expenses', money(expense), '', 'tone-blush')}${stat('Left to assign', money(income - expense), '', 'tone-sky')}${stat('In accounts', money(total(state.accounts, (a) => B.accountBalance(state, a.id))), '', 'tone-ink')}</div>` +
       panel(
         'Preferences',
-        `<form id="preferences" class="form-grid"><label>Currency<select name="currency" id="setup-currency">${currencyOptions.replace(`value="${currencySymbols.includes(state.currency) ? esc(state.currency) : 'custom'}"`, `value="${currencySymbols.includes(state.currency) ? esc(state.currency) : 'custom'}" selected`)}</select></label><label id="setup-custom-currency" ${currencySymbols.includes(state.currency) ? 'hidden' : ''}>Custom symbol<input name="currencyCustom" value="${esc(state.currency)}" maxlength="8"></label><label>Budget start date<input name="budgetStart" type="date" value="${esc(state.budgetStart)}" min="1900-01-01" max="2199-12-31" required></label><div class="preferences-actions"><button class="btn primary" type="submit">Save preferences</button></div></form>`,
+        `<form id="preferences" class="form-grid preferences-row"><label>Currency<select name="currency" id="setup-currency">${currencyOptions.replace(`value="${currencySymbols.includes(state.currency) ? esc(state.currency) : 'custom'}"`, `value="${currencySymbols.includes(state.currency) ? esc(state.currency) : 'custom'}" selected`)}</select></label><label id="setup-custom-currency" ${currencySymbols.includes(state.currency) ? 'hidden' : ''}>Custom symbol<input name="currencyCustom" value="${esc(state.currency)}" maxlength="8"></label><label>Budget start date<input name="budgetStart" type="date" value="${esc(state.budgetStart)}" min="1900-01-01" max="2199-12-31" required></label><div class="preferences-actions"><button class="btn primary" type="submit">Save preferences</button></div></form>`,
       ) +
       panel(
-        'Income',
-        state.groups
-          .filter((g) => g.type === 'Income')
-          .map(groupPanel)
-          .join(''),
-        btn('+ Add group', 'add-income-group', '', 'textbtn'),
-      ) +
-      panel(
-        'Expenses',
-        `<div class="setup-expenses">${state.groups
-          .filter((g) => g.type === 'Expense')
+        'Categories',
+        `<div class="screen-switch">${['Income', 'Expenses'].map((t) => btn(t, 'setup-tab', t, 'switch-pill ' + (setupTab === t ? 'active' : ''))).join('')}</div><div class="setup-groups">${state.groups
+          .filter((g) => g.type === (setupTab === 'Income' ? 'Income' : 'Expense'))
           .map(groupPanel)
           .join('')}</div>`,
-        btn('+ Add group', 'add-expense-group', '', 'textbtn'),
+        btn(
+          '+ Add group',
+          setupTab === 'Income' ? 'add-income-group' : 'add-expense-group',
+          '',
+          'textbtn',
+        ),
       ) +
       panel(
         'Accounts',
-        state.accounts
-          .map((a) =>
-            edit(
-              'account',
-              a.id,
-              `<span>${esc(a.name)}</span><b>${money(B.accountBalance(state, a.id))}</b>`,
-            ),
-          )
-          .join('') || '<p class="empty-copy">Add an account with its opening balance.</p>',
-        edit('account', '', '+ Add', 'textbtn'),
+        state.accounts.length
+          ? `<div class="setup-accounts"><div class="setup-account setup-account-head"><span></span><span>Opening balance</span><span></span></div>${state.accounts.map((a) => `<div class="setup-account"><span class="setup-cat-name">${esc(a.name)}${a.kind && a.kind !== a.name ? `<small>${esc(a.kind)}</small>` : ''}</span><b>${money(a.opening)}</b>${edit('account', a.id, 'Edit', 'textbtn')}</div>`).join('')}</div>`
+          : '<p class="empty-copy">Add an account with its opening balance.</p>',
+        edit('account', '', '+ Add account', 'textbtn'),
       ) +
       panel(
-        'Your data',
+        'Data',
         `<div class="button-row">${btn('Export backup', 'export')}${btn('Import backup', 'import')}<input type="file" id="import-file" accept="application/json,.json" hidden></div><div class="button-row">${btn('Load sample data', 'sample')}${btn('Clear sample data', 'clear-sample', '', 'btn danger')}</div>`,
       )
     );
@@ -2954,6 +2961,12 @@
       render();
     } else if (a === 'reset-month') {
       filters.month = '';
+      render();
+    } else if (a === 'setup-tab') {
+      setupTab = id;
+      render();
+    } else if (a === 'toggle-setup-group') {
+      if (!openSetupGroups.delete(id)) openSetupGroups.add(id);
       render();
     } else if (a === 'add-income-group') editor('group', '', { type: 'Income' });
     else if (a === 'add-expense-group') editor('group', '', { type: 'Expense' });

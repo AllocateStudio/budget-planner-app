@@ -78,7 +78,7 @@ function harness(startupState) {
   source = source.replace(
     /if\s*\(\s*state\.sampleProfile[\s\S]*?else render\(\);\s*\}\)\(\);\s*$/,
     (startup) =>
-      'globalThis.api={get:()=>state,nextRecurringLabel,scheduleRow,editMonthBudget,saveMonthBudget,setDashMode:m=>{dashMode=m;render();},openBudgetGroup:id=>{openBudgetGroups.add(id);render();},setSpendingExpanded:value=>{spendingExpanded=value;render();},showDebtHover,hideDebtHover,applyDebtPlan,addSampleDebtPayments,updateDebtBalance,saveDebtBalance,updateAccountBalance,saveAccountBalance,debtRecurring,pauseRecurring,skipPayment,findPayment,mutate,empty,sample,cleanSamples,validateImport,editor,saveRecord,deleteRecord,removeRecord,commit,renderScreen:s=>{screen=s;render();},render};' +
+      'globalThis.api={get:()=>state,openSetupGroup:id=>{openSetupGroups.add(id);render();},setSetupTab:t=>{setupTab=t;render();},nextRecurringLabel,scheduleRow,editMonthBudget,saveMonthBudget,setDashMode:m=>{dashMode=m;render();},openBudgetGroup:id=>{openBudgetGroups.add(id);render();},setSpendingExpanded:value=>{spendingExpanded=value;render();},showDebtHover,hideDebtHover,applyDebtPlan,addSampleDebtPayments,updateDebtBalance,saveDebtBalance,updateAccountBalance,saveAccountBalance,debtRecurring,pauseRecurring,skipPayment,findPayment,mutate,empty,sample,cleanSamples,validateImport,editor,saveRecord,deleteRecord,removeRecord,commit,renderScreen:s=>{screen=s;render();},render};' +
       (startupState ? startup : 'render();})();'),
   );
   vm.runInContext(source, ctx);
@@ -264,6 +264,8 @@ test('Income monthly budget saves, displays progress and never flags higher inco
   assert.ok(row[0].includes('3,615.00')); // Income + Freelance + Interest targets
   assert.ok(!row[0].includes('over-budget'));
   assert.ok(row[0].includes('aria-valuenow="100"'));
+  h.api.setSetupTab('Income');
+  h.api.openSetupGroup('group-income');
   h.api.renderScreen('Setup');
   assert.ok(h.node('#main').innerHTML.includes('$3,000.00</button>'));
 });
@@ -417,14 +419,14 @@ test('Subcategory budgets sum on dashboard; Setup is continuous and excludes rec
   assert.ok(h.node('#main').innerHTML.includes('$550.00'));
   h.api.renderScreen('Setup');
   const html = h.node('#main').innerHTML;
-  assert.ok(
-    html.includes(
-      'class="editable-heading" data-edit="group" data-id="group-income">Income</button>',
-    ),
-  );
-  assert.ok(html.includes('<h2>Expenses</h2>'));
+  assert.ok(html.includes('<h2>Categories</h2>'));
+  assert.ok(html.includes('data-action="setup-tab" data-id="Income"'));
+  assert.ok(html.includes('data-action="toggle-setup-group" data-id="group-food"'));
+  assert.ok(html.includes('$550.00<small> / month</small>'));
   assert.ok(html.includes('preferences-actions'));
-  assert.ok(html.includes('data-action="edit-budget" data-id="Needs-2"'));
+  assert.ok(!html.includes('data-action="edit-budget" data-id="Needs-2"'));
+  h.api.openSetupGroup('group-food');
+  assert.ok(h.node('#main').innerHTML.includes('data-action="edit-budget" data-id="Needs-2"'));
   assert.ok(!html.includes('Recurring income'));
   assert.ok(!html.includes('class="dashboard-grid"'));
 });
