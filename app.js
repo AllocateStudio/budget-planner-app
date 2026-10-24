@@ -209,6 +209,14 @@
   ];
   const money = (n) =>
     `${esc(state.currency)}${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  // Whole units for tight spaces such as phone calendar cells: $39, $1,800, $12k.
+  const shortMoney = (n) =>
+    esc(state.currency) +
+    (Math.abs(n) >= 10000
+      ? new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 })
+          .format(n)
+          .toLowerCase()
+      : Math.round(n || 0).toLocaleString('en-US'));
   const name = (list, id) => esc(state[list].find((x) => x.id === id)?.name || '—');
   const total = (rows, fn) => B.sum(rows, fn),
     pct = (a, b) => (b > 0 ? Math.min(100, Math.max(0, (a / b) * 100)) : 0);
@@ -487,7 +495,8 @@
               edit(
                 'transaction',
                 t.id,
-                `${t.paid ? '<i class="calendar-paid-check" aria-hidden="true">✓</i>' : ''}<span>${esc(t.name)}</span><small>${money(t.paid ? t.actual : t.expected)} · ${status(t)}</small>`,
+                // Phones show the short amount and hide the status word (colour shows it).
+                `<span class="cal-entry-name">${t.paid ? '<i class="calendar-paid-check" aria-hidden="true">✓</i>' : ''}${esc(t.name)}</span><small><span class="cal-amount">${money(t.paid ? t.actual : t.expected)}</span><span class="cal-amount-short">${shortMoney(t.paid ? t.actual : t.expected)}</span><span class="cal-entry-status"> · ${status(t)}</span></small>`,
                 'calendar-entry status-' +
                   status(t).toLowerCase().replace(' today', '') +
                   ' ' +

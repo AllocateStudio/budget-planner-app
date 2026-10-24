@@ -20,7 +20,7 @@ A standalone budgeting app that runs entirely in the browser. There is nothing t
 - **Dashboard:** income, expenses, left to spend and savings rate for the selected month; Expected vs Actual; spending breakdown; budget progress by group; upcoming bills; recent transactions.
 - **Transactions:** one journal for income, expenses and transfers. Filter by month, category, account and type, or search by name and notes. Choosing "—" clears a filter. Only saved transactions appear here; a recurring payment shows up once it is marked Paid.
 - **Recurring:** create and edit schedules. The Payment Schedule tab lists the occurrences for the selected month.
-- **Bill Calendar:** recurring payments and income only, including occurrences that were already paid. One-off transactions stay in the journal. Click an entry to open it; Paid / Received is always set by hand. Unpaid entries past their date are highlighted.
+- **Bill Calendar:** recurring payments and income only, including occurrences that were already paid. One-off transactions stay in the journal. Click an entry to open it; Paid / Received is always set by hand. Unpaid entries past their date are highlighted. Up to 1000 px wide, entries show a one-line name and a whole amount (for example $1,800); the status is shown by colour and the paid check.
 - **Accounts:** balance of each account and Net Worth.
 - **Debt Payoff:** Snowball, Avalanche and Custom strategies, extra monthly payment, debt-free date, projected interest and a per-debt schedule.
 - **Savings:** totals across goals, then one card per goal with progress, the monthly amount needed by its target date, and Add money / Withdraw / Set recurring actions.

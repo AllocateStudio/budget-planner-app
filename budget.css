@@ -1567,3 +1567,31 @@ td:not(:first-child) {
     font-size: 13px;
   }
 }
+
+/* Narrow calendars: one-line names with an ellipsis and whole amounts, no mid-word breaks. */
+.cal-amount-short {
+  display: none;
+}
+@media (max-width: 1000px) {
+  .calendar-entry {
+    overflow-wrap: normal;
+  }
+  .calendar-entry .cal-entry-name {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .calendar-entry small {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .calendar-entry .cal-amount,
+  .calendar-entry .cal-entry-status {
+    display: none;
+  }
+  .calendar-entry .cal-amount-short {
+    display: inline;
+  }
+}
