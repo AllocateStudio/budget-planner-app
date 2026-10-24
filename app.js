@@ -401,7 +401,7 @@
     return panel(
       'Expected vs Actual',
       `<div class="table-wrap expected-wrap"><table class="expected-table"><thead><tr><th></th><th>Expected</th><th>Actual</th><th>Difference</th></tr></thead><tbody>${line('Income', s.expectedIncome, s.income)}${line('Expenses', s.expectedExpense, s.expense)}${line('Left to spend', s.expectedIncome - s.expectedExpense, s.left)}</tbody></table></div>`,
-    ).replace('<section class="panel">', '<section class="panel expected-panel">');
+    );
   }
   // Group budgets for the given months; a single month can be edited per category.
   function budgetPanel(rowsList, months, editable) {
@@ -481,8 +481,9 @@
     let body;
     if (dashMode === 'Year')
       body =
-        `<div class="dashboard-grid">${expectedPanel(s)}${spendingPanel(s)}</div>` +
+        expectedPanel(s) +
         yearChart(s) +
+        spendingPanel(s) +
         budgetPanel(s.rows, budgetMonthsOf(year), false);
     else {
       const end = B.date(B.today());
@@ -492,8 +493,8 @@
         .sort((a, b) => a.date.localeCompare(b.date))
         .slice(0, 5);
       body =
-        `<div class="dashboard-grid">${expectedPanel(s)}${spendingPanel(s)}</div>` +
-        panel('Upcoming Bills', rows(upcoming, 'No upcoming bills.')) +
+        `<div class="dashboard-grid">${panel('Upcoming Bills', rows(upcoming, 'No upcoming bills.'))}${spendingPanel(s)}</div>` +
+        expectedPanel(s) +
         budgetPanel(s.rows, [state.month], true);
     }
     return (
