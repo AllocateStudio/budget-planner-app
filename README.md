@@ -136,15 +136,15 @@ Data is saved in the browser's localStorage under `allocate-studio.ultimate-budg
 
 ## Project files
 
-| File                            | Purpose                                                                                |
-| ------------------------------- | -------------------------------------------------------------------------------------- |
-| `index.html`                    | App shell                                                                              |
-| `app.js`                        | Screens, forms, saving, sample data                                                    |
-| `engine.js`                     | Calculations and recurring generation, no DOM                                          |
-| `styles.css`, `month-picker.js` | Base design system and month picker                                                    |
-| `budget.css`                    | Styles for the budget screens                                                          |
-| `assets/`                       | Logo and fonts (Plus Jakarta Sans and DM Sans, licences in `assets/fonts`)             |
-| `tests/`                        | `engine.test.cjs` (calculations) and `app.test.cjs` (app state in an isolated harness) |
+| File                            | Purpose                                                                                                      |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `index.html`                    | App shell                                                                                                    |
+| `app.js`                        | Screens, forms, saving, sample data                                                                          |
+| `engine.js`                     | Calculations and recurring generation, no DOM                                                                |
+| `styles.css`, `month-picker.js` | Base design system and month picker                                                                          |
+| `budget.css`                    | Styles for the budget screens                                                                                |
+| `assets/`                       | Logo and fonts (Plus Jakarta Sans for headings and all digits, DM Sans for text; licences in `assets/fonts`) |
+| `tests/`                        | `engine.test.cjs` (calculations) and `app.test.cjs` (app state in an isolated harness)                       |
 
 ## Development
 

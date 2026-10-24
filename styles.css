@@ -13,6 +13,15 @@
   font-weight: 800;
   font-display: swap;
 }
+/* Digits and money signs from Plus Jakarta Sans: equal-width figures keep amounts in line. */
+@font-face {
+  font-family: 'Budget Digits';
+  src: url('assets/fonts/PlusJakartaSans-Variable.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  unicode-range: U+0024-0025, U+002B-002E, U+0030-0039, U+2212;
+}
 @font-face {
   font-family: 'DM Sans';
   src: url('assets/fonts/DM-Sans.ttf') format('truetype');
@@ -52,7 +61,8 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: 'DM Sans', Arial, sans-serif;
+  font-family: 'Budget Digits', 'DM Sans', Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
   line-height: 1.4;
 }
 button,
@@ -682,8 +692,7 @@ select:focus-visible {
   --sky: #dfe9fb;
 }
 body {
-  background-image:
-    linear-gradient(#16161605 1px, transparent 1px),
+  background-image: linear-gradient(#16161605 1px, transparent 1px),
     linear-gradient(90deg, #16161605 1px, transparent 1px);
   background-size: 24px 24px;
 }
@@ -703,7 +712,7 @@ body {
   font-size: 1.2rem;
 }
 .wordmark small {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Budget Digits', 'DM Sans', sans-serif;
   font-size: 12px;
   letter-spacing: 0.14em;
   border-left: 1px solid var(--ink);
