@@ -373,19 +373,33 @@ test('Fully paid debt still shows this month actual payment with a check state',
 
 test('Snowball fixes priority before minimum payments change relative balances', () => {
   const debts = [
-    {id:'small', balance:500, minimum:10, apr:0, order:1},
-    {id:'large', balance:600, minimum:500, apr:12, order:2},
+    { id: 'small', balance: 500, minimum: 10, apr: 0, order: 1 },
+    { id: 'large', balance: 600, minimum: 500, apr: 12, order: 2 },
   ];
-  const s = {debts, transactions:[], extra:100, strategy:'Snowball'};
+  const s = { debts, transactions: [], extra: 100, strategy: 'Snowball' };
   const plan = B.debtProjection(s, 'Snowball', '2026-10-23');
-  assert.equal(plan.rows[0].debts.find(d=>d.id==='small').planned,110);
-  assert.equal(plan.rows[0].debts.find(d=>d.id==='large').planned,500);
-  const oldPlan = B.payoff(debts,100,'Snowball');
-  assert.equal(oldPlan.months,plan.months);
-  assert.equal(oldPlan.interest,plan.interest);
+  assert.equal(plan.rows[0].debts.find((d) => d.id === 'small').planned, 110);
+  assert.equal(plan.rows[0].debts.find((d) => d.id === 'large').planned, 500);
+  const oldPlan = B.payoff(debts, 100, 'Snowball');
+  assert.equal(oldPlan.months, plan.months);
+  assert.equal(oldPlan.interest, plan.interest);
 });
 test('Monthly due-day anchor survives short months', () => {
   const s = base();
-  s.recurring = [{id:'r',name:'Debt',type:'Transfer',start:'2091-02-28',monthDay:31,frequency:'Monthly',active:true,expected:100}];
-  assert.deepEqual(B.generated(s,'2091-05-31').map(t=>t.date),['2091-02-28','2091-03-31','2091-04-30','2091-05-31']);
+  s.recurring = [
+    {
+      id: 'r',
+      name: 'Debt',
+      type: 'Transfer',
+      start: '2091-02-28',
+      monthDay: 31,
+      frequency: 'Monthly',
+      active: true,
+      expected: 100,
+    },
+  ];
+  assert.deepEqual(
+    B.generated(s, '2091-05-31').map((t) => t.date),
+    ['2091-02-28', '2091-03-31', '2091-04-30', '2091-05-31'],
+  );
 });

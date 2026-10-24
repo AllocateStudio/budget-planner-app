@@ -682,7 +682,8 @@ select:focus-visible {
   --sky: #dfe9fb;
 }
 body {
-  background-image: linear-gradient(#16161605 1px, transparent 1px),
+  background-image:
+    linear-gradient(#16161605 1px, transparent 1px),
     linear-gradient(90deg, #16161605 1px, transparent 1px);
   background-size: 24px 24px;
 }

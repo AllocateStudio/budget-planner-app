@@ -1136,55 +1136,312 @@ td:not(:first-child) {
   }
 }
 
-.debt-priority-badge{display:inline-grid;place-items:center;min-width:28px;height:28px;padding:0 6px;margin-right:6px;border:1.5px solid var(--ink);border-radius:8px;background:var(--accent);font-size:14px;vertical-align:middle}
-.debt-first-label{display:block;margin-top:8px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;letter-spacing:0}
+.debt-priority-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  margin-right: 6px;
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
+  background: var(--accent);
+  font-size: 14px;
+  vertical-align: middle;
+}
+.debt-first-label {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
 
-.debt-comparison > div{text-align:center;justify-items:center}
-.debt-comparison-date{display:grid;justify-items:center;gap:6px}
+.debt-comparison > div {
+  text-align: center;
+  justify-items: center;
+}
+.debt-comparison-date {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
 
 /* Shared metric-card sizing across Dashboard and Debt Payoff. */
-.stats-strip{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:stretch}
-.stats-strip .stat-tile{box-sizing:border-box;height:104px;padding:14px 18px;display:flex;flex-direction:column;justify-content:center;gap:6px;border-radius:16px}
-.stats-strip .stat-label{font-size:14px;line-height:20px;margin:0}
-.stats-strip .stat-value{font-size:clamp(22px,2.4vw,30px);line-height:1.2;margin:0}
-.stats-strip .stat-tile>small:empty{display:none}
-@media(max-width:850px){.stats-strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:450px){.stats-strip .stat-tile{height:104px;padding:12px}.stats-strip .stat-label{font-size:13px}.stats-strip .stat-value{font-size:22px}}
+.stats-strip {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
+}
+.stats-strip .stat-tile {
+  box-sizing: border-box;
+  height: 104px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 16px;
+}
+.stats-strip .stat-label {
+  font-size: 14px;
+  line-height: 20px;
+  margin: 0;
+}
+.stats-strip .stat-value {
+  font-size: clamp(22px, 2.4vw, 30px);
+  line-height: 1.2;
+  margin: 0;
+}
+.stats-strip .stat-tile > small:empty {
+  display: none;
+}
+@media (max-width: 850px) {
+  .stats-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 450px) {
+  .stats-strip .stat-tile {
+    height: 104px;
+    padding: 12px;
+  }
+  .stats-strip .stat-label {
+    font-size: 13px;
+  }
+  .stats-strip .stat-value {
+    font-size: 22px;
+  }
+}
 
-.screen-switch .switch-pill.active{background:var(--blush);color:var(--ink)}
+.screen-switch .switch-pill.active {
+  background: var(--blush);
+  color: var(--ink);
+}
 
 /* Unified payoff controls, selectable strategies and comparison chart. */
-.debt-plan-toolbar{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:24px}
-.extra-payment-control{display:grid;gap:8px;flex:1;max-width:360px}
-.extra-payment-control>label{font-size:14px;font-weight:600}
-.extra-payment-input{display:flex;align-items:center;gap:8px;border:1.5px solid var(--ink);border-radius:10px;background:var(--card);padding:0 12px;height:46px}
-.extra-payment-input input{width:100%;min-width:0;border:0!important;background:transparent;padding:10px 0;font-size:16px;outline-offset:0}
-.extra-payment-input>span:last-child{white-space:nowrap;font-size:13px;color:var(--muted)}
-.extra-payment-quick{display:flex;gap:8px}.debt-plan-toolbar .btn{min-height:46px}
-.strategy-card{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;width:100%;min-width:0;padding:20px 16px;border:1.5px solid var(--ink);border-radius:14px;background:var(--card);color:var(--ink);text-align:center;cursor:pointer;font-family:inherit}
-.strategy-card:hover{box-shadow:2px 3px 0 var(--ink)}
-.strategy-card.is-selected{background:var(--accent);box-shadow:inset 0 0 0 1px var(--ink)}
-.strategy-card-title{font-size:17px!important;font-weight:800;color:var(--ink)!important}
-.strategy-badge{min-height:24px;font-size:11px!important;font-weight:700;border-radius:99px;padding:4px 9px}
-.strategy-badge:not(:empty){color:var(--ink)}
-.strategy-card:has(.strategy-badge) .strategy-badge{background:transparent}
-.strategy-main-label{font-size:12px!important;color:var(--ink-soft)!important}
-.strategy-main-value{font-family:'Plus Jakarta Sans',sans-serif;font-size:clamp(22px,3vw,32px);line-height:1.25;overflow-wrap:anywhere}
-.strategy-secondary{font-size:13px!important;line-height:1.5;margin-top:4px;color:var(--ink-soft)!important}
-.strategy-comparison-note{text-align:center;font-size:15px;font-weight:700;margin:18px 0 26px}
-.strategy-comparison-note>span{display:block;font-size:13px;font-weight:400;color:var(--muted);margin-top:6px}
-.enhanced-debt-chart svg{max-height:none;width:100%;display:block;overflow:visible}
-.enhanced-debt-chart svg text{font-family:'DM Sans',sans-serif;font-size:12px;fill:var(--muted)}
-.enhanced-debt-chart svg .chart-finish{font-size:13px;font-weight:700;fill:var(--ink)}
-.chart-gridline{stroke:var(--line);stroke-width:1}
-.chart-selected,.chart-baseline{fill:none;stroke-width:2.5;stroke-linejoin:round;vector-effect:non-scaling-stroke}
-.chart-selected{stroke:var(--ink)}.chart-baseline{stroke:#8b8994;stroke-dasharray:7 6}
-.enhanced-debt-chart>.chart-legend-inline{display:flex;justify-content:center;gap:24px;font-size:13px;margin-bottom:12px}
-.chart-legend-inline>span{display:flex;align-items:center;gap:8px}
-.chart-line-key{width:24px;border-top:3px solid var(--ink)}.chart-line-key.dashed{border-top:2px dashed #8b8994}
-.debt-chart-hit{cursor:crosshair}
-.debt-chart-tooltip{display:block;min-height:40px;text-align:center;font-size:13px;color:var(--ink-soft);padding:8px;line-height:1.5}
-.debt-assumptions{font-size:12px;color:var(--muted);margin-top:12px}
-.debt-assumptions summary{cursor:pointer;width:fit-content}.debt-assumptions p{margin-top:8px;line-height:1.5;max-width:750px}
-@media(max-width:650px){.extra-payment-control{max-width:none;flex-basis:100%}.strategy-card{padding:16px}.debt-comparison{grid-template-columns:1fr}.enhanced-debt-chart{overflow-x:auto}.enhanced-debt-chart svg{min-width:620px}.strategy-main-value{font-size:28px}}
-.strategy-card .strategy-badge.has-badge{background:var(--blush);color:var(--ink)}
+.debt-plan-toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.extra-payment-control {
+  display: grid;
+  gap: 8px;
+  flex: 1;
+  max-width: 360px;
+}
+.extra-payment-control > label {
+  font-size: 14px;
+  font-weight: 600;
+}
+.extra-payment-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1.5px solid var(--ink);
+  border-radius: 10px;
+  background: var(--card);
+  padding: 0 12px;
+  height: 46px;
+}
+.extra-payment-input input {
+  width: 100%;
+  min-width: 0;
+  border: 0 !important;
+  background: transparent;
+  padding: 10px 0;
+  font-size: 16px;
+  outline-offset: 0;
+}
+.extra-payment-input > span:last-child {
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--muted);
+}
+.extra-payment-quick {
+  display: flex;
+  gap: 8px;
+}
+.debt-plan-toolbar .btn {
+  min-height: 46px;
+}
+.strategy-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  padding: 20px 16px;
+  border: 1.5px solid var(--ink);
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--ink);
+  text-align: center;
+  cursor: pointer;
+  font-family: inherit;
+}
+.strategy-card:hover {
+  box-shadow: 2px 3px 0 var(--ink);
+}
+.strategy-card.is-selected {
+  background: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+.strategy-card-title {
+  font-size: 17px !important;
+  font-weight: 800;
+  color: var(--ink) !important;
+}
+.strategy-badge {
+  min-height: 24px;
+  font-size: 11px !important;
+  font-weight: 700;
+  border-radius: 99px;
+  padding: 4px 9px;
+}
+.strategy-badge:not(:empty) {
+  color: var(--ink);
+}
+.strategy-card:has(.strategy-badge) .strategy-badge {
+  background: transparent;
+}
+.strategy-main-label {
+  font-size: 12px !important;
+  color: var(--ink-soft) !important;
+}
+.strategy-main-value {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(22px, 3vw, 32px);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.strategy-secondary {
+  font-size: 13px !important;
+  line-height: 1.5;
+  margin-top: 4px;
+  color: var(--ink-soft) !important;
+}
+.strategy-comparison-note {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  margin: 18px 0 26px;
+}
+.strategy-comparison-note > span {
+  display: block;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-top: 6px;
+}
+.enhanced-debt-chart svg {
+  max-height: none;
+  width: 100%;
+  display: block;
+  overflow: visible;
+}
+.enhanced-debt-chart svg text {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  fill: var(--muted);
+}
+.enhanced-debt-chart svg .chart-finish {
+  font-size: 13px;
+  font-weight: 700;
+  fill: var(--ink);
+}
+.chart-gridline {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.chart-selected,
+.chart-baseline {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.chart-selected {
+  stroke: var(--ink);
+}
+.chart-baseline {
+  stroke: #8b8994;
+  stroke-dasharray: 7 6;
+}
+.enhanced-debt-chart > .chart-legend-inline {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+.chart-legend-inline > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.chart-line-key {
+  width: 24px;
+  border-top: 3px solid var(--ink);
+}
+.chart-line-key.dashed {
+  border-top: 2px dashed #8b8994;
+}
+.debt-chart-hit {
+  cursor: crosshair;
+}
+.debt-chart-tooltip {
+  display: block;
+  min-height: 40px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-soft);
+  padding: 8px;
+  line-height: 1.5;
+}
+.debt-assumptions {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 12px;
+}
+.debt-assumptions summary {
+  cursor: pointer;
+  width: fit-content;
+}
+.debt-assumptions p {
+  margin-top: 8px;
+  line-height: 1.5;
+  max-width: 750px;
+}
+@media (max-width: 650px) {
+  .extra-payment-control {
+    max-width: none;
+    flex-basis: 100%;
+  }
+  .strategy-card {
+    padding: 16px;
+  }
+  .debt-comparison {
+    grid-template-columns: 1fr;
+  }
+  .enhanced-debt-chart {
+    overflow-x: auto;
+  }
+  .enhanced-debt-chart svg {
+    min-width: 620px;
+  }
+  .strategy-main-value {
+    font-size: 28px;
+  }
+}
+.strategy-card .strategy-badge.has-badge {
+  background: var(--blush);
+  color: var(--ink);
+}

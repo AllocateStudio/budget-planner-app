@@ -81,7 +81,6 @@ Transfers between accounts reduce the source and increase the destination. Trans
 
 41 automated state/calculation checks passed. These do not replace browser visual QA.
 
-
 ## Recurring lifecycle
 
 Templates support Expense, Income and Transfer to an account, debt or goal. Expected is positive; Name, Frequency, Start Date and source account are required. Expense uses Group → Category; Income uses Category. End Date and Notes are optional. Semi-monthly starts on the first or fifteenth on or after Start Date. Existing Every 4 Weeks templates remain supported for compatibility; new templates use the eight options above.
@@ -91,7 +90,6 @@ Upcoming, Due, Overdue, Paid and Skipped have separate calendar colours. Payment
 Paid opens an Actual amount and Payment date form. The date defaults to the scheduled date and can be changed. Expected and the calendar date remain attached to the original scheduled month; Actual is counted in the chosen payment month. Saving again edits the same transaction without duplication. Skip excludes the occurrence from expected totals and balances; Restore brings it back. Paid is never automatic.
 
 Paid transfers reduce the source account and credit the destination account, debt principal or goal. Pending and skipped transfers do not affect balances. The template amount does not change when Actual is edited. Frozen past occurrences and their category/account references are preserved in backups and category reassignment.
-
 
 ## Debt Payoff
 

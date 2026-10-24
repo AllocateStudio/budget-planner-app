@@ -844,68 +844,135 @@ test('Debt form, statement reconciliation and recurring shortcut keep the ledger
 });
 
 test('Debt recurring uses the first due day on or after debt start, retaining the monthly anchor', () => {
-  const h=harness();
-  save(h,'account','',{name:'Checking',kind:'Checking',opening:'2000'});
-  const accountId=h.api.get().accounts[0].id;
-  h.api.mutate(n=>n.debts.push({id:'future',name:'Future loan',balance:1000,original:1000,start:'2090-11-20',dueDay:5,minimum:100,apr:0,order:1}));
+  const h = harness();
+  save(h, 'account', '', { name: 'Checking', kind: 'Checking', opening: '2000' });
+  const accountId = h.api.get().accounts[0].id;
+  h.api.mutate((n) =>
+    n.debts.push({
+      id: 'future',
+      name: 'Future loan',
+      balance: 1000,
+      original: 1000,
+      start: '2090-11-20',
+      dueDay: 5,
+      minimum: 100,
+      apr: 0,
+      order: 1,
+    }),
+  );
   h.api.debtRecurring('future');
   assert.ok(h.node('#editor').innerHTML.includes('value="2090-12-05"'));
-  h.api.mutate(n=>{n.debts[0].start='2091-02-20';n.debts[0].dueDay=31;});
+  h.api.mutate((n) => {
+    n.debts[0].start = '2091-02-20';
+    n.debts[0].dueDay = 31;
+  });
   h.api.debtRecurring('future');
   assert.ok(h.node('#editor').innerHTML.includes('value="2091-02-28"'));
-  h.api.saveRecord({preventDefault(){},target:{data:{type:'Transfer',name:'Future loan',expected:'100',frequency:'Monthly',start:'2091-02-28',end:'',accountId,destination:'debt:future',notes:''}}});
-  assert.equal(h.api.get().recurring[0].monthDay,31);
-  assert.deepEqual(B.generated(h.api.get(),'2091-03-31').map(t=>t.date),['2091-02-28','2091-03-31']);
-  assert.doesNotThrow(()=>h.api.validateImport(h.api.get()));
+  h.api.saveRecord({
+    preventDefault() {},
+    target: {
+      data: {
+        type: 'Transfer',
+        name: 'Future loan',
+        expected: '100',
+        frequency: 'Monthly',
+        start: '2091-02-28',
+        end: '',
+        accountId,
+        destination: 'debt:future',
+        notes: '',
+      },
+    },
+  });
+  assert.equal(h.api.get().recurring[0].monthDay, 31);
+  assert.deepEqual(
+    B.generated(h.api.get(), '2091-03-31').map((t) => t.date),
+    ['2091-02-28', '2091-03-31'],
+  );
+  assert.doesNotThrow(() => h.api.validateImport(h.api.get()));
 });
 
 test('Additional sample debt transfers update four debts once and clear with sample data', () => {
-  const h=harness();h.api.sample();const s=h.api.get();
-  const transfers=s.transactions.filter(t=>t.notes==='Fictional sample debt payment');
-  assert.equal(transfers.length,13);
-  const student=s.debts.find(d=>d.id.endsWith('-loan'));
-  assert.equal(B.debtBalance(s,student.id),10200);
-  assert.equal(B.debtBalance(s,'sample-extra-debt-auto'),7540);
-  assert.equal(B.debtBalance(s,'sample-extra-debt-personal'),2260);
-  assert.equal(B.debtBalance(s,'sample-extra-debt-store'),605);
-  const before=B.accountBalance(s,transfers[0].accountId);
+  const h = harness();
+  h.api.sample();
+  const s = h.api.get();
+  const transfers = s.transactions.filter((t) => t.notes === 'Fictional sample debt payment');
+  assert.equal(transfers.length, 13);
+  const student = s.debts.find((d) => d.id.endsWith('-loan'));
+  assert.equal(B.debtBalance(s, student.id), 10200);
+  assert.equal(B.debtBalance(s, 'sample-extra-debt-auto'), 7540);
+  assert.equal(B.debtBalance(s, 'sample-extra-debt-personal'), 2260);
+  assert.equal(B.debtBalance(s, 'sample-extra-debt-store'), 605);
+  const before = B.accountBalance(s, transfers[0].accountId);
   h.api.mutate(h.api.addSampleDebtPayments);
-  assert.equal(h.api.get().transactions.length,s.transactions.length);
-  assert.equal(B.accountBalance(h.api.get(),transfers[0].accountId),before);
-  assert.doesNotThrow(()=>h.api.validateImport(h.api.get()));
-  h.api.mutate(h.api.cleanSamples);assert.equal(h.api.get().transactions.length,0);
+  assert.equal(h.api.get().transactions.length, s.transactions.length);
+  assert.equal(B.accountBalance(h.api.get(), transfers[0].accountId), before);
+  assert.doesNotThrow(() => h.api.validateImport(h.api.get()));
+  h.api.mutate(h.api.cleanSamples);
+  assert.equal(h.api.get().transactions.length, 0);
 });
 
 test('Debt cards follow each strategy and keep paid-off debts last', () => {
-  const h=harness();
-  h.api.mutate(n=>{n.debts=[
-    {id:'a',name:'Alpha',balance:1000,original:1000,minimum:50,apr:25,order:2},
-    {id:'b',name:'Beta',balance:500,original:500,minimum:20,apr:5,order:3},
-    {id:'c',name:'Gamma',balance:2000,original:2000,minimum:70,apr:10,order:1},
-    {id:'z',name:'Closed',balance:0,original:100,minimum:10,apr:30,order:0}];});
-  for(const [strategy,expected] of [['Snowball',['Beta','Alpha','Gamma','Closed']],['Avalanche',['Alpha','Gamma','Beta','Closed']],['Custom',['Gamma','Alpha','Beta','Closed']]]){
-    h.api.mutate(n=>n.strategy=strategy);h.api.renderScreen('Debt Payoff');
-    const html=h.node('#main').innerHTML.split('<div class="debt-list">')[1];
-    const indexes=expected.map(name=>html.indexOf(name));assert.ok(indexes.every(i=>i>=0));assert.deepEqual([...indexes].sort((a,b)=>a-b),indexes);
-    assert.equal((html.match(/Extra payment first/g)||[]).length,1);
-    assert.equal((html.match(/class="debt-priority-badge"/g)||[]).length,3);
+  const h = harness();
+  h.api.mutate((n) => {
+    n.debts = [
+      { id: 'a', name: 'Alpha', balance: 1000, original: 1000, minimum: 50, apr: 25, order: 2 },
+      { id: 'b', name: 'Beta', balance: 500, original: 500, minimum: 20, apr: 5, order: 3 },
+      { id: 'c', name: 'Gamma', balance: 2000, original: 2000, minimum: 70, apr: 10, order: 1 },
+      { id: 'z', name: 'Closed', balance: 0, original: 100, minimum: 10, apr: 30, order: 0 },
+    ];
+  });
+  for (const [strategy, expected] of [
+    ['Snowball', ['Beta', 'Alpha', 'Gamma', 'Closed']],
+    ['Avalanche', ['Alpha', 'Gamma', 'Beta', 'Closed']],
+    ['Custom', ['Gamma', 'Alpha', 'Beta', 'Closed']],
+  ]) {
+    h.api.mutate((n) => (n.strategy = strategy));
+    h.api.renderScreen('Debt Payoff');
+    const html = h.node('#main').innerHTML.split('<div class="debt-list">')[1];
+    const indexes = expected.map((name) => html.indexOf(name));
+    assert.ok(indexes.every((i) => i >= 0));
+    assert.deepEqual(
+      [...indexes].sort((a, b) => a - b),
+      indexes,
+    );
+    assert.equal((html.match(/Extra payment first/g) || []).length, 1);
+    assert.equal((html.match(/class="debt-priority-badge"/g) || []).length, 3);
   }
 });
 
 test('Strategy selection and quick extra increments update state and comparison projections', () => {
-  const h=harness();h.api.sample();h.api.renderScreen('Debt Payoff');
-  h.node('#extra-payment').value='300';h.api.applyDebtPlan('Avalanche');
-  assert.equal(h.api.get().strategy,'Avalanche');assert.equal(h.api.get().extra,300);
-  let html=h.node('#main').innerHTML;
-  assert.ok(html.includes('class="strategy-card is-selected" data-action="choose-debt-strategy" data-id="Avalanche" aria-pressed="true"'));
-  assert.ok(html.includes('Lowest interest'));assert.ok(html.includes('Without extra'));assert.ok(html.includes('Debt-free ·'));
-  const expected=B.debtProjection(h.api.get(),'Avalanche').interest;
-  assert.ok(html.includes(expected.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})));
-  const baseline=B.debtProjection({...h.api.get(),extra:0},'Avalanche');
+  const h = harness();
+  h.api.sample();
+  h.api.renderScreen('Debt Payoff');
+  h.node('#extra-payment').value = '300';
+  h.api.applyDebtPlan('Avalanche');
+  assert.equal(h.api.get().strategy, 'Avalanche');
+  assert.equal(h.api.get().extra, 300);
+  let html = h.node('#main').innerHTML;
+  assert.ok(
+    html.includes(
+      'class="strategy-card is-selected" data-action="choose-debt-strategy" data-id="Avalanche" aria-pressed="true"',
+    ),
+  );
+  assert.ok(html.includes('Lowest interest'));
+  assert.ok(html.includes('Without extra'));
+  assert.ok(html.includes('Debt-free ·'));
+  const expected = B.debtProjection(h.api.get(), 'Avalanche').interest;
+  assert.ok(
+    html.includes(
+      expected.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    ),
+  );
+  const baseline = B.debtProjection({ ...h.api.get(), extra: 0 }, 'Avalanche');
   assert.ok(html.includes('class="chart-baseline"'));
-  assert.ok(baseline.months>B.debtProjection(h.api.get(),'Avalanche').months);
-  h.node('#extra-payment').value='300';h.api.applyDebtPlan('Custom',100);
-  assert.equal(h.api.get().extra,400);assert.equal(h.api.get().strategy,'Custom');
-  h.node('#extra-payment').value='-1';h.api.applyDebtPlan('Snowball');
-  assert.equal(h.api.get().strategy,'Custom');assert.equal(h.api.get().extra,400);
+  assert.ok(baseline.months > B.debtProjection(h.api.get(), 'Avalanche').months);
+  h.node('#extra-payment').value = '300';
+  h.api.applyDebtPlan('Custom', 100);
+  assert.equal(h.api.get().extra, 400);
+  assert.equal(h.api.get().strategy, 'Custom');
+  h.node('#extra-payment').value = '-1';
+  h.api.applyDebtPlan('Snowball');
+  assert.equal(h.api.get().strategy, 'Custom');
+  assert.equal(h.api.get().extra, 400);
 });

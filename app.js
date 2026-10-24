@@ -515,36 +515,95 @@
   const debtMonth = (m) =>
     B.date(m + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
   function debtChart(plan, current, baseline) {
-    const month = B.today().slice(0,7), selected = [current,...plan.rows.map(r=>r.balance)], without = [current,...baseline.rows.map(r=>r.balance)];
-    const count = Math.max(1,selected.length-1,without.length-1), max = Math.max(1,...selected,...without);
-    const x = i=>90+i/count*800, y = value=>260-value/max*220;
-    const points = values=>values.map((v,i)=>x(i)+','+y(v)).join(' ');
-    const endIndex=selected.length-1, endX=x(endIndex), endY=y(selected.at(-1));
-    const years = Math.max(1,Math.ceil(count/12)), step = Math.max(1,Math.ceil(years/5));
-    const ticks=[];
-    for(let i=1;i<=count;i++){const m=B.monthShift(month,i-1);if(m.endsWith('-01')&&(Number(m.slice(0,4))-Number(month.slice(0,4)))%step===0&&x(i)>160)ticks.push(`<text x="${x(i)}" y="292" text-anchor="middle">${m.slice(0,4)}</text>`);}
-    const grid=[0,1,2,3].map(i=>{const value=max*i/3;return `<line x1="90" y1="${y(value)}" x2="890" y2="${y(value)}" class="chart-gridline"/><text x="78" y="${y(value)+4}" text-anchor="end">${money(Math.round(value))}</text>`;}).join('');
-    const hover=Array.from({length:count+1},(_,i)=>{const label=(i===0?'This month · '+debtMonth(month):debtMonth(B.monthShift(month,i-1)))+' · '+state.strategy+': '+money(selected[i]??0)+' · Without extra: '+money(without[i]??0);return `<rect x="${Math.max(90,x(i)-400/count)}" y="35" width="${Math.min(800/count,890-Math.max(90,x(i)-400/count))}" height="230" fill="transparent" class="debt-chart-hit" data-chart-tip="${esc(label)}"><title>${esc(label)}</title></rect>`;}).join('');
-    return `<div class="debt-chart enhanced-debt-chart"><div class="chart-legend-inline"><span><i class="chart-line-key"></i>${esc(state.strategy)}</span><span><i class="chart-line-key dashed"></i>Without extra</span></div><svg viewBox="0 0 940 315" role="img" aria-label="Debt balance forecast with and without extra monthly payments"><title>Monthly debt balance: ${esc(state.strategy)} compared with no extra payment</title>${grid}<polygon points="90,260 ${points(selected)} ${endX},260" fill="var(--accent)" opacity=".2"/><polyline points="${points(without)}" class="chart-baseline"/><polyline points="${points(selected)}" class="chart-selected"/><text x="90" y="292" text-anchor="start">This month</text>${ticks}${plan.paidOff?`<circle cx="${endX}" cy="${endY}" r="5" fill="var(--blush)" stroke="var(--ink)"/><text x="${endX}" y="${Math.max(22,endY-15)}" text-anchor="${endX>650?'end':'start'}" class="chart-finish">Debt-free · ${debtMonth(plan.end)}</text>`:''}${hover}</svg><output class="debt-chart-tooltip" aria-live="polite">Hover over the chart for monthly balances</output>${!baseline.paidOff?'<p class="hint">Without extra: not paid off within the 100-year projection.</p>':''}</div>`;
+    const month = B.today().slice(0, 7),
+      selected = [current, ...plan.rows.map((r) => r.balance)],
+      without = [current, ...baseline.rows.map((r) => r.balance)];
+    const count = Math.max(1, selected.length - 1, without.length - 1),
+      max = Math.max(1, ...selected, ...without);
+    const x = (i) => 90 + (i / count) * 800,
+      y = (value) => 260 - (value / max) * 220;
+    const points = (values) => values.map((v, i) => x(i) + ',' + y(v)).join(' ');
+    const endIndex = selected.length - 1,
+      endX = x(endIndex),
+      endY = y(selected.at(-1));
+    const years = Math.max(1, Math.ceil(count / 12)),
+      step = Math.max(1, Math.ceil(years / 5));
+    const ticks = [];
+    for (let i = 1; i <= count; i++) {
+      const m = B.monthShift(month, i - 1);
+      if (
+        m.endsWith('-01') &&
+        (Number(m.slice(0, 4)) - Number(month.slice(0, 4))) % step === 0 &&
+        x(i) > 160
+      )
+        ticks.push(`<text x="${x(i)}" y="292" text-anchor="middle">${m.slice(0, 4)}</text>`);
+    }
+    const grid = [0, 1, 2, 3]
+      .map((i) => {
+        const value = (max * i) / 3;
+        return `<line x1="90" y1="${y(value)}" x2="890" y2="${y(value)}" class="chart-gridline"/><text x="78" y="${y(value) + 4}" text-anchor="end">${money(Math.round(value))}</text>`;
+      })
+      .join('');
+    const hover = Array.from({ length: count + 1 }, (_, i) => {
+      const label =
+        (i === 0 ? 'This month · ' + debtMonth(month) : debtMonth(B.monthShift(month, i - 1))) +
+        ' · ' +
+        state.strategy +
+        ': ' +
+        money(selected[i] ?? 0) +
+        ' · Without extra: ' +
+        money(without[i] ?? 0);
+      return `<rect x="${Math.max(90, x(i) - 400 / count)}" y="35" width="${Math.min(800 / count, 890 - Math.max(90, x(i) - 400 / count))}" height="230" fill="transparent" class="debt-chart-hit" data-chart-tip="${esc(label)}"><title>${esc(label)}</title></rect>`;
+    }).join('');
+    return `<div class="debt-chart enhanced-debt-chart"><div class="chart-legend-inline"><span><i class="chart-line-key"></i>${esc(state.strategy)}</span><span><i class="chart-line-key dashed"></i>Without extra</span></div><svg viewBox="0 0 940 315" role="img" aria-label="Debt balance forecast with and without extra monthly payments"><title>Monthly debt balance: ${esc(state.strategy)} compared with no extra payment</title>${grid}<polygon points="90,260 ${points(selected)} ${endX},260" fill="var(--accent)" opacity=".2"/><polyline points="${points(without)}" class="chart-baseline"/><polyline points="${points(selected)}" class="chart-selected"/><text x="90" y="292" text-anchor="start">This month</text>${ticks}${plan.paidOff ? `<circle cx="${endX}" cy="${endY}" r="5" fill="var(--blush)" stroke="var(--ink)"/><text x="${endX}" y="${Math.max(22, endY - 15)}" text-anchor="${endX > 650 ? 'end' : 'start'}" class="chart-finish">Debt-free · ${debtMonth(plan.end)}</text>` : ''}${hover}</svg><output class="debt-chart-tooltip" aria-live="polite">Hover over the chart for monthly balances</output>${!baseline.paidOff ? '<p class="hint">Without extra: not paid off within the 100-year projection.</p>' : ''}</div>`;
   }
   function debtComparison(plans) {
-    const successful=plans.filter(([,p])=>p.paidOff), bestInterest=successful.length?Math.min(...successful.map(([,p])=>p.interest)):null;
-    const best=successful.find(([label,p])=>label==='Avalanche'&&p.interest===bestInterest)||successful.find(([,p])=>p.interest===bestInterest);
-    const sameDate=successful.length===plans.length&&new Set(plans.map(([,p])=>p.end)).size===1;
-    const cards=plans.map(([label,p])=>{
-      const date=p.paidOff?(p.months===0?'Paid off':debtMonth(p.end)):'Increase payment', interest=p.paidOff?money(p.interest):'—';
-      return `<button type="button" class="strategy-card ${label===state.strategy?'is-selected':''}" data-action="choose-debt-strategy" data-id="${label}" aria-pressed="${label===state.strategy}"><span class="strategy-card-title">${label}</span><span class="strategy-badge ${best&&best[0]===label&&p.months>0?'has-badge':''}">${best&&best[0]===label&&p.months>0?'Lowest interest':'&nbsp;'}</span><span class="strategy-main-label">${sameDate?'Total interest':'Debt-free date'}</span><strong class="strategy-main-value">${sameDate?interest:date}</strong><span class="strategy-secondary">${sameDate?'Debt-free date · '+date:interest+' total interest'}</span></button>`;
-    }).join('');
-    const avalanche=plans.find(([label])=>label==='Avalanche')[1],custom=plans.find(([label])=>label==='Custom')[1];
-    const difference=B.round(custom.interest-avalanche.interest);
-    const comparison=avalanche.paidOff&&custom.paidOff?`Avalanche: ${difference>=0?'−':'+'}${money(Math.abs(difference))} vs Custom`:'';
-    const selected=plans.find(([label])=>label===state.strategy)[1],cost=best&&selected.paidOff?B.round(selected.interest-bestInterest):0;
-    return `<div class="debt-comparison" role="group" aria-label="Payoff strategy">${cards}</div><p class="strategy-comparison-note">${comparison}${cost>0?`<span>Your ${state.strategy} plan costs ${money(cost)} more than ${best[0]}.</span>`:''}</p>`;
+    const successful = plans.filter(([, p]) => p.paidOff),
+      bestInterest = successful.length ? Math.min(...successful.map(([, p]) => p.interest)) : null;
+    const best =
+      successful.find(([label, p]) => label === 'Avalanche' && p.interest === bestInterest) ||
+      successful.find(([, p]) => p.interest === bestInterest);
+    const sameDate =
+      successful.length === plans.length && new Set(plans.map(([, p]) => p.end)).size === 1;
+    const cards = plans
+      .map(([label, p]) => {
+        const date = p.paidOff
+            ? p.months === 0
+              ? 'Paid off'
+              : debtMonth(p.end)
+            : 'Increase payment',
+          interest = p.paidOff ? money(p.interest) : '—';
+        return `<button type="button" class="strategy-card ${label === state.strategy ? 'is-selected' : ''}" data-action="choose-debt-strategy" data-id="${label}" aria-pressed="${label === state.strategy}"><span class="strategy-card-title">${label}</span><span class="strategy-badge ${best && best[0] === label && p.months > 0 ? 'has-badge' : ''}">${best && best[0] === label && p.months > 0 ? 'Lowest interest' : '&nbsp;'}</span><span class="strategy-main-label">${sameDate ? 'Total interest' : 'Debt-free date'}</span><strong class="strategy-main-value">${sameDate ? interest : date}</strong><span class="strategy-secondary">${sameDate ? 'Debt-free date · ' + date : interest + ' total interest'}</span></button>`;
+      })
+      .join('');
+    const avalanche = plans.find(([label]) => label === 'Avalanche')[1],
+      custom = plans.find(([label]) => label === 'Custom')[1];
+    const difference = B.round(custom.interest - avalanche.interest);
+    const comparison =
+      avalanche.paidOff && custom.paidOff
+        ? `Avalanche: ${difference >= 0 ? '−' : '+'}${money(Math.abs(difference))} vs Custom`
+        : '';
+    const selected = plans.find(([label]) => label === state.strategy)[1],
+      cost = best && selected.paidOff ? B.round(selected.interest - bestInterest) : 0;
+    return `<div class="debt-comparison" role="group" aria-label="Payoff strategy">${cards}</div><p class="strategy-comparison-note">${comparison}${cost > 0 ? `<span>Your ${state.strategy} plan costs ${money(cost)} more than ${best[0]}.</span>` : ''}</p>`;
   }
-  function applyDebtPlan(strategy=state.strategy,increment=0) {
-    const value=$('#extra-payment').value,extra=Number(value)+increment;
-    if(!['Snowball','Avalanche','Custom'].includes(strategy)||!String(value).trim()||!Number.isFinite(extra)||extra<0||extra>1e9){toast('Enter a valid extra payment.');return;}
-    mutate(n=>{n.extra=B.round(extra);n.strategy=strategy;});
+  function applyDebtPlan(strategy = state.strategy, increment = 0) {
+    const value = $('#extra-payment').value,
+      extra = Number(value) + increment;
+    if (
+      !['Snowball', 'Avalanche', 'Custom'].includes(strategy) ||
+      !String(value).trim() ||
+      !Number.isFinite(extra) ||
+      extra < 0 ||
+      extra > 1e9
+    ) {
+      toast('Enter a valid extra payment.');
+      return;
+    }
+    mutate((n) => {
+      n.extra = B.round(extra);
+      n.strategy = strategy;
+    });
   }
   function debtTable(d, plan) {
     const current = B.today().slice(0, 7),
@@ -562,7 +621,7 @@
       snow = B.debtProjection(state, 'Snowball'),
       avalanche = B.debtProjection(state, 'Avalanche'),
       custom = B.debtProjection(state, 'Custom'),
-      baseline = B.debtProjection({...state,extra:0},state.strategy),
+      baseline = B.debtProjection({ ...state, extra: 0 }, state.strategy),
       totalDebt = total(state.debts, (d) => B.debtBalance(state, d.id)),
       paid = total(state.debts, (d) => B.debtPaid(state, d.id));
     const finish = (p) =>
@@ -570,15 +629,27 @@
     const debts = [...state.debts].sort(
       (a, b) =>
         (B.debtBalance(state, a.id) === 0) - (B.debtBalance(state, b.id) === 0) ||
-        B.debtPriority({...a, balance:B.debtBalance(state,a.id)}, {...b, balance:B.debtBalance(state,b.id)}, state.strategy),
+        B.debtPriority(
+          { ...a, balance: B.debtBalance(state, a.id) },
+          { ...b, balance: B.debtBalance(state, b.id) },
+          state.strategy,
+        ),
     );
     return (
       heading('Debt Payoff', '', edit('debt', '', '+ Add Debt', 'btn primary')) +
       `<div class="stats-strip debt-stats">${stat('Total debt', money(totalDebt), '', 'tone-sky')}${stat('Paid so far', money(paid), '', 'tone-mint')}${stat('Debt-free date', finish(plan), '', 'tone-ink')}${stat('Total interest', plan.paidOff ? money(plan.interest) : '—', '', 'tone-blush')}</div>` +
-      panel('Balance over time',
-        `<div class="debt-plan-toolbar"><div class="extra-payment-control"><label for="extra-payment">Extra monthly payment</label><div class="extra-payment-input"><span>${esc(state.currency)}</span><input id="extra-payment" type="number" min="0" max="1000000000" step="0.01" value="${state.extra}"><span>/ month</span></div></div><div class="extra-payment-quick">${[50,100,200].map(amount=>btn('+'+amount,'extra-debt-payment',String(amount),'btn')).join('')}</div>${btn('Update plan','plan','','btn primary')}</div>`+
-        (debts.length?debtComparison([['Snowball',snow],['Avalanche',avalanche],['Custom',custom]])+debtChart(plan,totalDebt,baseline):'<p class="empty-copy">Add a debt to see your payment forecast.</p>')+
-        '<details class="debt-assumptions"><summary>ⓘ Projection assumptions</summary><p>Fixed APRs, monthly interest, no new borrowing or fees. Freed minimums roll into the next debt. Without extra uses the same strategy and minimums with zero extra payment.</p></details>')+
+      panel(
+        'Balance over time',
+        `<div class="debt-plan-toolbar"><div class="extra-payment-control"><label for="extra-payment">Extra monthly payment</label><div class="extra-payment-input"><span>${esc(state.currency)}</span><input id="extra-payment" type="number" min="0" max="1000000000" step="0.01" value="${state.extra}"><span>/ month</span></div></div><div class="extra-payment-quick">${[50, 100, 200].map((amount) => btn('+' + amount, 'extra-debt-payment', String(amount), 'btn')).join('')}</div>${btn('Update plan', 'plan', '', 'btn primary')}</div>` +
+          (debts.length
+            ? debtComparison([
+                ['Snowball', snow],
+                ['Avalanche', avalanche],
+                ['Custom', custom],
+              ]) + debtChart(plan, totalDebt, baseline)
+            : '<p class="empty-copy">Add a debt to see your payment forecast.</p>') +
+          '<details class="debt-assumptions"><summary>ⓘ Projection assumptions</summary><p>Fixed APRs, monthly interest, no new borrowing or fees. Freed minimums roll into the next debt. Without extra uses the same strategy and minimums with zero extra payment.</p></details>',
+      ) +
       '<div class="debt-list">' +
       (debts
         .map((d, index) => {
@@ -586,7 +657,11 @@
             closed = balance === 0,
             open = debtExpanded.has(d.id);
           return panel(
-            (closed ? '' : '<span class="debt-priority-badge">' + (index + 1) + '</span> ') + esc(d.name) + (!closed && index === 0 ? '<small class="debt-first-label">Extra payment first</small>' : ''),
+            (closed ? '' : '<span class="debt-priority-badge">' + (index + 1) + '</span> ') +
+              esc(d.name) +
+              (!closed && index === 0
+                ? '<small class="debt-first-label">Extra payment first</small>'
+                : ''),
             `<div class="debt-card-summary"><div><strong class="large-value">${money(balance)}</strong><p>${closed ? '<span class="paid-off-label">Paid Off</span>' : esc(d.kind || 'Other') + ' · ' + d.apr + '% APR · ' + money(d.minimum) + ' minimum'}${d.dueDay ? ' · Due ' + d.dueDay : ''}</p></div><div class="debt-card-actions">${btn('Update Balance', 'debt-balance', d.id, 'btn')}${!closed ? btn('Set recurring payment', 'debt-recurring', d.id, 'btn') : ''}</div></div>${bar(Math.max(0, d.balance - balance), d.balance)}<div class="debt-card-footer"><span>${money(B.debtPaid(state, d.id))} paid${state.strategy === 'Custom' ? ' · Priority ' + d.order : ''}</span><button type="button" class="textbtn" data-action="debt-expand" data-id="${esc(d.id)}" aria-expanded="${open}">${open ? 'Hide schedule' : 'View schedule'}</button></div>${open ? debtTable(d, plan) : ''}`,
             edit('debt', d.id, 'Edit', 'textbtn'),
           );
@@ -634,9 +709,10 @@
       editor('recurring', existing.id);
       return;
     }
-    const today = B.today(), start = d.start && d.start > today ? d.start : today;
+    const today = B.today(),
+      start = d.start && d.start > today ? d.start : today;
     const day = Number(d.dueDay || start.slice(-2));
-    const dueInMonth = month => {
+    const dueInMonth = (month) => {
       const first = B.date(month + '-01');
       const last = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
       return month + '-' + String(Math.min(day, last)).padStart(2, '0');
@@ -1654,26 +1730,43 @@
   }
   function addSampleDebtPayments(n) {
     if (n.sampleDebtPaymentsVersion === 1) return;
-    const account = n.accounts.find(a => a.sample && a.id.endsWith('-checking'));
+    const account = n.accounts.find((a) => a.sample && a.id.endsWith('-checking'));
     if (!account) return;
     const add = (debt, date, amount) => {
       if (!debt || !debt.sample || (debt.start && date < debt.start)) return;
       const id = 'sample-payment-' + debt.id + '@' + date;
-      if (n.transactions.some(t => t.id === id)) return;
+      if (n.transactions.some((t) => t.id === id)) return;
       const actual = Math.min(amount, B.debtBalance(n, debt.id));
       if (actual <= 0) return;
       n.transactions.push({
-        id, type: 'Transfer', name: 'Transfer to ' + debt.name,
-        description: '', accountId: account.id, toKind: 'debt', toId: debt.id,
-        date, expected: amount, actual, paid: true, sample: true,
+        id,
+        type: 'Transfer',
+        name: 'Transfer to ' + debt.name,
+        description: '',
+        accountId: account.id,
+        toKind: 'debt',
+        toId: debt.id,
+        date,
+        expected: amount,
+        actual,
+        paid: true,
+        sample: true,
         notes: 'Fictional sample debt payment',
       });
     };
-    const student = n.debts.find(d => d.sample && d.id.endsWith('-loan'));
+    const student = n.debts.find((d) => d.sample && d.id.endsWith('-loan'));
     for (let month = 1; month <= 10; month++)
       add(student, '2026-' + String(month).padStart(2, '0') + '-15', 180);
-    for (const [key, amount] of [['auto', 260], ['personal', 140], ['store', 45]])
-      add(n.debts.find(d => d.id === 'sample-extra-debt-' + key), '2026-10-22', amount);
+    for (const [key, amount] of [
+      ['auto', 260],
+      ['personal', 140],
+      ['store', 45],
+    ])
+      add(
+        n.debts.find((d) => d.id === 'sample-extra-debt-' + key),
+        '2026-10-22',
+        amount,
+      );
     n.sampleDebtPaymentsVersion = 1;
   }
   function sample() {
@@ -2038,7 +2131,10 @@
       )
         throw Error('Invalid schedule.');
     for (const r of s.recurring)
-      if (r.monthDay != null && (!Number.isInteger(r.monthDay) || r.monthDay < 1 || r.monthDay > 31))
+      if (
+        r.monthDay != null &&
+        (!Number.isInteger(r.monthDay) || r.monthDay < 1 || r.monthDay > 31)
+      )
         throw Error('Invalid monthly due day.');
     for (const t of s.scheduled)
       if (!validDate(t.date) || !t.recurringId || t.paid || !finite(t.actual))
@@ -2148,7 +2244,7 @@
     } else if (a === 'debt-balance') updateDebtBalance(id);
     else if (a === 'debt-recurring') debtRecurring(id);
     else if (a === 'choose-debt-strategy') applyDebtPlan(id);
-    else if (a === 'extra-debt-payment') applyDebtPlan(state.strategy,Number(id));
+    else if (a === 'extra-debt-payment') applyDebtPlan(state.strategy, Number(id));
     else if (a === 'plan') {
       applyDebtPlan();
     } else if (a === 'sample') sample();
@@ -2215,7 +2311,10 @@
         return;
       }
       const strategy = e.value;
-      mutate(n => { n.strategy = strategy; n.extra = B.round(extra); });
+      mutate((n) => {
+        n.strategy = strategy;
+        n.extra = B.round(extra);
+      });
     } else if (e.id === 'budget-month') {
       const m = e.value;
       filters.month = m;
@@ -2290,9 +2389,11 @@
       }
     }
   });
-  document.addEventListener('pointerover',event=>{
-    const hit=event.target.closest?.('[data-chart-tip]');
-    if(hit)hit.closest('.debt-chart').querySelector('.debt-chart-tooltip').textContent=hit.dataset.chartTip;
+  document.addEventListener('pointerover', (event) => {
+    const hit = event.target.closest?.('[data-chart-tip]');
+    if (hit)
+      hit.closest('.debt-chart').querySelector('.debt-chart-tooltip').textContent =
+        hit.dataset.chartTip;
   });
   document.addEventListener('keydown', (event) => {
     if (!event.target.matches?.('[data-category-budget]')) return;
@@ -2331,7 +2432,14 @@
     }
   });
   if (state.sampleProfile && state.sampleDataVersion !== 2 && !blocked) sample();
-  else if (state.sampleProfile && !blocked && (state.extraSampleDebtsVersion !== 1 || state.sampleDebtPaymentsVersion !== 1))
-    mutate(n => { addExtraSampleDebts(n); addSampleDebtPayments(n); });
+  else if (
+    state.sampleProfile &&
+    !blocked &&
+    (state.extraSampleDebtsVersion !== 1 || state.sampleDebtPaymentsVersion !== 1)
+  )
+    mutate((n) => {
+      addExtraSampleDebts(n);
+      addSampleDebtPayments(n);
+    });
   else render();
 })();
