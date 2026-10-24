@@ -331,7 +331,10 @@
       const ordered = [...eligible].sort((a, b) => debtPriority(a, b, strategy));
       const allocations = {};
       for (const d of eligible) {
-        const charge = round((d.balance * d.apr) / 1200);
+        // A statement entered this month already includes this month's interest.
+        const reconciled =
+          n === 0 && (d.adjustments || []).some((a) => a.date.startsWith(month) && a.date <= asOf);
+        const charge = reconciled ? 0 : round((d.balance * d.apr) / 1200);
         interest = round(interest + charge);
         d.balance = round(d.balance + charge);
         allocations[d.id] = 0;

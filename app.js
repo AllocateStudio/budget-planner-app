@@ -517,6 +517,8 @@
     debtFull = new Set();
   const debtMonth = (m) =>
     B.date(m + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  const debtDay = (d) =>
+    B.date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   function debtChart(plan, current, baseline) {
     // Start at the first projected month-end; do not prepend a duplicate current-month point.
     const month = B.today().slice(0, 7);
@@ -836,13 +838,20 @@
     const d = state.debts.find((d) => d.id === id);
     if (!d) return;
     editing = { kind: 'debt-balance', id, record: d };
+    const earliest = debtBalanceEarliest(d);
     $('#editor').innerHTML =
-      `<form id="debt-balance-form"><div class="dialog-head"><h2>Update Balance</h2>${btn('×', 'close', '', 'icon-btn')}</div><h3>${esc(d.name)}</h3><div class="form-grid">${input('Statement balance *', 'balance', B.debtBalance(state, id), 'number', 'required min="0" max="1000000000" step="0.01"')}</div><p class="settings-note">Reconcile today’s balance with your statement. This does not create a payment or change your account balance.</p><p id="form-error" class="form-error" role="alert"></p><div class="dialog-actions">${btn('Cancel', 'close', '', 'btn ghost')}<button type="submit" class="btn primary">Update Balance</button></div></form>`;
+      `<form id="debt-balance-form"><div class="dialog-head"><h2>Update Balance</h2>${btn('×', 'close', '', 'icon-btn')}</div><h3>${esc(d.name)}</h3><div class="form-grid">${input('Statement balance *', 'balance', B.debtBalance(state, id), 'number', 'required min="0" max="1000000000" step="0.01"')}${input('Statement date *', 'date', B.today(), 'date', `required max="${B.today()}"${earliest ? ` min="${earliest}"` : ''}`)}</div><p class="settings-note">Payments recorded after the statement date are subtracted automatically. This does not create a payment or change your account balance.</p><p id="form-error" class="form-error" role="alert"></p><div class="dialog-actions">${btn('Cancel', 'close', '', 'btn ghost')}<button type="submit" class="btn primary">Update Balance</button></div></form>`;
     $('#editor').showModal();
+  }
+  // A statement cannot predate the debt or its latest balance update.
+  function debtBalanceEarliest(d) {
+    return [d.start || '', ...(d.adjustments || []).map((a) => a.date)].sort().at(-1) || '';
   }
   function saveDebtBalance(data) {
     const value = Number(data.get('balance')),
-      id = editing.id;
+      day = String(data.get('date') || ''),
+      id = editing.id,
+      earliest = debtBalanceEarliest(state.debts.find((d) => d.id === id));
     if (
       data.get('balance') === null ||
       String(data.get('balance')).trim() === '' ||
@@ -852,11 +861,24 @@
     )
       throw Error('Enter a valid statement balance.');
     if (
+      !/^(19|20|21)\d{2}-(0[1-9]|1[0-2])-\d{2}$/.test(day) ||
+      B.iso(B.date(day)) !== day ||
+      day > B.today()
+    )
+      throw Error('Enter a statement date that is not in the future.');
+    if (day < earliest)
+      throw Error(
+        earliest === state.debts.find((d) => d.id === id).start
+          ? `Choose a date on or after the debt start (${debtDay(earliest)}).`
+          : `Choose a date on or after your last balance update (${debtDay(earliest)}).`,
+      );
+    if (
       mutate((n) => {
         const d = n.debts.find((d) => d.id === id);
-        const delta = B.round(value - (B.debtBasis(d) - B.debtPaid(n, id)));
+        // Reconcile the balance as of the statement date; later payments still apply.
+        const delta = B.round(value - (B.debtBasis(d, day) - B.debtPaid(n, id, day)));
         d.adjustments ||= [];
-        d.adjustments.push({ date: B.today(), amount: delta });
+        d.adjustments.push({ date: day, amount: delta });
       })
     )
       $('#editor').close();

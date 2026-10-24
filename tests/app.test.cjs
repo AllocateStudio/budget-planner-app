@@ -840,8 +840,25 @@ test('Debt form, statement reconciliation and recurring shortcut keep the ledger
   assert.equal(d.start, '2026-01-01');
   assert.equal(d.original, 1000);
   h.api.updateDebtBalance(d.id);
-  h.api.saveDebtBalance({ get: () => '1050' });
+  const form = h.node('#editor').innerHTML;
+  assert.ok(form.includes(`name="date" type="date" value="${B.today()}"`));
+  assert.ok(form.includes(`max="${B.today()}" min="2026-01-01"`));
+  const statement = (balance, date) => ({ get: (k) => ({ balance, date })[k] });
+  h.api.saveDebtBalance(statement('1050', B.today()));
   assert.equal(B.debtBalance(h.api.get(), d.id), 1050);
+  assert.equal(h.api.get().debts[0].adjustments.at(-1).date, B.today());
+  assert.throws(
+    () => h.api.saveDebtBalance(statement('1000', B.iso(new Date(Date.now() + 864e5 * 2)))),
+    /not in the future/,
+  );
+  assert.throws(
+    () => h.api.saveDebtBalance(statement('1000', '2026-01-02')),
+    /last balance update/,
+  );
+  assert.throws(
+    () => h.api.saveDebtBalance(statement('1000', '2025-12-31')),
+    /last balance update/,
+  );
   assert.equal(h.api.get().transactions.length, 0);
   assert.equal(B.accountBalance(h.api.get(), h.api.get().accounts[0].id), 2000);
   save(h, 'transaction', '', {
@@ -875,6 +892,28 @@ test('Debt form, statement reconciliation and recurring shortcut keep the ledger
   const invalid = structuredClone(h.api.get());
   invalid.debts[0].dueDay = 32;
   assert.throws(() => h.api.validateImport(invalid));
+  // A past statement date keeps payments recorded after it.
+  save(h, 'debt', '', {
+    name: 'Loan',
+    kind: 'Loan',
+    balance: '1000',
+    start: '2026-01-01',
+    apr: '0',
+    minimum: '50',
+  });
+  const loan = h.api.get().debts[1],
+    yesterday = B.iso(new Date(B.date(B.today()).getTime() - 864e5));
+  save(h, 'transaction', '', {
+    type: 'Transfer',
+    amount: '100',
+    date: B.today(),
+    accountId: h.api.get().accounts[0].id,
+    destination: 'debt:' + loan.id,
+  });
+  h.api.updateDebtBalance(loan.id);
+  h.api.saveDebtBalance(statement('900', yesterday));
+  assert.equal(B.debtBalance(h.api.get(), loan.id), 800);
+  assert.equal(B.debtPaid(h.api.get(), loan.id), 100);
 });
 
 test('Debt recurring uses the first due day on or after debt start, retaining the monthly anchor', () => {

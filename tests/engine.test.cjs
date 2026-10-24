@@ -321,6 +321,19 @@ test('Debt reconciliation is dated, does not count as paid and handles subsequen
   assert.equal(B.debtPaid(s, 'd'), 100);
   assert.equal(B.accountBalance(s, 'a'), 0);
 });
+test('A statement entered this month skips interest for that month only', () => {
+  const s = base();
+  s.extra = 0;
+  s.debts = [{ id: 'd', balance: 1000, minimum: 100, apr: 12, start: '2026-01-01' }];
+  let p = B.debtProjection(s, 'Snowball', '2026-10-22');
+  assert.equal(p.rows[0].balance, 910);
+  s.debts[0].adjustments = [{ date: '2026-10-05', amount: 0 }];
+  p = B.debtProjection(s, 'Snowball', '2026-10-22');
+  assert.equal(p.rows[0].balance, 900);
+  assert.equal(p.rows[1].balance, 809);
+  s.debts[0].adjustments = [{ date: '2026-09-28', amount: 0 }];
+  assert.equal(B.debtProjection(s, 'Snowball', '2026-10-22').rows[0].balance, 910);
+});
 test('Debt history distinguishes paid, partial, missed, future and shows future paid-off rows', () => {
   const s = base();
   s.extra = 0;

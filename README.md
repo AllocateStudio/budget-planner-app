@@ -89,7 +89,7 @@ Calendar colours distinguish Upcoming, Due, Overdue, Paid and Skipped. Payment S
 
 Each debt has a Name, Type, Starting balance, Start date, APR, Minimum payment, optional Due day and a Custom priority (used by the Custom strategy).
 
-**Current balance** = starting balance − paid transfers to the debt ± dated balance adjustments. **Update Balance** records a reconciliation adjustment (for example, bank interest or fees); it is never a payment and never touches an account. **Paid** counts payments only, not adjustments. **Set recurring payment** opens a Monthly transfer prefilled with the debt and its minimum; choose the source account and save it in Recurring.
+**Current balance** = starting balance − paid transfers to the debt ± dated balance adjustments. **Update Balance** records a reconciliation adjustment (for example, bank interest or fees) as of the statement date; it is never a payment and never touches an account. The statement date defaults to today, cannot be in the future, and cannot be earlier than the debt start or the last balance update. Payments recorded after the statement date are still subtracted. **Paid** counts payments only, not adjustments. **Set recurring payment** opens a Monthly transfer prefilled with the debt and its minimum; choose the source account and save it in Recurring.
 
 **Layout.** The left panel, **Choose your strategy**, holds the extra monthly payment and the strategy list. The right panel, **Balance over time**, holds the chart. When the panels sit side by side, the chart grows to the height of the strategy panel and refits when the window is resized. Below 1100 px the panels stack.
 
@@ -104,6 +104,7 @@ Each debt has a Name, Type, Starting balance, Start date, APR, Minimum payment, 
 - Fixed APR, monthly interest, and a constant monthly pool of all minimums plus extra.
 - The payment order for each month is set before interest and minimums are applied.
 - Payments already made this month are credited before planning the rest.
+- If a debt's balance was updated this month, the projection does not charge interest on it again for this month, since the statement already includes it.
 - When a debt is paid off, its minimum stays in the pool for the remaining debts.
 - No new borrowing or fees are assumed. The horizon is 1,200 months; a plan that cannot finish is marked as such.
 
