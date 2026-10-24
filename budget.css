@@ -1613,12 +1613,49 @@ td:not(:first-child) {
   margin-top: 4px;
 }
 
-/* Accounts reuse the two-column card grid and action row from Savings. */
+/* Accounts reuse the debt card layout; the badge shows the account's initial,
+   coloured by account type. */
+.account-badge.type-checking {
+  background: var(--mint);
+}
+.account-badge.type-savings {
+  background: var(--sky);
+}
+.account-badge.type-cash {
+  background: var(--butter);
+}
+.account-badge.type-investment {
+  background: var(--blush);
+}
+.account-badge.type-other {
+  background: var(--line);
+}
 .large-value.is-negative {
   color: var(--blush-ink);
 }
-.account-flow {
-  margin: 0;
-  font-size: 13px;
-  color: var(--muted);
+.account-footer {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.account-footer {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+.account-footer .flow-part {
+  margin-left: 8px;
+  white-space: nowrap;
+}
+.account-footer b {
+  font-weight: 700;
+}
+.account-footer .textbtn {
+  margin-left: auto;
+  white-space: nowrap;
+}
+.account-footer .flow-in {
+  color: var(--mint-ink);
+}
+.account-footer .flow-out {
+  color: var(--blush-ink);
 }
