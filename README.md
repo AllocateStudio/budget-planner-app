@@ -1,114 +1,150 @@
 # Ultimate Budget · Allocate Studio
 
-Самостоятельное локальное приложение без установки и сборки. Откройте `index.html` в браузере. Интерфейс — на английском, как у исходного Bill Tracker. Все шрифты и ресурсы локальные.
+A standalone budgeting app that runs entirely in the browser. There is nothing to install or build: open `index.html`. All fonts and assets are bundled locally, and all data stays in the browser.
 
-## Первый запуск
+## Getting started
 
-1. Откройте Setup, выберите валюту и дату начала бюджета.
-2. Создайте счета и укажите начальные балансы **до** операций, которые будете вводить.
-3. Настройте категории и месячные лимиты. Каждая категория относится к группе Income или одной из расходных групп.
-4. Добавьте регулярные доходы и расходы либо отдельные операции. Expected — план, Actual — факт. Отметьте Paid / Received, чтобы факт участвовал в расчётах.
+1. Open **Setup** and choose a currency and a budget start date.
+2. Add your accounts with their opening balances as of **before** the first transaction you plan to enter.
+3. Review categories and set a monthly budget for each subcategory. Every category belongs either to the Income group or to one of the expense groups.
+4. Add recurring income and bills on the **Recurring** screen, and one-off entries from **+ Add transaction**.
 
-Нажмите Load sample data на стартовом блоке или в Setup: доступен один вымышленный набор Sample. Начало бюджета — 1 января 2026, история операций — по 22 октября 2026 включительно. Заполнены Monthly budget всех подкатегорий и 11 recurring-расписаний. Clear sample data удаляет только демо-записи и возвращает прежние бюджеты, если вы не изменили их вручную после загрузки. Личные операции сохраняются. При обновлении страницы прежний загруженный демо-профиль автоматически заменяется этим набором.
+### Sample data
 
-## Экраны
+**Load sample data** (on the welcome panel or in Setup) loads one fictional dataset. The budget starts on 1 January 2026 and the history runs through 22 October 2026. Every subcategory has a monthly budget, and there are 11 recurring schedules plus several debts with payment history.
 
-- **Transactions:** доходы и расходы в едином журнале, фильтры по месяцу, категории, счёту и типу, поиск по имени и примечанию. «—» сбрасывает фильтр. Показываются только сохранённые транзакции. Регулярный платёж появляется здесь после ручной отметки Paid.
-- **Recurring:** создание и редактирование расписаний. Вкладка Payment Schedule показывает их записи в выбранном месяце. Восемь частот: Weekly, Bi-weekly, Semi-monthly (1-е и 15-е), Monthly, Every 2 months, Quarterly, Semi-annually, Annually.
-- **Bill Calendar:** только регулярные платежи и доходы, включая сохранённые оплаченные повторения. Обычные разовые транзакции остаются в журнале. Календарь в стиле Bill Tracker. Нажатие открывает запись; Paid / Received отмечается вручную. Неоплаченные записи с прошедшей датой подсвечены Terracotta.
-- **Accounts:** независимые балансы; Net Worth автоматически вычитает Debt из суммы счетов.
-- **Debt Payoff:** Snowball, Avalanche и Custom; дополнительный месячный платёж, прогноз даты погашения и процентов, прогресс. Custom использует возрастающий номер приоритета в карточке долга.
-- **Savings:** цели и sinking funds, срок, требуемый месячный взнос и прогресс.
-- **Setup:** валюта, счета, категории и месячные бюджеты групп, регулярные доходы, инструкция, демо, резервные копии.
+**Clear sample data** removes only the sample records. Your own entries are kept, and category budgets return to their previous values unless you edited them after loading the sample. If an older sample profile is found on page load, it is replaced with the current one automatically.
 
-Любая запись из Upcoming, календаря и списков открывается в одной форме. Есть создание, редактирование и удаление. Счёт, цель или долг с привязанными операциями удаляется после переноса/удаления ссылок.
+## Screens
 
-## Правила расчётов
+- **Dashboard:** income, expenses, left to spend and savings rate for the selected month; Expected vs Actual; spending breakdown; budget progress by group; upcoming bills; recent transactions.
+- **Transactions:** one journal for income, expenses and transfers. Filter by month, category, account and type, or search by name and notes. Choosing "—" clears a filter. Only saved transactions appear here; a recurring payment shows up once it is marked Paid.
+- **Recurring:** create and edit schedules. The Payment Schedule tab lists the occurrences for the selected month.
+- **Bill Calendar:** recurring payments and income only, including occurrences that were already paid. One-off transactions stay in the journal. Click an entry to open it; Paid / Received is always set by hand. Unpaid entries past their date are highlighted.
+- **Accounts:** balance of each account and Net Worth.
+- **Debt Payoff:** Snowball, Avalanche and Custom strategies, extra monthly payment, debt-free date, projected interest and a per-debt schedule.
+- **Savings:** goals and sinking funds with a target date, required monthly contribution and progress.
+- **Setup:** preferences, accounts, categories and monthly budgets, help, sample data, backups.
 
-- Expected и Actual независимы. В факт, баланс и прогресс входят только записи с Paid / Received. Нулевая фактическая сумма допустима.
-- Баланс счёта = начальный баланс + полученные доходы − оплаченные расходы именно этого счёта. Приложение не выполняет банковские платежи.
-- Expenses включает накопительные отчисления. Left to spend = фактический доход − все фактические расходы. Savings rate = оплаченные расходы, связанные с целями Savings / фактический доход.
-- Месячный лимит категории применяется ко всем месяцам. Перерасход определяется по Actual.
-- Регулярные записи генерируются детерминированно и не дублируются при переключении месяцев. Изменение отдельной записи фиксирует её независимо от расписания; удаление исключает это повторение. Для 29–31 числа используется последний допустимый день месяца с сохранением исходного дня в последующих месяцах.
-- Изменение шаблона действует со следующего дня. Платежи, дата которых уже наступила, сохраняются с прежними условиями. Pause убирает будущие платежи до Resume; пропущенный во время паузы период не восстанавливается. Удаление шаблона сохраняет оплаченные транзакции и уже наступившие платежи.
-- Остаток долга = Starting outstanding balance − principal оплаченных связанных расходов. Полная сумма расхода списывается со счёта; только principal уменьшает долг. Original debt служит базой прогресса. Начисленные банком проценты и новые заимствования автоматически в текущий остаток не добавляются.
-- Прогноз Debt Payoff использует фиксированный APR, месячные проценты и постоянную сумму минимальных платежей плюс extra. Освободившиеся платежи направляются на следующий долг. Interest saved сравнивается с той же стратегией без extra. Горизонт — 1200 месяцев; невозможный/слишком долгий план явно обозначается.
-- Saved цели = Starting saved amount + Actual оплаченных расходов, связанных с целью. Можно выбрать любую расходную категорию. Требуемый взнос делит остаток на число календарных месяцев до срока включительно, начиная с текущего; просроченная цель обозначается отдельно.
-- Net Worth = сумма балансов Accounts − текущие остатки Debt. Цели повторно к активам не прибавляются. Кредитные обязательства заводите только в Debt, чтобы не вычитать их дважды.
-
-## Хранение и резервные копии
-
-Данные хранятся в `allocate-studio.ultimate-budget.v2` в localStorage браузера. Существующие настройки первой версии автоматически подхватываются при отсутствии новых данных. Bill Tracker использует отдельные файлы и хранилище.
-
-Export backup скачивает JSON. Import backup проверяет формат и связи, затем требует подтверждения замены текущего бюджета. Сначала экспортируйте текущие данные, если они нужны. Одновременное изменение из другой вкладки блокирует запись до перезагрузки. Очистка данных браузера может удалить бюджет; регулярно сохраняйте резервные копии. Разные браузеры и адреса не синхронизируются.
-
-## Файлы и проверки
-
-- `index.html` — оболочка; `app.js` — экраны, формы, сохранение и демо.
-- `engine.js` — расчёты и генерация повторов без DOM.
-- `styles.css`, `month-picker.js`, `assets/` — независимые копии дизайна Bill Tracker; `budget.css` — оформление новых экранов.
-- `tests/engine.test.cjs`, `tests/app.test.cjs` — 41 проверка расчётов и состояния приложения, включая все экраны и единый демо-набор, CRUD и очистку демо.
-
-Запуск проверок: `node --test tests/*.test.cjs`.
-
-Автоматические проверки пройдены. Визуальная проверка в браузере не выполнена: инструмент блокирует адреса file://. Тесты состояния используют изолированное окружение и не заменяют проверку реального браузера.
-
-Исходный дизайн: `/Users/tatianasergeeva/Documents/Codex/2026-09-30/bill-calendar`. Оригинальные файлы не изменялись. Шрифты Plus Jakarta Sans и DM Sans, лицензии в `assets/fonts`.
+Any entry opened from Upcoming, the calendar or a list uses the same form, with create, edit and delete. An account, goal or debt that still has linked entries can only be deleted after those links are moved or removed.
 
 ## Setup
 
-Preferences contains currency and Budget start date, with Save preferences centered below the fields. Week starts on belongs to Bill Calendar.
+**Preferences** holds the currency and the budget start date. The week start setting lives on the Bill Calendar.
 
-Income and Expenses share the same heading style. Expenses is a continuous list: group headings are larger than subcategory names. Each subcategory has an editable Monthly budget field that saves on change. Dashboard calculates each group budget as the sum of its subcategories, including hidden ones. Categories can be renamed, hidden and shown, and deleted with reassignment of linked records.
+**Budget start date** limits Dashboard totals. Account history before that date is kept and still counts toward balances.
 
-Recurring schedules are managed only on the Recurring screen. They use the visible categories from Setup; existing links to hidden categories remain valid.
+**Categories.** Income and Expenses are shown as one continuous list, with group headings above their subcategories. Each subcategory has a Monthly budget field that saves on change. The Dashboard budget for a group is the sum of its subcategories, including hidden ones. Categories can be renamed, hidden, shown again, or deleted.
 
-Version 4 keeps monthly budgets on subcategories. Version 2 imports retain their original category budgets. Existing version 3 group budgets are split evenly across their subcategories, preserving the exact total to the cent; this allocation can be adjusted in Setup. Transaction IDs, balances and links remain unchanged. The localStorage key remains the same.
+**Deleting categories:**
 
-Budget start date limits Dashboard totals; earlier account history is preserved.
+- Deleting a group moves its subcategories, budgets and links into another group of the same type.
+- Deleting a subcategory that is in use moves its saved entries and recurring schedules to another subcategory of the same type and adds its monthly budget to the destination. A new destination can be created in the confirmation dialog.
+- An unused subcategory can be deleted directly; its budget is removed.
+- Amounts, dates, paid status and account balances never change during reassignment.
 
-Deletion: deleting a group moves its subcategories, budgets and links into another group of the same type. Deleting a linked subcategory moves saved entries and recurring schedules to another subcategory of the same type and adds its monthly budget to the destination. A new destination can be created in the confirmation dialog. Unused subcategories can be deleted without reassignment; their budgets are removed. Amounts, dates, paid status and account balances are unchanged.
+Recurring schedules are managed only on the Recurring screen. They use the visible categories from Setup; existing links to hidden categories stay valid.
 
-## Transaction form
+## Transactions
 
-New journal entries start with Expense / Income / Transfer buttons. Date defaults to today. Amount is required and positive; the type determines the sign. Account remembers the last saved selection. Description and Notes are optional. If Description is blank, the category name is used in the journal.
+A new entry starts with a choice of **Expense**, **Income** or **Transfer**. The date defaults to today. Amount is required and must be positive; the type decides the sign. The account remembers your last choice. Description and Notes are optional; if Description is empty, the journal shows the category name.
 
-Expense: Date, Amount, Category group → Category, Account, Description, Notes. Income: Date, Amount, Category, Account, Description, Notes. Categories come from Setup. Transfer: Date, Amount, From account, To account/debt/goal, Notes. The category list depends on the selected expense group. Hidden categories remain available only when editing an existing linked entry.
+| Type     | Fields                                                               |
+| -------- | -------------------------------------------------------------------- |
+| Expense  | Date, Amount, Category group → Category, Account, Description, Notes |
+| Income   | Date, Amount, Category, Account, Description, Notes                  |
+| Transfer | Date, Amount, From account, To account / debt / goal, Notes          |
 
-Ordinary Income / Expense entries take effect immediately. They have no status, Expected or payment-method fields. Existing recurring occurrences keep their separate payment editor with manual Paid / Received and Expected / Actual. Ordinary transfers stay in the journal. Recurring transfers appear in Bill Calendar and create a journal transaction only when marked Paid.
+Hidden categories are offered only when editing an entry that already uses them.
 
-Transfers between accounts reduce the source and increase the destination. Transfers to debt reduce the source account and the outstanding principal by the full amount; interest charges remain separate expenses. Transfers to goals reduce the source account and increase funds held in that goal. Those transferred funds remain assets in Net Worth, so a transfer does not destroy wealth. All transfers are excluded from Income and Expenses; goal transfers contribute to the savings rate. Editing or deleting a transfer recalculates both sides. Account/debt/goal deletion is blocked while referenced by transfers.
+One-off income and expenses take effect immediately and have no status or Expected amount. Recurring occurrences keep their own payment form with Expected / Actual and a manual Paid / Received toggle.
 
-41 automated state/calculation checks passed. These do not replace browser visual QA.
+**Transfers:**
 
-## Recurring lifecycle
+- Between accounts: the source decreases and the destination increases.
+- To a debt: the source account and the debt balance both decrease by the full amount. Interest charges are recorded separately.
+- To a goal: the source account decreases and the goal's saved amount increases. The money is still counted as an asset in Net Worth.
+- Transfers never count as income or expenses. Transfers to goals count toward the savings rate.
+- Editing or deleting a transfer recalculates both sides. An account, debt or goal referenced by a transfer cannot be deleted.
 
-Templates support Expense, Income and Transfer to an account, debt or goal. Expected is positive; Name, Frequency, Start Date and source account are required. Expense uses Group → Category; Income uses Category. End Date and Notes are optional. Semi-monthly starts on the first or fifteenth on or after Start Date. Existing Every 4 Weeks templates remain supported for compatibility; new templates use the eight options above.
+One-off transfers stay in the journal. Recurring transfers appear in the Bill Calendar and create a journal entry only when marked Paid.
 
-Upcoming, Due, Overdue, Paid and Skipped have separate calendar colours. Payment Schedule includes Paid / Skip / Restore actions and monthly expected expense and transfer totals. Dashboard Upcoming Bills shows the next five unpaid outgoing payments.
+## Recurring schedules
 
-Paid opens an Actual amount and Payment date form. The date defaults to the scheduled date and can be changed. Expected and the calendar date remain attached to the original scheduled month; Actual is counted in the chosen payment month. Saving again edits the same transaction without duplication. Skip excludes the occurrence from expected totals and balances; Restore brings it back. Paid is never automatic.
+Schedules support Expense, Income, and Transfer to an account, debt or goal. Name, Frequency, Start Date, source account and a positive Expected amount are required; End Date and Notes are optional. Expenses use Group → Category; income uses Category.
 
-Paid transfers reduce the source account and credit the destination account, debt principal or goal. Pending and skipped transfers do not affect balances. The template amount does not change when Actual is edited. Frozen past occurrences and their category/account references are preserved in backups and category reassignment.
+**Frequencies:** Weekly, Bi-weekly, Semi-monthly, Monthly, Every 2 months, Quarterly, Semi-annually, Annually. Semi-monthly falls on the 1st and 15th, starting with the first of those on or after the Start Date. Older "Every 4 Weeks" schedules are still supported but cannot be created anymore.
+
+**Dates.** Occurrences are generated deterministically and never duplicate when you switch months. For days 29 to 31, a short month uses its last day and later months return to the original day. Monthly debt payments created from a debt's Due Day keep that day as their anchor.
+
+**Paying an occurrence.** Paid opens a form with the Actual amount and Payment date (defaults to the scheduled date). Expected and the calendar position stay in the scheduled month; Actual counts in the month it was paid. Saving again edits the same transaction. Paid is never set automatically.
+
+**Skip** removes an occurrence from expected totals and balances; **Restore** brings it back. Editing a single occurrence detaches it from the schedule; deleting it removes only that occurrence.
+
+**Changing a schedule** takes effect from the next day. Occurrences whose date has already passed keep their original terms. **Pause** hides future occurrences until **Resume**; periods skipped while paused are not restored. Deleting a schedule keeps paid transactions and occurrences that have already passed.
+
+Calendar colours distinguish Upcoming, Due, Overdue, Paid and Skipped. Payment Schedule offers Paid / Skip / Restore and shows the month's expected expense and transfer totals. Dashboard Upcoming Bills lists the next five unpaid outgoing payments.
 
 ## Debt Payoff
 
-Debt records now contain Name, Type, Starting Balance, Start Date, APR, Minimum Payment and optional Due Day. Custom priority is shown for the Custom strategy. Existing debt records and legacy principal allocations remain readable so the upgrade does not change historical balances.
+Each debt has a Name, Type, Starting balance, Start date, APR, Minimum payment, optional Due day and a Custom priority (used by the Custom strategy).
 
-Current Balance subtracts paid debt transfers from the starting balance, plus dated statement adjustments. Update Balance records a reconciliation adjustment, never a payment or an account debit. Paid So Far counts recorded payments, excluding adjustments. Set recurring payment opens a Monthly Transfer template with the debt and minimum prefilled; the user selects the source account and saves it in Recurring.
+**Current balance** = starting balance − paid transfers to the debt ± dated balance adjustments. **Update Balance** records a reconciliation adjustment (for example, bank interest or fees); it is never a payment and never touches an account. **Paid so far** counts payments only, not adjustments. **Set recurring payment** opens a Monthly transfer prefilled with the debt and its minimum; choose the source account and save it in Recurring.
 
-The screen shows Total Debt, Paid So Far, Debt-Free Date and projected Total Interest, one total-balance line, and Snowball/Avalanche comparison. The projection uses monthly interest, a constant minimum-plus-extra pool, and credits this month's actual payments before planning any remaining payment. Paid-off minimums remain in the pool for remaining debts. Actual balances do not accrue forecast interest; statement reconciliation captures bank interest or fees.
+**Strategy.** Pick Snowball (smallest balance first), Avalanche (highest APR first) or Custom (your priority order) by clicking its card. Each card shows total interest and the debt-free date. Every strategy tied for the lowest interest gets a **Lowest interest** badge, and one sentence compares your choice with the cheapest plan. Debts are listed in payment order.
 
-Each debt expands to Month / Planned / Paid / Balance. Past rows compare actual payments with the minimum due (capped by the opening balance); future rows use the selected allocation strategy from the current actual balances. The current row contains this month's planned end balance. Default range: three prior months, current month, twelve future months. Show full schedule includes tracked history and forecast, with a 1,200-month projection limit. Current month is highlighted; paid is muted with a pink check, partial/missed payments are accented, future is muted. Paid-off debts sort last. No combined Payment Plan tab in this version.
+**Extra monthly payment** applies 350 ms after you stop typing. Invalid or empty input never overwrites the saved amount. The +50 / +100 / +200 buttons and strategy cards apply immediately.
 
-47 automated checks cover state, calculations, reconciliation, strategy comparison and transfers. Browser visual QA remains unavailable.
+**Chart.** Total balance by month, starting from the first projected month-end. When extra is above zero, a dashed "Without extra" line shows the same strategy with no extra payment. Hover or use the arrow keys (Home / End, Escape) to see monthly values. Below 600 px the chart is shown above compact strategy rows.
 
-## Debt Payoff interaction refinements
+**Projection rules:**
 
-Extra monthly payment applies after a 350 ms pause on input/change. Empty or invalid drafts never overwrite the saved amount; strategy cards and quick increments apply immediately and cancel any pending input update. The old strategy dropdown and Update plan action are removed.
+- Fixed APR, monthly interest, and a constant monthly pool of all minimums plus extra.
+- The payment order for each month is set before interest and minimums are applied.
+- Payments already made this month are credited before planning the rest.
+- When a debt is paid off, its minimum stays in the pool for the remaining debts.
+- No new borrowing or fees are assumed. The horizon is 1,200 months; a plan that cannot finish is marked as such.
 
-All strategies tied for the minimum projected interest receive Lowest interest. A single comparison sentence describes the currently selected plan relative to the least expensive completed plan. Strategies that cannot finish within the projection horizon are not labelled as cheapest.
+**Per-debt schedule.** Each debt expands to Month / Planned / Paid / Balance. Past months compare actual payments with the minimum due; future months follow the selected strategy. The default range is three months back, the current month and twelve months ahead; **Show full schedule** shows the whole history and forecast. Paid-off debts are listed last.
 
-The chart starts with the first projected month-end rather than duplicating the current month. Without extra is drawn only when extra is positive, using the same strategy and a shared timeline. Y ticks use rounded compact amounts; the debt-free label sits above the plotting area. Pointer and keyboard (arrow keys, Home/End, Escape) exploration show line markers and an anchored tooltip. At widths below 600 px, the chart precedes compact strategy rows with name and interest side by side.
+## Calculation rules
 
-Checks cover the zero-extra baseline, tied badges, debounced input, rounded chart ticks, and hover marker/tooltip positioning. These isolated tests do not replace browser visual QA.
+- Only entries marked Paid / Received count toward actual totals, balances and progress. An actual amount of zero is allowed.
+- **Account balance** = opening balance + received income − paid expenses ± transfers for that account. The app never makes real bank payments.
+- **Left to spend** = actual income − actual expenses.
+- **Savings rate** = (paid expenses linked to a savings goal + transfers to goals) ÷ actual income.
+- Category budgets apply to every month. Overspending is measured against Actual.
+- **Goal saved amount** = starting saved amount + paid expenses linked to the goal + transfers to the goal. The required monthly contribution divides what is left by the number of calendar months until the target date, including the current month. Overdue goals are flagged.
+- **Net Worth** = account balances + money transferred into goals − current debt balances. Record loans and credit cards only under Debt so they are not subtracted twice.
+- Older debt payments recorded as expenses with a principal amount are still read, so upgrading does not change past balances.
+
+## Storage and backups
+
+Data is saved in the browser's localStorage under `allocate-studio.ultimate-budget.v2`. If no data exists yet, preferences from the earlier `allocate-studio.ultimate-budget.preferences.v1` key are picked up.
+
+- **Export backup** downloads a JSON file.
+- **Import backup** validates the format and all references, then asks before replacing the current budget. Export your current data first if you need it.
+- If another tab changes the budget, this tab stops saving until it is reloaded.
+- Clearing browser data can delete the budget. Export backups regularly. Different browsers and different web addresses do not share data.
+
+**Data versions.** Version 4 stores monthly budgets on subcategories. Version 2 backups keep their original category budgets. Version 3 group budgets are split evenly across their subcategories, exact to the cent, and can be adjusted in Setup. Transaction IDs, balances and links are unchanged by migration.
+
+## Project files
+
+| File                            | Purpose                                                                                |
+| ------------------------------- | -------------------------------------------------------------------------------------- |
+| `index.html`                    | App shell                                                                              |
+| `app.js`                        | Screens, forms, saving, sample data                                                    |
+| `engine.js`                     | Calculations and recurring generation, no DOM                                          |
+| `styles.css`, `month-picker.js` | Base design system and month picker                                                    |
+| `budget.css`                    | Styles for the budget screens                                                          |
+| `assets/`                       | Logo and fonts (Plus Jakarta Sans and DM Sans, licences in `assets/fonts`)             |
+| `tests/`                        | `engine.test.cjs` (calculations) and `app.test.cjs` (app state in an isolated harness) |
+
+## Development
+
+- Run the tests with `node --test tests/*.test.cjs`.
+- Code is formatted with Prettier using `.prettierrc` (print width 100, single quotes). Keep new code in that style.
+- `tests/app.test.cjs` loads `app.js` by matching its last few lines. Keep the shape of the final `if (state.sampleProfile …) … else render();` block, or update the test harness with it.
+- The tests check state and HTML output without a real browser. Layout and CSS changes still need a check in a browser at phone (375 px) and desktop widths.
+- Commit after each step and push to `origin` (`main`). Pull before starting work.
