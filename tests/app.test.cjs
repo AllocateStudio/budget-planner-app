@@ -76,7 +76,7 @@ function harness() {
   let source = fs.readFileSync(path.join(__dirname, '../app.js'), 'utf8');
   source = source.replace(
     /if\s*\(state\.sampleProfile[\s\S]*?else render\(\);\s*\}\)\(\);\s*$/,
-    'globalThis.api={get:()=>state,setDashMode:m=>{dashMode=m;render();},openBudgetGroup:id=>{openBudgetGroups.add(id);render();},setSpendingExpanded:value=>{spendingExpanded=value;render();},showDebtHover,hideDebtHover,applyDebtPlan,addSampleDebtPayments,updateDebtBalance,saveDebtBalance,updateAccountBalance,saveAccountBalance,debtRecurring,pauseRecurring,skipPayment,findPayment,mutate,empty,sample,cleanSamples,validateImport,editor,saveRecord,deleteRecord,removeRecord,commit,renderScreen:s=>{screen=s;render();},render};render();})();',
+    'globalThis.api={get:()=>state,editMonthBudget,saveMonthBudget,setDashMode:m=>{dashMode=m;render();},openBudgetGroup:id=>{openBudgetGroups.add(id);render();},setSpendingExpanded:value=>{spendingExpanded=value;render();},showDebtHover,hideDebtHover,applyDebtPlan,addSampleDebtPayments,updateDebtBalance,saveDebtBalance,updateAccountBalance,saveAccountBalance,debtRecurring,pauseRecurring,skipPayment,findPayment,mutate,empty,sample,cleanSamples,validateImport,editor,saveRecord,deleteRecord,removeRecord,commit,renderScreen:s=>{screen=s;render();},render};render();})();',
   );
   vm.runInContext(source, ctx);
   return {
@@ -1346,34 +1346,29 @@ test('Dashboard edits one month of a budget and applies it to following months',
       h.api.get().categories.find((c) => c.id === id),
       month,
     );
-  h.api.mutate((n) =>
-    B.setBudgetMonth(
-      n.categories.find((c) => c.id === id),
-      n.month,
-      777,
-    ),
-  );
+  const form = (amount) => ({ get: (k) => (k === 'amount' ? amount : null) });
+  h.api.editMonthBudget(id);
+  assert.ok(h.node('#editor').innerHTML.includes('value="following"'));
+  assert.throws(() => h.api.saveMonthBudget(form('-5'), 'month'));
+  h.api.saveMonthBudget(form('777'), 'month');
   h.api.openBudgetGroup('group-food');
-  let html = h.node('#main').innerHTML;
-  assert.ok(html.includes(`class="budget-input is-own" data-month-budget="${id}" value="777"`));
-  assert.ok(html.includes('data-action="budget-apply"'));
+  const html = h.node('#main').innerHTML;
+  assert.ok(
+    html.includes(`class="budget-input is-own" data-action="month-budget" data-id="${id}"`),
+  );
   assert.ok(!html.includes('Recent transactions'));
   assert.ok(html.includes('<th>Difference</th>'));
   assert.ok(html.includes('class="record-list upcoming-list"'));
   assert.ok(html.includes('class="record-date"'));
   const cat = () => h.api.get().categories.find((c) => c.id === id);
+  assert.equal(B.budgetFor(cat(), month), 777);
   assert.equal(B.budgetFor(cat(), next), before);
-  h.api.mutate((n) =>
-    B.setBudgetFrom(
-      n.categories.find((c) => c.id === id),
-      month,
-      777,
-      n.budgetStart.slice(0, 7),
-    ),
-  );
-  assert.equal(B.budgetFor(cat(), next), 777);
+  h.api.editMonthBudget(id);
+  h.api.saveMonthBudget(form('650'), 'following');
+  assert.equal(B.budgetFor(cat(), month), 650);
+  assert.equal(B.budgetFor(cat(), next), 650);
   assert.equal(B.budgetFor(cat(), B.monthShift(month, -1)), before);
-  assert.ok(!h.node('#main').innerHTML.includes('data-action="budget-apply"'));
+  assert.equal(cat().budgetMonths, undefined);
 });
 test('Year dashboard sums the months and shows read-only yearly budgets', () => {
   const h = harness();

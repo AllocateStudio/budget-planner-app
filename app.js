@@ -413,8 +413,7 @@
           rowsList.filter((t) => t.paid && t.type === type && ids.has(t.categoryId)),
           (t) => t.actual,
         ),
-      budgetOf = (c) => total(months, (m) => B.budgetFor(c, m)),
-      overrides = editable && state.categories.some((c) => c.budgetMonths?.[month] !== undefined);
+      budgetOf = (c) => total(months, (m) => B.budgetFor(c, m));
     const groups = state.groups
       .map((g) => {
         const cats = state.categories
@@ -438,7 +437,7 @@
               .map((c) => {
                 const own = editable && c.budgetMonths?.[month] !== undefined,
                   catOver = g.type === 'Expense' && c.planned > 0 && c.spent > c.planned;
-                return `<div class="budget-cat ${catOver ? 'over-budget' : ''}"><span>${esc(c.name)}</span><b>${money(c.spent)}</b>${editable ? `<input type="number" min="0" max="1000000000" step="0.01" class="budget-input ${own ? 'is-own' : ''}" data-month-budget="${esc(c.id)}" value="${c.planned}" aria-label="${esc(c.name)} budget">` : `<b class="budget-cat-plan">${money(c.planned)}</b>`}</div>`;
+                return `<div class="budget-cat ${catOver ? 'over-budget' : ''}"><span>${esc(c.name)}</span><b>${money(c.spent)}</b>${editable ? `<button type="button" class="budget-input ${own ? 'is-own' : ''}" data-action="month-budget" data-id="${esc(c.id)}" aria-label="Edit ${esc(c.name)} budget">${money(c.planned)}</button>` : `<b class="budget-cat-plan">${money(c.planned)}</b>`}</div>`;
               })
               .join('')}</div>`
           : '';
@@ -450,7 +449,6 @@
       body
         ? `<div class="budget-head"><span>Actual / Budget</span></div>${body}`
         : '<p class="empty-copy">Add categories in Setup.</p>',
-      overrides ? btn('Apply to following months', 'budget-apply', month, 'btn') : '',
     );
   }
   // Chart labels: $950, $3.6k, $12k; the currency hides on phones to fit 12 columns.
@@ -1047,6 +1045,36 @@
         const delta = B.round(value - (B.debtBasis(d, day) - B.debtPaid(n, id, day)));
         d.adjustments ||= [];
         d.adjustments.push({ date: day, amount: delta });
+      })
+    )
+      $('#editor').close();
+  }
+  // A month's category budget: this month only, or this month and every later month.
+  function editMonthBudget(id) {
+    const c = state.categories.find((c) => c.id === id);
+    if (!c) return;
+    editing = { kind: 'month-budget', id, record: c };
+    $('#editor').innerHTML =
+      `<form id="month-budget-form"><div class="dialog-head"><h2>${esc(c.name)}</h2>${btn('×', 'close', '', 'icon-btn')}</div><h3>${debtMonth(state.month)}</h3><div class="form-grid">${input('Budget', 'amount', B.budgetFor(c, state.month), 'number', 'required min="0" max="1000000000" step="0.01"')}</div><p id="form-error" class="form-error" role="alert"></p><div class="dialog-actions">${btn('Cancel', 'close', '', 'btn ghost')}<button type="submit" class="btn" value="month">This month only</button><button type="submit" class="btn primary" value="following">Apply to following months</button></div></form>`;
+    $('#editor').showModal();
+    $('[name="amount"]')?.select?.();
+  }
+  function saveMonthBudget(data, scope) {
+    const amount = Number(data.get('amount')),
+      id = editing.id;
+    if (
+      String(data.get('amount') ?? '').trim() === '' ||
+      !Number.isFinite(amount) ||
+      amount < 0 ||
+      amount > 1e9
+    )
+      throw Error('Enter a valid budget.');
+    if (
+      mutate((n) => {
+        const c = n.categories.find((c) => c.id === id);
+        if (!c) return;
+        if (scope === 'following') B.setBudgetFrom(c, n.month, amount, firstBudgetMonth());
+        else B.setBudgetMonth(c, n.month, amount);
       })
     )
       $('#editor').close();
@@ -2791,13 +2819,7 @@
     } else if (a === 'toggle-budget-group') {
       if (!openBudgetGroups.delete(id)) openBudgetGroups.add(id);
       render();
-    } else if (a === 'budget-apply')
-      mutate((n) =>
-        n.categories.forEach((c) => {
-          const own = c.budgetMonths?.[id];
-          if (own !== undefined) B.setBudgetFrom(c, id, own, firstBudgetMonth());
-        }),
-      );
+    } else if (a === 'month-budget') editMonthBudget(id);
     else if (a === 'toggle-spending') {
       spendingExpanded = !spendingExpanded;
       render();
@@ -2896,6 +2918,13 @@
       } catch (error) {
         $('#form-error').textContent = error.message;
       }
+    } else if (event.target.id === 'month-budget-form') {
+      event.preventDefault();
+      try {
+        saveMonthBudget(new FormData(event.target), event.submitter?.value);
+      } catch (error) {
+        $('#form-error').textContent = error.message;
+      }
     } else if (event.target.id === 'account-balance-form') {
       event.preventDefault();
       try {
@@ -2944,19 +2973,6 @@
       const m = e.value;
       filters.month = m;
       mutate((n) => (n.month = m));
-    } else if (e.dataset.monthBudget) {
-      const amount = Number(e.value),
-        id = e.dataset.monthBudget,
-        c = state.categories.find((c) => c.id === id);
-      if (!e.value.trim() || !Number.isFinite(amount) || amount < 0 || amount > 1e9) {
-        toast('Enter a valid budget.');
-        e.value = c ? B.budgetFor(c, state.month) : 0;
-        return;
-      }
-      mutate((n) => {
-        const c = n.categories.find((c) => c.id === id);
-        if (c) B.setBudgetMonth(c, n.month, amount);
-      });
     } else if (e.dataset.categoryBudget) {
       const amount = Number(e.value);
       if (!e.value.trim() || !Number.isFinite(amount) || amount < 0 || amount > 1e9) {
@@ -3081,11 +3097,6 @@
     if (hits[index]) showDebtHover(hits[index]);
   });
   document.addEventListener('keydown', (event) => {
-    if (event.target.matches?.('[data-month-budget]') && event.key === 'Enter') {
-      event.preventDefault();
-      event.target.blur();
-      return;
-    }
     if (!event.target.matches?.('[data-category-budget]')) return;
     if (event.key === 'Enter') {
       event.preventDefault();

@@ -1935,3 +1935,15 @@ td:not(:first-child) {
 .budget-cat-head span:not(:first-child) {
   text-align: right;
 }
+/* Line the Budget caption up with the amount inside the button below it. */
+.budget-cat-head span:last-child {
+  padding-right: 11.5px;
+}
+button.budget-input {
+  cursor: pointer;
+  color: var(--ink);
+  white-space: nowrap;
+}
+button.budget-input:hover {
+  border-color: var(--ink);
+}
