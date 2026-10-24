@@ -1359,6 +1359,8 @@ test('Dashboard edits one month of a budget and applies it to following months',
   assert.ok(html.includes('data-action="budget-apply"'));
   assert.ok(!html.includes('Recent transactions'));
   assert.ok(html.includes('<th>Difference</th>'));
+  assert.ok(html.includes('class="record-list upcoming-list"'));
+  assert.ok(html.includes('class="record-date"'));
   const cat = () => h.api.get().categories.find((c) => c.id === id);
   assert.equal(B.budgetFor(cat(), next), before);
   h.api.mutate((n) =>

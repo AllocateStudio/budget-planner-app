@@ -304,16 +304,18 @@
       ? `Transfer → ${name({ account: 'accounts', debt: 'debts', goal: 'goals' }[t.toKind], t.toId)}`
       : name('categories', t.categoryId);
   }
-  function row(t) {
+  const dayLabel = (d) =>
+    B.date(d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  function row(t, dated = false) {
     return edit(
       'transaction',
       t.id,
-      `<span class="record-name">${esc(t.name)}<small>${esc(t.date)} · ${entryCategory(t)} · ${entrySource(t)}</small></span><span class="record-amount">${money(t.paid ? t.actual : t.expected)}<small class="${status(t) === 'Overdue' ? 'terracotta' : ''}">${status(t)}</small></span>`,
+      `<span class="record-name">${esc(t.name)}${dated ? `<span class="record-date">${dayLabel(t.date)}</span>` : ''}<small>${esc(t.date)} · ${entryCategory(t)} · ${entrySource(t)}</small></span><span class="record-amount">${money(t.paid ? t.actual : t.expected)}<small class="${status(t) === 'Overdue' ? 'terracotta' : ''}">${status(t)}</small></span>`,
     );
   }
   function rows(list, emptyText = 'No entries yet.') {
     return list.length
-      ? `<div class="record-list">${list.map(row).join('')}</div>`
+      ? `<div class="record-list">${list.map((t) => row(t)).join('')}</div>`
       : `<p class="empty-copy">${emptyText}</p>`;
   }
   function welcome() {
@@ -491,9 +493,9 @@
       const upcoming = B.generated(state, B.iso(end))
         .filter((t) => t.type !== 'Income' && t.date >= B.today())
         .sort((a, b) => a.date.localeCompare(b.date))
-        .slice(0, 5);
+        .slice(0, 12);
       body =
-        `<div class="dashboard-grid">${panel('Upcoming Bills', rows(upcoming, 'No upcoming bills.'))}${spendingPanel(s)}</div>` +
+        `<div class="dashboard-grid">${panel('Upcoming Bills', upcoming.length ? `<div class="record-list upcoming-list">${upcoming.map((t, i) => row(t, true).replace('<button ', `<button ${i >= 5 ? 'style="display:none" ' : ''}`)).join('')}</div>` : '<p class="empty-copy">No upcoming bills.</p>')}${spendingPanel(s)}</div>` +
         expectedPanel(s) +
         budgetPanel(s.rows, [state.month], true);
     }
@@ -755,6 +757,25 @@
     return `<div class="debt-chart enhanced-debt-chart">${renderPlot(false)}${renderPlot(true)}</div>`;
   }
   // Beside the strategy panel, stretch the desktop chart to match that panel's height.
+  // Beside Spending breakdown, Upcoming Bills shows as many entries as fit its height (at least 5).
+  function fitUpcoming() {
+    const list = $('.upcoming-list');
+    if (!list?.children) return;
+    const panel = list.closest('.panel'),
+      other = panel.nextElementSibling,
+      items = [...list.children];
+    items.forEach((el, i) => (el.style.display = i < 5 ? '' : 'none'));
+    if (!other || other.offsetTop !== panel.offsetTop) return;
+    panel.style.alignSelf = other.style.alignSelf = 'start';
+    for (const el of items.slice(5)) {
+      el.style.display = '';
+      if (panel.offsetHeight > other.offsetHeight) {
+        el.style.display = 'none';
+        break;
+      }
+    }
+    panel.style.alignSelf = other.style.alignSelf = '';
+  }
   function fitDebtChart() {
     const overview = document.querySelector('.debt-overview'),
       [side, chart] = overview?.children || [],
@@ -1245,6 +1266,7 @@
         Setup: setupScreen,
       }[screen]();
     if (screen === 'Debt Payoff') fitDebtChart();
+    if (screen === 'Dashboard') fitUpcoming();
   }
   const collections = {
     transaction: 'transactions',
@@ -3011,8 +3033,12 @@
   });
   globalThis.addEventListener?.('resize', () => {
     if (screen === 'Debt Payoff') fitDebtChart();
+    if (screen === 'Dashboard') fitUpcoming();
   });
-  document.fonts?.ready.then(() => screen === 'Debt Payoff' && fitDebtChart());
+  document.fonts?.ready.then(() => {
+    if (screen === 'Debt Payoff') fitDebtChart();
+    if (screen === 'Dashboard') fitUpcoming();
+  });
   document.addEventListener('pointermove', (event) => {
     const hit = event.target.closest?.('[data-chart-tip]');
     if (hit) showDebtHover(hit);
