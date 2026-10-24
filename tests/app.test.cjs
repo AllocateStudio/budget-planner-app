@@ -1040,7 +1040,19 @@ test('Zero extra hides the comparison line and legend; entering extra restores t
   h.flushTimers();
   assert.equal(h.api.get().extra, 0);
   assert.ok(!h.node('#main').innerHTML.includes('class="chart-baseline"'));
+  field.value = '200';
+  h.fire('input', { target: field });
+  h.flushTimers();
+  assert.equal(h.api.get().extra, 200);
+  // Clearing the field resets the extra payment to zero.
   field.value = '';
+  h.fire('input', { target: field });
+  h.flushTimers();
+  assert.equal(h.api.get().extra, 0);
+  assert.equal(field['aria-invalid'], undefined);
+  assert.ok(!h.node('#main').innerHTML.includes('class="chart-baseline"'));
+  assert.ok(h.node('#main').innerHTML.includes('placeholder="0" value=""'));
+  field.value = '-5';
   h.fire('input', { target: field });
   h.flushTimers();
   assert.equal(h.api.get().extra, 0);

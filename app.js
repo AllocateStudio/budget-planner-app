@@ -713,11 +713,11 @@
     const field = $('#extra-payment');
     if (!field) return;
     const focused = document.activeElement === field;
-    const value = $('#extra-payment').value,
-      extra = Number(value) + increment;
+    // An empty field means no extra payment.
+    const value = String($('#extra-payment').value).trim(),
+      extra = Number(value || 0) + increment;
     if (
       !['Snowball', 'Avalanche', 'Custom'].includes(strategy) ||
-      !String(value).trim() ||
       !Number.isFinite(extra) ||
       extra < 0 ||
       extra > 1e9
@@ -771,7 +771,7 @@
         ? '<div class="debt-overview">' +
           panel(
             'Choose your strategy',
-            `<div class="extra-payment-control"><label for="extra-payment" class="field-label">Extra monthly payment</label><div class="extra-payment-input"><span>${esc(state.currency)}</span><input id="extra-payment" type="number" min="0" max="1000000000" step="0.01" value="${state.extra}"><span>/ month</span></div><div class="extra-payment-quick">${[50, 100, 200].map((amount) => btn('+' + amount, 'extra-debt-payment', String(amount), 'btn')).join('')}</div></div>` +
+            `<div class="extra-payment-control"><label for="extra-payment" class="field-label">Extra monthly payment</label><div class="extra-payment-input"><span>${esc(state.currency)}</span><input id="extra-payment" type="number" min="0" max="1000000000" step="0.01" inputmode="decimal" placeholder="0" value="${state.extra || ''}"><span>/ month</span></div><div class="extra-payment-quick">${[50, 100, 200].map((amount) => btn('+' + amount, 'extra-debt-payment', String(amount), 'btn')).join('')}</div></div>` +
               debtStrategies([
                 ['Snowball', snow],
                 ['Avalanche', avalanche],
