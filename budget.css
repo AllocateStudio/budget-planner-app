@@ -2266,3 +2266,13 @@ td .transaction-type-badge,
 .panel > .donut-wrap + .breakdown-actions {
   margin-bottom: auto;
 }
+/* Side by side in a half-width panel: keep names close to their amounts and centre chart and legend. */
+@container (min-width: 480px) and (max-width: 719px) {
+  .donut-layout {
+    justify-content: center;
+    gap: 40px;
+  }
+  .chart-legend {
+    flex: 0 1 290px;
+  }
+}
