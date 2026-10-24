@@ -547,7 +547,16 @@
         plotWidth = right - left;
       const x = (i) => left + (i / count) * plotWidth,
         y = (v) => bottom - (v / ceiling) * (bottom - top);
-      const points = (values) => values.map((v, i) => `${x(i)},${y(v)}`).join(' ');
+      // A tiny final payment draws as a flat tail; let the line run straight to zero.
+      const points = (values) =>
+        values
+          .map((v, i) => [i, v])
+          .filter(
+            ([i, v]) =>
+              !(i === values.length - 2 && values.at(-1) === 0 && v > 0 && v < ceiling * 0.02),
+          )
+          .map(([i, v]) => `${x(i)},${y(v)}`)
+          .join(' ');
       const endX = x(selected.length - 1),
         endY = y(selected.at(-1));
       const grid = [0, 1, 2, 3]
