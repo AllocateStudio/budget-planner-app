@@ -1674,7 +1674,7 @@ td:not(:first-child) {
 }
 .expected-table th:not(:first-child),
 .expected-table td {
-  text-align: right;
+  text-align: center;
   white-space: nowrap;
 }
 .budget-group .budget-label {
