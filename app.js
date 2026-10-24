@@ -401,7 +401,7 @@
     return panel(
       'Expected vs Actual',
       `<div class="table-wrap expected-wrap"><table class="expected-table"><thead><tr><th></th><th>Expected</th><th>Actual</th><th>Difference</th></tr></thead><tbody>${line('Income', s.expectedIncome, s.income)}${line('Expenses', s.expectedExpense, s.expense)}${line('Left to spend', s.expectedIncome - s.expectedExpense, s.left)}</tbody></table></div>`,
-    );
+    ).replace('<section class="panel">', '<section class="panel expected-panel">');
   }
   // Group budgets for the given months; a single month can be edited per category.
   function budgetPanel(rowsList, months, editable) {

@@ -1907,3 +1907,14 @@ td:not(:first-child) {
     padding: 6px 0;
   }
 }
+/* Next to Spending breakdown the table rows spread to the panel's full height. */
+.expected-panel {
+  display: flex;
+  flex-direction: column;
+}
+.expected-panel .expected-wrap {
+  flex: 1;
+}
+.expected-table {
+  height: 100%;
+}
