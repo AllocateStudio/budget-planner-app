@@ -989,7 +989,10 @@ test('Strategy selection and quick extra increments update state and comparison 
       'class="strategy-option is-selected" data-action="choose-debt-strategy" data-id="Avalanche" aria-pressed="true"',
     ),
   );
-  assert.equal((html.match(/>Lowest interest</g) || []).length, 1);
+  assert.ok(!html.includes('Lowest interest'));
+  assert.match(html, /Saves \$[\d,.]+ vs Snowball/);
+  assert.match(html, /First debt paid off [A-Z][a-z]{2} \d{4}/);
+  assert.match(html, /Pays [^<]+ first/);
   assert.ok(!html.includes('Paid so far'));
   assert.ok(html.includes('Without extra'));
   assert.ok(html.includes('Debt-free ·'));
@@ -1048,7 +1051,7 @@ test('Zero extra hides the comparison line and legend; entering extra restores t
   assert.equal(h.api.get().extra, 50);
   assert.equal(field['aria-invalid'], undefined);
 });
-test('Tied strategies get no Lowest interest badge and the note names the tie', () => {
+test('Each strategy states its own benefit; ties need no comparison note', () => {
   const h = harness();
   h.api.mutate((n) => {
     n.extra = 0;
@@ -1066,10 +1069,11 @@ test('Tied strategies get no Lowest interest badge and the note names the tie', 
   });
   h.api.renderScreen('Debt Payoff');
   let html = h.node('#main').innerHTML;
-  assert.equal((html.match(/>Lowest interest</g) || []).length, 0);
-  assert.ok(html.includes('Same total interest as Avalanche and Custom.'));
+  assert.ok(html.includes('Same interest as Snowball for these debts'));
+  assert.ok(html.includes('Pays Zero APR first'));
+  assert.ok(html.includes('First debt paid off'));
+  assert.ok(!html.includes('strategy-comparison-note'));
   assert.ok(!html.includes('vs Custom'));
-  assert.equal((html.match(/class="strategy-comparison-note"/g) || []).length, 1);
   assert.ok(html.includes('$24k'));
   assert.ok(html.includes('$16k'));
   assert.ok(html.includes('$8k'));
@@ -1080,7 +1084,7 @@ test('Tied strategies get no Lowest interest badge and the note names the tie', 
   for (const strategy of ['Avalanche', 'Custom']) {
     h.node('#extra-payment').value = '0';
     h.api.applyDebtPlan(strategy);
-    assert.ok(h.node('#main').innerHTML.includes('Same total interest as'));
+    assert.ok(!h.node('#main').innerHTML.includes('strategy-comparison-note'));
   }
 });
 test('Hover positions a marker on the line and anchors the tooltip near that point', () => {

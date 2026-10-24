@@ -638,32 +638,57 @@
     Avalanche: 'Highest APR first',
     Custom: 'Your priority order',
   };
+  // First month in which any currently open debt reaches zero.
+  function firstPayoff(plan) {
+    const open = new Set(
+      state.debts.filter((d) => B.debtBalance(state, d.id) > 0).map((d) => d.id),
+    );
+    return plan.rows.find((row) => row.debts.some((d) => open.has(d.id) && d.balance <= 0))?.month;
+  }
+  function strategyBenefit(label, plans) {
+    const plan = (name) => plans.find(([l]) => l === name)[1];
+    if (label === 'Snowball') {
+      const month = firstPayoff(plan('Snowball'));
+      return month ? `First debt paid off ${debtMonth(month)}` : 'Quick wins keep you motivated';
+    }
+    if (label === 'Avalanche') {
+      const snowball = plan('Snowball'),
+        avalanche = plan('Avalanche');
+      if (!snowball.paidOff || !avalanche.paidOff) return 'Least interest over time';
+      const saved = B.round(snowball.interest - avalanche.interest);
+      return saved > 0
+        ? `Saves ${money(saved)} vs Snowball`
+        : 'Same interest as Snowball for these debts';
+    }
+    const first = state.debts
+      .map((d) => ({ ...d, balance: B.debtBalance(state, d.id) }))
+      .filter((d) => d.balance > 0)
+      .sort((a, b) => B.debtPriority(a, b, 'Custom'))[0];
+    return first ? `Pays ${esc(first.name)} first` : 'Pay debts in your own order';
+  }
   function debtStrategies(plans) {
     const successful = plans.filter(([, p]) => p.paidOff),
       bestInterest = successful.length ? Math.min(...successful.map(([, p]) => p.interest)) : null,
       cheapest = successful.filter(([, p]) => p.interest === bestInterest).map(([label]) => label);
-    // Badge only a clear winner; tied plans are explained in the note instead.
-    const winner = cheapest.length === 1 ? cheapest[0] : null;
+    // Show debt-free dates per row only when the strategies actually differ.
+    const sameDate = new Set(plans.map(([, p]) => (p.paidOff ? p.end : 'never'))).size === 1;
     const options = plans
       .map(([label, p]) => {
         const selected = label === state.strategy,
           date = p.paidOff ? (p.months === 0 ? 'Paid off' : debtMonth(p.end)) : 'Not paid off',
           interest = p.paidOff ? money(p.interest) : '—';
-        return `<button type="button" class="strategy-option${selected ? ' is-selected' : ''}" data-action="choose-debt-strategy" data-id="${label}" aria-pressed="${selected}"><span class="strategy-option-text"><span class="strategy-option-name">${label}${label === winner ? '<span class="strategy-badge">Lowest interest</span>' : ''}</span><span class="strategy-option-hint">${strategyHints[label]}</span></span><span class="strategy-option-figures"><strong>${interest}</strong><span>${date}</span></span></button>`;
+        return `<button type="button" class="strategy-option${selected ? ' is-selected' : ''}" data-action="choose-debt-strategy" data-id="${label}" aria-pressed="${selected}"><span class="strategy-option-text"><span class="strategy-option-name">${label}</span><span class="strategy-option-hint">${strategyHints[label]}</span></span><span class="strategy-option-figures"><strong>${interest}</strong><span>${sameDate ? 'interest' : 'interest · ' + date}</span></span><span class="strategy-option-benefit">${strategyBenefit(label, plans)}</span></button>`;
       })
       .join('');
     const selected = plans.find(([label]) => label === state.strategy)[1];
-    const others = cheapest.filter((label) => label !== state.strategy);
     const cost =
       selected.paidOff && bestInterest !== null ? B.round(selected.interest - bestInterest) : 0;
     const note = !selected.paidOff
       ? 'Increase the monthly payment to complete this plan.'
       : cost > 0
         ? `Your ${state.strategy} plan costs ${money(cost)} more in interest than ${cheapest.includes('Avalanche') ? 'Avalanche' : cheapest[0]}.`
-        : others.length
-          ? `Same total interest as ${others.join(' and ')}.`
-          : 'This is the lowest-interest plan.';
-    return `<p class="field-label">Strategy</p><div class="strategy-options" role="group" aria-label="Payoff strategy">${options}</div><p class="strategy-comparison-note">${note}</p>`;
+        : '';
+    return `<p class="field-label">Strategy</p><div class="strategy-options" role="group" aria-label="Payoff strategy">${options}</div>${note ? `<p class="strategy-comparison-note">${note}</p>` : ''}`;
   }
   let extraPaymentTimer;
   function queueDebtPlan(field) {
