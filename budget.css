@@ -1449,12 +1449,6 @@ td:not(:first-child) {
   content: '✓';
   font-weight: 800;
 }
-.strategy-comparison-note {
-  margin: 14px 0 0;
-  color: var(--ink-soft);
-  font-size: 13px;
-  line-height: 1.5;
-}
 .chart-legend-inline {
   display: flex;
   gap: 16px;

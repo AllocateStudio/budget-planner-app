@@ -93,7 +93,7 @@ Each debt has a Name, Type, Starting balance, Start date, APR, Minimum payment, 
 
 **Layout.** The left panel, **Choose your strategy**, holds the extra monthly payment and the strategy list. The right panel, **Balance over time**, holds the chart. When the panels sit side by side, the chart grows to the height of the strategy panel and refits when the window is resized. Below 1100 px the panels stack.
 
-**Strategy.** Pick Snowball (smallest balance first), Avalanche (highest APR first) or Custom (your priority order) from the list. Each row shows total interest and one concrete benefit: Snowball shows when the first debt is paid off, Avalanche shows how much interest it saves compared with Snowball, and Custom names the debt it pays first. Debt-free dates appear in the rows only when they differ between strategies. If the selected plan costs more than the cheapest one, a note under the list says by how much. Debts are listed in payment order.
+**Strategy.** Pick Snowball (smallest balance first), Avalanche (highest APR first) or Custom (your priority order) from the list. Each row shows total interest and one concrete benefit: Snowball shows when the first debt is paid off, Avalanche shows how much interest it saves compared with Snowball, and Custom names the debt it pays first. Debt-free dates appear in the rows only when they differ between strategies. Debts are listed in payment order.
 
 **Extra monthly payment** applies 350 ms after you stop typing. Clearing the field sets the extra payment to $0. Invalid input (for example, a negative number) never overwrites the saved amount. The +50 / +100 / +200 buttons and strategy cards apply immediately.
 

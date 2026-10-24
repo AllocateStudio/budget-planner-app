@@ -605,7 +605,7 @@
       return `<div class="debt-chart-plot ${compact ? 'chart-mobile' : 'chart-desktop'}"><svg data-debt-chart tabindex="0" viewBox="0 0 ${width} ${bottom + 52}" role="img" aria-label="${esc(state.strategy)} monthly debt balance${showBaseline ? ' compared with no extra payment' : ''}. Use arrow keys to explore.">${grid}<polygon points="${left},${bottom} ${points(selected)} ${endX},${bottom}" fill="var(--accent)" opacity=".2"/>${showBaseline ? `<polyline points="${points(without)}" class="chart-baseline"/>` : ''}<polyline points="${points(selected)}" class="chart-selected"/><text x="${left}" y="${bottom + 30}" text-anchor="start">This month</text>${ticks.join('')}${finish}${hover}<circle class="chart-hover-marker" r="5" fill="var(--blush)" stroke="var(--ink)" visibility="hidden"/>${showBaseline ? '<circle class="chart-baseline-marker" r="4" fill="white" stroke="#8b8994" visibility="hidden"/>' : ''}</svg><output class="debt-chart-tooltip" aria-live="polite" hidden></output></div>`;
     };
     redrawDebtPlot = () => renderPlot(false);
-    return `<div class="debt-chart enhanced-debt-chart">${renderPlot(false)}${renderPlot(true)}${showBaseline && !baseline.paidOff ? '<p class="hint">Without extra: not paid off within the 100-year projection.</p>' : ''}</div>`;
+    return `<div class="debt-chart enhanced-debt-chart">${renderPlot(false)}${renderPlot(true)}</div>`;
   }
   // Beside the strategy panel, stretch the desktop chart to match that panel's height.
   function fitDebtChart() {
@@ -714,9 +714,6 @@
     return first ? `Pays ${esc(first.name)} first` : 'Pay debts in your own order';
   }
   function debtStrategies(plans) {
-    const successful = plans.filter(([, p]) => p.paidOff),
-      bestInterest = successful.length ? Math.min(...successful.map(([, p]) => p.interest)) : null,
-      cheapest = successful.filter(([, p]) => p.interest === bestInterest).map(([label]) => label);
     // Show debt-free dates per row only when the strategies actually differ.
     const sameDate = new Set(plans.map(([, p]) => (p.paidOff ? p.end : 'never'))).size === 1;
     const options = plans
@@ -727,15 +724,7 @@
         return `<button type="button" class="strategy-option${selected ? ' is-selected' : ''}" data-action="choose-debt-strategy" data-id="${label}" aria-pressed="${selected}"><span class="strategy-option-text"><span class="strategy-option-name">${label}</span><span class="strategy-option-hint">${strategyHints[label]}</span></span><span class="strategy-option-figures"><strong>${interest}</strong><span>${sameDate ? 'interest' : 'interest · ' + date}</span></span><span class="strategy-option-benefit">${strategyBenefit(label, plans)}</span></button>`;
       })
       .join('');
-    const selected = plans.find(([label]) => label === state.strategy)[1];
-    const cost =
-      selected.paidOff && bestInterest !== null ? B.round(selected.interest - bestInterest) : 0;
-    const note = !selected.paidOff
-      ? 'Increase the monthly payment to complete this plan.'
-      : cost > 0
-        ? `Your ${state.strategy} plan costs ${money(cost)} more in interest than ${cheapest.includes('Avalanche') ? 'Avalanche' : cheapest[0]}.`
-        : '';
-    return `<p class="field-label">Strategy</p><div class="strategy-options" role="group" aria-label="Payoff strategy">${options}</div>${note ? `<p class="strategy-comparison-note">${note}</p>` : ''}`;
+    return `<p class="field-label">Strategy</p><div class="strategy-options" role="group" aria-label="Payoff strategy">${options}</div>`;
   }
   let extraPaymentTimer;
   function queueDebtPlan(field) {
