@@ -520,3 +520,29 @@ test('Account adjustments are dated and monthly flow splits money in and out', (
   // Adjustments are not income or expenses.
   assert.equal(B.summary(s, '2026-10').expense, 200);
 });
+test('Category budgets change by month without touching earlier months', () => {
+  const c = { budget: 100 };
+  B.setBudgetMonth(c, '2026-05', 150);
+  assert.equal(B.budgetFor(c, '2026-05'), 150);
+  assert.equal(B.budgetFor(c, '2026-06'), 100);
+  B.setBudgetMonth(c, '2026-05', 100);
+  assert.equal(c.budgetMonths, undefined);
+  B.setBudgetMonth(c, '2026-08', 90);
+  B.setBudgetFrom(c, '2026-06', 200, '2026-01');
+  assert.deepEqual(c.budgetPlan, [{ from: '2026-06', amount: 200 }]);
+  assert.equal(c.budgetMonths, undefined);
+  assert.equal(B.budgetFor(c, '2026-05'), 100);
+  assert.equal(B.budgetFor(c, '2027-01'), 200);
+  B.setBudgetFrom(c, '2026-06', 100, '2026-01');
+  assert.equal(c.budgetPlan, undefined);
+  B.setBudgetFrom(c, '2026-01', 80, '2026-01');
+  assert.equal(c.budget, 80);
+  const merged = B.mergeBudgets(
+    { budget: 10, budgetPlan: [{ from: '2026-03', amount: 20 }] },
+    { budget: 5, budgetMonths: { '2026-02': 7 } },
+  );
+  assert.equal(B.budgetFor(merged, '2026-01'), 15);
+  assert.equal(B.budgetFor(merged, '2026-02'), 17);
+  assert.equal(B.budgetFor(merged, '2026-03'), 25);
+  assert.deepEqual(B.budgetAmounts(merged), [15, 25, 17]);
+});

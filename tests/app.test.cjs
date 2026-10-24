@@ -76,7 +76,7 @@ function harness() {
   let source = fs.readFileSync(path.join(__dirname, '../app.js'), 'utf8');
   source = source.replace(
     /if\s*\(state\.sampleProfile[\s\S]*?else render\(\);\s*\}\)\(\);\s*$/,
-    'globalThis.api={get:()=>state,setSpendingExpanded:value=>{spendingExpanded=value;render();},showDebtHover,hideDebtHover,applyDebtPlan,addSampleDebtPayments,updateDebtBalance,saveDebtBalance,updateAccountBalance,saveAccountBalance,debtRecurring,pauseRecurring,skipPayment,findPayment,mutate,empty,sample,cleanSamples,validateImport,editor,saveRecord,deleteRecord,removeRecord,commit,renderScreen:s=>{screen=s;render();},render};render();})();',
+    'globalThis.api={get:()=>state,setDashMode:m=>{dashMode=m;render();},openBudgetGroup:id=>{openBudgetGroups.add(id);render();},setSpendingExpanded:value=>{spendingExpanded=value;render();},showDebtHover,hideDebtHover,applyDebtPlan,addSampleDebtPayments,updateDebtBalance,saveDebtBalance,updateAccountBalance,saveAccountBalance,debtRecurring,pauseRecurring,skipPayment,findPayment,mutate,empty,sample,cleanSamples,validateImport,editor,saveRecord,deleteRecord,removeRecord,commit,renderScreen:s=>{screen=s;render();},render};render();})();',
   );
   vm.runInContext(source, ctx);
   return {
@@ -245,7 +245,13 @@ test('Income monthly budget saves, displays progress and never flags higher inco
   const h = harness();
   h.api.sample('Jessica');
   save(h, 'category', 'Income-0', { name: 'Income', groupId: 'group-income', budget: '3000' });
-  assert.equal(h.api.get().categories.find((c) => c.id === 'Income-0').budget, 3000);
+  assert.equal(
+    B.budgetFor(
+      h.api.get().categories.find((c) => c.id === 'Income-0'),
+      B.today().slice(0, 7),
+    ),
+    3000,
+  );
   h.api.renderScreen('Dashboard');
   const html = h.node('#main').innerHTML;
   const row = html.match(
@@ -1329,4 +1335,73 @@ test('Hover positions a marker on the line and anchors the tooltip near that poi
   h.api.hideDebtHover(plot);
   assert.equal(tooltip.hidden, true);
   assert.equal(attrs.visibility, 'hidden');
+});
+test('Dashboard edits one month of a budget and applies it to following months', () => {
+  const h = harness();
+  h.api.sample('Jessica');
+  const month = h.api.get().month,
+    next = B.monthShift(month, 1),
+    id = h.api.get().categories.find((c) => c.groupId === 'group-food' && !c.hidden).id,
+    before = B.budgetFor(
+      h.api.get().categories.find((c) => c.id === id),
+      month,
+    );
+  h.api.mutate((n) =>
+    B.setBudgetMonth(
+      n.categories.find((c) => c.id === id),
+      n.month,
+      777,
+    ),
+  );
+  h.api.openBudgetGroup('group-food');
+  let html = h.node('#main').innerHTML;
+  assert.ok(html.includes(`class="budget-input is-own" data-month-budget="${id}" value="777"`));
+  assert.ok(html.includes('data-action="budget-apply"'));
+  assert.ok(!html.includes('Recent transactions'));
+  assert.ok(html.includes('<th>Difference</th>'));
+  const cat = () => h.api.get().categories.find((c) => c.id === id);
+  assert.equal(B.budgetFor(cat(), next), before);
+  h.api.mutate((n) =>
+    B.setBudgetFrom(
+      n.categories.find((c) => c.id === id),
+      month,
+      777,
+      n.budgetStart.slice(0, 7),
+    ),
+  );
+  assert.equal(B.budgetFor(cat(), next), 777);
+  assert.equal(B.budgetFor(cat(), B.monthShift(month, -1)), before);
+  assert.ok(!h.node('#main').innerHTML.includes('data-action="budget-apply"'));
+});
+test('Year dashboard sums the months and shows read-only yearly budgets', () => {
+  const h = harness();
+  h.api.sample('Jessica');
+  h.api.setDashMode('Year');
+  const s = h.api.get(),
+    year = s.month.slice(0, 4),
+    months = Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`),
+    income = B.sum(months, (m) => B.summary(s, m).income),
+    html = h.node('#main').innerHTML;
+  assert.ok(html.includes('class="year-chart"'));
+  assert.ok(html.includes('data-action="dash-year"'));
+  assert.ok(
+    html.includes(
+      `<strong class="stat-value">$${income.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+    ),
+  );
+  assert.ok(!html.includes('data-month-budget'));
+  assert.ok(!html.includes('Upcoming Bills'));
+});
+test('Imported per-month budgets are validated', () => {
+  const h = harness();
+  const data = JSON.parse(JSON.stringify(h.api.get())),
+    c = data.categories[0];
+  c.budgetPlan = [{ from: '2026-03', amount: 50 }];
+  c.budgetMonths = { '2026-04': 10 };
+  h.api.validateImport(JSON.parse(JSON.stringify(data)));
+  c.budgetPlan = [{ from: '2026-13', amount: 50 }];
+  assert.throws(() => h.api.validateImport(JSON.parse(JSON.stringify(data))));
+  c.budgetPlan = undefined;
+  c.budgetMonths = { '2026-04': -1 };
+  assert.throws(() => h.api.validateImport(JSON.parse(JSON.stringify(data))));
 });

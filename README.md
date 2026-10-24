@@ -17,7 +17,7 @@ A standalone budgeting app that runs entirely in the browser. There is nothing t
 
 ## Screens
 
-- **Dashboard:** income, expenses, left to spend and savings rate for the selected month; Expected vs Actual; spending breakdown; budget progress by group; upcoming bills; recent transactions.
+- **Dashboard:** a Month / Year switch. Month shows income, expenses, left to spend and savings rate, Expected vs Actual with the difference, the spending breakdown, upcoming bills and group budgets that can be edited for that month. Year shows the same totals for the calendar year, income vs expenses by month (click a month to open it), the yearly spending breakdown and yearly group budgets.
 - **Transactions:** one journal for income, expenses and transfers. Filter by month, category, account and type, or search by name and notes. Choosing "—" clears a filter. Only saved transactions appear here; a recurring payment shows up once it is marked Paid.
 - **Recurring:** create and edit schedules. The Payment Schedule tab lists the occurrences for the selected month.
 - **Bill Calendar:** recurring payments and income only, including occurrences that were already paid. One-off transactions stay in the journal. Click an entry to open it; Paid / Received is always set by hand. Unpaid entries past their date are highlighted. Up to 1000 px wide, entries show a one-line name and a whole amount (for example $1,800); the status is shown by colour and the paid check.
@@ -34,12 +34,12 @@ Any entry opened from Upcoming, the calendar or a list uses the same form, with 
 
 **Budget start date** limits Dashboard totals. Account history before that date is kept and still counts toward balances.
 
-**Categories.** Income and Expenses are shown as one continuous list, with group headings above their subcategories. Each subcategory has a Monthly budget field that saves on change. The Dashboard budget for a group is the sum of its subcategories, including hidden ones. Categories can be renamed, hidden, shown again, or deleted.
+**Categories.** Income and Expenses are shown as one continuous list, with group headings above their subcategories. Each subcategory has a Monthly budget field that saves on change and applies from the current month on; earlier months keep their budgets. The Dashboard budget for a group is the sum of its subcategories, including hidden ones. Categories can be renamed, hidden, shown again, or deleted.
 
 **Deleting categories:**
 
 - Deleting a group moves its subcategories, budgets and links into another group of the same type.
-- Deleting a subcategory that is in use moves its saved entries and recurring schedules to another subcategory of the same type and adds its monthly budget to the destination. A new destination can be created in the confirmation dialog.
+- Deleting a subcategory that is in use moves its saved entries and recurring schedules to another subcategory of the same type and adds its budget to the destination month by month. A new destination can be created in the confirmation dialog.
 - An unused subcategory can be deleted directly; its budget is removed.
 - Amounts, dates, paid status and account balances never change during reassignment.
 
@@ -117,7 +117,8 @@ Each debt has a Name, Type, Starting balance, Start date, APR, Minimum payment, 
 - **Account balance** = opening balance + balance adjustments + received income − paid expenses ± transfers for that account. The app never makes real bank payments.
 - **Left to spend** = actual income − actual expenses.
 - **Savings rate** = (paid expenses linked to a savings goal + transfers to goals) ÷ actual income. Withdrawals do not reduce it.
-- Category budgets apply to every month. Overspending is measured against Actual.
+- A category budget has a base amount and can change from a given month on. On the Dashboard each month's budget can also be changed for that month only; **Apply to following months** carries those amounts into the next months and replaces later changes. Months before the selected one never change.
+- A year's group budget is the sum of its monthly budgets from the budget start date. Overspending is measured against Actual.
 - **Goal saved amount** = starting saved amount + paid expenses linked to the goal + transfers to the goal − withdrawals. The target date is optional. With a date, the monthly amount needed divides what is left by the number of calendar months until that date, including the current month. A goal shows **On track** or **Behind** by comparing that amount with its active recurring contributions (converted to a monthly amount); without a recurring contribution no status is shown. Goals past their date are marked **Overdue**, and reached goals are listed last.
 - **Net Worth** = account balances + money held in goals − current debt balances. Money held in goals is everything moved into them (transfers and older linked expenses) minus withdrawals; the starting saved amount is assumed to sit in an account already. Record loans and credit cards only under Debt so they are not subtracted twice.
 - Older debt payments recorded as expenses with a principal amount are still read, so upgrading does not change past balances.

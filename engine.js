@@ -293,6 +293,69 @@
       rate: income ? (savings / income) * 100 : 0,
     };
   }
+  // Category budgets: a base amount, step changes from a month on, and one-month overrides.
+  function planBudget(c, month) {
+    let amount = c.budget || 0;
+    for (const p of c.budgetPlan || []) if (p.from <= month) amount = p.amount;
+    return amount;
+  }
+  function budgetFor(c, month) {
+    const own = c.budgetMonths?.[month];
+    return own === undefined ? planBudget(c, month) : own;
+  }
+  function tidyBudget(c) {
+    if (!c.budgetPlan?.length) delete c.budgetPlan;
+    if (!Object.keys(c.budgetMonths || {}).length) delete c.budgetMonths;
+    return c;
+  }
+  // Changes one month only; matching the planned amount clears the override.
+  function setBudgetMonth(c, month, amount) {
+    const months = { ...(c.budgetMonths || {}) };
+    if (round(amount) === planBudget(c, month)) delete months[month];
+    else months[month] = round(amount);
+    c.budgetMonths = months;
+    return tidyBudget(c);
+  }
+  // Sets the amount from `month` on; earlier months keep their budgets.
+  function setBudgetFrom(c, month, amount, firstMonth = month) {
+    const plan = (c.budgetPlan || []).filter((p) => p.from < month),
+      months = Object.fromEntries(Object.entries(c.budgetMonths || {}).filter(([m]) => m < month));
+    if (month <= firstMonth) {
+      c.budget = round(amount);
+      plan.length = 0;
+    } else if (
+      planBudget({ budget: c.budget, budgetPlan: plan }, monthShift(month, -1)) !== round(amount)
+    )
+      plan.push({ from: month, amount: round(amount) });
+    c.budgetPlan = plan;
+    c.budgetMonths = months;
+    return tidyBudget(c);
+  }
+  // Budget fields of two categories added together month by month.
+  function mergeBudgets(a, b) {
+    const froms = [
+        ...new Set([...(a.budgetPlan || []), ...(b.budgetPlan || [])].map((p) => p.from)),
+      ],
+      months = new Set([
+        ...Object.keys(a.budgetMonths || {}),
+        ...Object.keys(b.budgetMonths || {}),
+      ]);
+    return tidyBudget({
+      budget: round((a.budget || 0) + (b.budget || 0)),
+      budgetPlan: froms.sort().map((from) => ({
+        from,
+        amount: round(planBudget(a, from) + planBudget(b, from)),
+      })),
+      budgetMonths: Object.fromEntries(
+        [...months].sort().map((m) => [m, round(budgetFor(a, m) + budgetFor(b, m))]),
+      ),
+    });
+  }
+  const budgetAmounts = (c) => [
+    c.budget || 0,
+    ...(c.budgetPlan || []).map((p) => p.amount),
+    ...Object.values(c.budgetMonths || {}),
+  ];
   function debtPriority(a, b, strategy) {
     return strategy === 'Avalanche'
       ? b.apr - a.apr || a.balance - b.balance
@@ -519,6 +582,12 @@
     goalPlan,
     totalAssets,
     summary,
+    planBudget,
+    budgetFor,
+    setBudgetMonth,
+    setBudgetFrom,
+    mergeBudgets,
+    budgetAmounts,
     payoff,
   };
   if (typeof module !== 'undefined') module.exports = api;

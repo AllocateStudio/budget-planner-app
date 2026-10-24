@@ -193,7 +193,9 @@
     blocked = true;
   }
   let editingBudget = null,
-    spendingExpanded = false;
+    spendingExpanded = false,
+    dashMode = 'Month';
+  const openBudgetGroups = new Set();
   let screen = 'Dashboard',
     tab = 'Recurring',
     filters = { month: state.month, category: '', account: '', type: '', search: '' };
@@ -277,7 +279,7 @@
     return false;
   };
   function heading(title, subtitle = '', actions = '') {
-    return `<div class="budget-heading"><div class="stats-head"><h1>${title}</h1>${subtitle ? `<p class="muted">${subtitle}</p>` : ''}</div><div class="heading-actions">${['Dashboard', 'Transactions', 'Recurring', 'Bill Calendar'].includes(screen) ? renderMonthPicker({ value: state.month, id: 'budget-month', locale: 'en-US' }) : ''}${actions}</div></div>`;
+    return `<div class="budget-heading"><div class="stats-head"><h1>${title}</h1>${subtitle ? `<p class="muted">${subtitle}</p>` : ''}</div><div class="heading-actions">${screen === 'Dashboard' && dashMode === 'Year' ? `<div class="week-nav-picker year-picker"><button type="button" class="mp-step" data-action="dash-year" data-id="-1" aria-label="Previous year">‹</button><span class="mp-trigger">${state.month.slice(0, 4)}</span><button type="button" class="mp-step" data-action="dash-year" data-id="1" aria-label="Next year">›</button></div>` : ['Dashboard', 'Transactions', 'Recurring', 'Bill Calendar'].includes(screen) ? renderMonthPicker({ value: state.month, id: 'budget-month', locale: 'en-US' }) : ''}${actions}</div></div>`;
   }
   function stat(label, value, note, tone) {
     return `<div class="stat-tile ${tone}"><span class="stat-label">${label}</span><strong class="stat-value">${value}</strong><small>${note}</small></div>`;
@@ -317,14 +319,47 @@
   function welcome() {
     return `<section class="welcome"><div><h2>Quick setup</h2><p>1. Add your accounts and opening balances in Setup.<br>2. Set monthly budgets for each category.<br>3. Record Actual amounts and mark entries Paid or Received.</p></div><div class="welcome-actions">${btn('Start setup', 'setup', '', 'btn primary')}${btn('Got it', 'dismiss')}${btn('Load sample data', 'sample')}</div></section>`;
   }
-  function dashboard() {
-    const s = B.summary(state, state.month),
-      end = B.date(B.today());
-    end.setFullYear(end.getFullYear() + 1);
-    const upcoming = B.generated(state, B.iso(end))
-      .filter((t) => t.type !== 'Income' && t.date >= B.today())
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .slice(0, 5);
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  const firstBudgetMonth = () => (state.budgetStart || '').slice(0, 7),
+    thisMonth = () => B.today().slice(0, 7);
+  // Budget months of the selected year that fall inside the budget.
+  const budgetMonthsOf = (year) =>
+    monthNames
+      .map((_, i) => `${year}-${String(i + 1).padStart(2, '0')}`)
+      .filter((m) => m >= firstBudgetMonth());
+  function yearSummary(year) {
+    const months = monthNames.map((_, i) => ({
+      month: `${year}-${String(i + 1).padStart(2, '0')}`,
+      ...B.summary(state, `${year}-${String(i + 1).padStart(2, '0')}`),
+    }));
+    const add = (key) => total(months, (m) => m[key]),
+      income = add('income'),
+      savings = add('savings');
+    return {
+      months,
+      rows: months.flatMap((m) => m.rows),
+      income,
+      expense: add('expense'),
+      expectedIncome: add('expectedIncome'),
+      expectedExpense: add('expectedExpense'),
+      left: add('left'),
+      rate: income ? (savings / income) * 100 : 0,
+    };
+  }
+  function spendingPanel(s) {
     const spent = state.categories
       .filter((c) => c.type !== 'Income')
       .map((c) => ({
@@ -352,59 +387,110 @@
         return `${colours[i % colours.length]} ${from}% ${offset}%`;
       })
       .join(',');
-    const budgetCategories = state.groups.map((g) => ({
-      ...g,
-      budget: total(
-        state.categories.filter((c) => c.groupId === g.id),
-        (c) => c.budget || 0,
-      ),
-      amount: total(
-        s.rows.filter(
-          (t) =>
-            t.paid &&
-            t.type === g.type &&
-            state.categories.find((c) => c.id === t.categoryId)?.groupId === g.id,
+    return panel(
+      'Spending breakdown',
+      `<div class="donut-layout"><div class="donut" role="img" aria-label="Total actual expenses ${esc(state.currency)}${s.expense}" style="background:${segments.length ? 'conic-gradient(' + gradient + ')' : '#dededb'}"><div><small>Actual expenses</small><b>${money(s.expense)}</b></div></div><ul class="chart-legend" id="spending-legend">${segments.map((c, i) => `<li><i style="background:${colours[i % colours.length]}"></i><span>${esc(c.name)}</span><b>${money(c.amount)}</b></li>`).join('') || '<li>No expenses yet.</li>'}</ul></div>${allSegments.length > 8 ? `<div class="breakdown-actions"><button type="button" class="textbtn" data-action="toggle-spending" aria-expanded="${spendingExpanded}" aria-controls="spending-legend">${spendingExpanded ? 'Show less' : `Show all ${allSegments.length} categories`}</button></div>` : ''}`,
+    );
+  }
+  function expectedPanel(s) {
+    const line = (label, expected, actual) =>
+      `<tr><th>${label}</th><td>${money(expected)}</td><td>${money(actual)}</td><td>${B.round(actual - expected) > 0 ? '+' : ''}${money(actual - expected)}</td></tr>`;
+    return panel(
+      'Expected vs Actual',
+      `<div class="table-wrap"><table class="expected-table"><thead><tr><th></th><th>Expected</th><th>Actual</th><th>Difference</th></tr></thead><tbody>${line('Income', s.expectedIncome, s.income)}${line('Expenses', s.expectedExpense, s.expense)}${line('Left to spend', s.expectedIncome - s.expectedExpense, s.left)}</tbody></table></div>`,
+    );
+  }
+  // Group budgets for the given months; a single month can be edited per category.
+  function budgetPanel(rowsList, months, editable) {
+    const month = months[0],
+      spentIn = (ids, type) =>
+        total(
+          rowsList.filter((t) => t.paid && t.type === type && ids.has(t.categoryId)),
+          (t) => t.actual,
         ),
-        (t) => t.actual,
-      ),
-    }));
-    const budgets = budgetCategories
-      .filter((g) => g.budget > 0 || g.amount > 0)
+      budgetOf = (c) => total(months, (m) => B.budgetFor(c, m)),
+      overrides = editable && state.categories.some((c) => c.budgetMonths?.[month] !== undefined);
+    const groups = state.groups
       .map((g) => {
-        const over = g.type === 'Expense' && g.budget > 0 && g.amount > g.budget;
-        return `<div class="budget-line ${over ? 'over-budget' : ''}">${edit('group', g.id, `<span>${esc(g.name)}</span><b>${money(g.amount)} <small>/ ${g.budget ? money(g.budget) : g.type === 'Income' ? 'No target' : 'No limit'}</small></b>`, 'budget-label')}${g.budget ? bar(g.amount, g.budget) : ''}${over ? `<small class="terracotta">Over budget by ${money(g.amount - g.budget)}</small>` : ''}</div>`;
+        const cats = state.categories
+          .filter((c) => c.groupId === g.id)
+          .map((c) => ({ ...c, planned: budgetOf(c), spent: spentIn(new Set([c.id]), g.type) }))
+          .filter((c) => !c.hidden || c.planned > 0 || c.spent > 0);
+        return {
+          ...g,
+          cats,
+          budget: total(cats, (c) => c.planned),
+          amount: total(cats, (c) => c.spent),
+        };
+      })
+      .filter((g) => g.cats.length && (editable || g.budget > 0 || g.amount > 0));
+    const body = groups
+      .map((g) => {
+        const open = openBudgetGroups.has(g.id),
+          over = g.type === 'Expense' && g.budget > 0 && g.amount > g.budget;
+        const cats = open
+          ? `<div class="budget-cats">${g.cats
+              .map((c) => {
+                const own = editable && c.budgetMonths?.[month] !== undefined,
+                  catOver = g.type === 'Expense' && c.planned > 0 && c.spent > c.planned;
+                return `<div class="budget-cat ${catOver ? 'over-budget' : ''}"><span>${esc(c.name)}</span><b>${money(c.spent)}</b>${editable ? `<input type="number" min="0" max="1000000000" step="0.01" class="budget-input ${own ? 'is-own' : ''}" data-month-budget="${esc(c.id)}" value="${c.planned}" aria-label="${esc(c.name)} budget">` : `<b class="budget-cat-plan">${money(c.planned)}</b>`}</div>`;
+              })
+              .join('')}</div>`
+          : '';
+        return `<div class="budget-line budget-group ${over ? 'over-budget' : ''} ${open ? 'is-open' : ''}"><button type="button" class="budget-label" data-action="toggle-budget-group" data-id="${esc(g.id)}" aria-expanded="${open}"><span><i class="budget-chevron" aria-hidden="true">›</i>${esc(g.name)}</span><b>${money(g.amount)} <small>/ ${g.budget ? money(g.budget) : g.type === 'Income' ? 'No target' : 'No limit'}</small></b></button>${g.budget ? bar(g.amount, g.budget) : ''}${cats}</div>`;
       })
       .join('');
+    return panel(
+      'Group budgets',
+      body || '<p class="empty-copy">Add categories in Setup.</p>',
+      overrides ? btn('Apply to following months', 'budget-apply', month, 'btn') : '',
+    );
+  }
+  function yearChart(y) {
+    const top = Math.max(1, ...y.months.map((m) => Math.max(m.income, m.expense)));
+    return panel(
+      'Income vs Expenses',
+      `<div class="year-chart">${y.months
+        .map(
+          (m, i) =>
+            `<button type="button" class="year-col ${m.month === state.month ? 'is-current' : ''}" data-action="dash-month" data-id="${m.month}" aria-label="${monthNames[i]}: income ${money(m.income)}, expenses ${money(m.expense)}" title="Income ${money(m.income)} · Expenses ${money(m.expense)}"><span class="year-bars"><i class="year-in" style="height:${(m.income / top) * 100}%"></i><i class="year-out" style="height:${(m.expense / top) * 100}%"></i></span><span class="year-label">${monthNames[i]}</span></button>`,
+        )
+        .join(
+          '',
+        )}</div><div class="year-legend"><span><i class="year-in"></i>Income</span><span><i class="year-out"></i>Expenses</span></div>`,
+    );
+  }
+  function dashboard() {
+    const year = state.month.slice(0, 4),
+      s = dashMode === 'Year' ? yearSummary(year) : B.summary(state, state.month);
+    const tiles = `<div class="stats-strip">${stat('Income', money(s.income), 'Expected ' + money(s.expectedIncome), 'tone-mint')}${stat('Expenses', money(s.expense), 'Expected ' + money(s.expectedExpense), 'tone-blush')}${stat('Left to spend', money(s.left), 'Expected ' + money(s.expectedIncome - s.expectedExpense), 'tone-sky')}${stat('Savings rate', `${s.rate.toFixed(1)}%`, '', 'tone-ink')}</div>`;
+    let body;
+    if (dashMode === 'Year')
+      body =
+        expectedPanel(s) +
+        yearChart(s) +
+        spendingPanel(s) +
+        budgetPanel(s.rows, budgetMonthsOf(year), false);
+    else {
+      const end = B.date(B.today());
+      end.setFullYear(end.getFullYear() + 1);
+      const upcoming = B.generated(state, B.iso(end))
+        .filter((t) => t.type !== 'Income' && t.date >= B.today())
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .slice(0, 5);
+      body =
+        expectedPanel(s) +
+        `<div class="dashboard-grid">${spendingPanel(s)}${panel('Upcoming Bills', rows(upcoming, 'No upcoming bills.'))}</div>` +
+        budgetPanel(s.rows, [state.month], true);
+    }
     return (
       '<div class="dashboard-view">' +
       heading('Dashboard', '', edit('transaction', '', '+ Add transaction', 'btn primary')) +
+      `<div class="screen-switch">${['Month', 'Year'].map((t) => btn(t, 'dash-mode', t, 'switch-pill ' + (dashMode === t ? 'active' : ''))).join('')}</div>` +
       (!state.onboarded ? welcome() : '') +
-      `<div class="stats-strip">${stat('Income', money(s.income), 'Expected ' + money(s.expectedIncome), 'tone-mint')}${stat('Expenses', money(s.expense), 'Expected ' + money(s.expectedExpense), 'tone-blush')}${stat('Left to spend', money(s.left), 'Expected ' + money(s.expectedIncome - s.expectedExpense), 'tone-sky')}${stat('Savings rate', `${s.rate.toFixed(1)}%`, 'Savings goal contributions ÷ actual income', 'tone-ink')}</div><div class="dashboard-grid">` +
-      panel(
-        'Expected vs Actual',
-        `<div class="table-wrap"><table><thead><tr><th></th><th>Expected</th><th>Actual</th></tr></thead><tbody><tr><th>Income</th><td>${money(s.expectedIncome)}</td><td>${money(s.income)}</td></tr><tr><th>Expenses</th><td>${money(s.expectedExpense)}</td><td>${money(s.expense)}</td></tr><tr><th>Left to spend</th><td>${money(s.expectedIncome - s.expectedExpense)}</td><td>${money(s.left)}</td></tr></tbody></table></div>`,
-      ) +
-      panel(
-        'Spending breakdown',
-        `<div class="donut-layout"><div class="donut" role="img" aria-label="Total actual expenses ${esc(state.currency)}${s.expense}" style="background:${segments.length ? 'conic-gradient(' + gradient + ')' : '#dededb'}"><div><small>Actual expenses</small><b>${money(s.expense)}</b></div></div><ul class="chart-legend" id="spending-legend">${segments.map((c, i) => `<li><i style="background:${colours[i % colours.length]}"></i><span>${esc(c.name)}</span><b>${money(c.amount)}</b></li>`).join('') || '<li>No expenses yet.</li>'}</ul></div>${allSegments.length > 8 ? `<div class="breakdown-actions"><button type="button" class="textbtn" data-action="toggle-spending" aria-expanded="${spendingExpanded}" aria-controls="spending-legend">${spendingExpanded ? 'Show less' : `Show all ${allSegments.length} categories`}</button></div>` : ''}`,
-      ) +
-      panel('Upcoming Bills', rows(upcoming, 'No upcoming bills.')) +
-      panel(
-        'Group budgets',
-        budgets || '<p class="empty-copy">Set monthly group budgets in Setup.</p>',
-        btn('Manage', 'setup', '', 'textbtn'),
-      ) +
-      panel(
-        'Recent transactions',
-        rows(
-          s.rows
-            .filter((t) => t.paid)
-            .reverse()
-            .slice(0, 5),
-        ),
-        btn('View all', 'transactions', '', 'textbtn'),
-      ) +
-      '</div></div>'
+      tiles +
+      body +
+      '</div>'
     );
   }
   function options(list, value, blank = false) {
@@ -1076,7 +1162,7 @@
   }
   function groupPanel(g) {
     const cats = state.categories.filter((c) => c.groupId === g.id);
-    return `<section class="setup-group"><div class="setup-group-head"><h3>${edit('group', g.id, esc(g.name), 'editable-heading')}</h3>${edit('category', '', '+ Add', 'textbtn').replace('data-edit="category"', `data-edit="category" data-group="${esc(g.id)}"`)}</div><div class="setup-categories">${cats.map((c) => `<div class="setup-category ${c.hidden ? 'is-hidden' : ''}">${edit('category', c.id, esc(c.name), 'table-link')}<div class="subcategory-budget"><span>Monthly budget</span>${editingBudget === c.id ? `<input id="active-budget-input" type="number" min="0" max="1000000000" step="0.01" data-category-budget="${esc(c.id)}" value="${c.budget || 0}" aria-label="${esc(c.name)} monthly budget">` : `<button type="button" class="budget-value" data-action="edit-budget" data-id="${esc(c.id)}" aria-label="Edit ${esc(c.name)} monthly budget">${money(c.budget)}</button>`}</div>${edit('category', c.id, 'Edit', 'textbtn')}</div>`).join('')}</div></section>`;
+    return `<section class="setup-group"><div class="setup-group-head"><h3>${edit('group', g.id, esc(g.name), 'editable-heading')}</h3>${edit('category', '', '+ Add', 'textbtn').replace('data-edit="category"', `data-edit="category" data-group="${esc(g.id)}"`)}</div><div class="setup-categories">${cats.map((c) => `<div class="setup-category ${c.hidden ? 'is-hidden' : ''}">${edit('category', c.id, esc(c.name), 'table-link')}<div class="subcategory-budget"><span>Monthly budget</span>${editingBudget === c.id ? `<input id="active-budget-input" type="number" min="0" max="1000000000" step="0.01" data-category-budget="${esc(c.id)}" value="${B.budgetFor(c, thisMonth())}" aria-label="${esc(c.name)} monthly budget">` : `<button type="button" class="budget-value" data-action="edit-budget" data-id="${esc(c.id)}" aria-label="Edit ${esc(c.name)} monthly budget">${money(B.budgetFor(c, thisMonth()))}</button>`}</div>${edit('category', c.id, 'Edit', 'textbtn')}</div>`).join('')}</div></section>`;
   }
 
   function setupScreen() {
@@ -1705,14 +1791,16 @@
       fields =
         input('Category name', 'name', x.name || '', 'text', 'required maxlength="60"') +
         select('Group', 'groupId', state.groups, x.groupId || groupId('Other')) +
-        num('Monthly budget', 'budget', x.budget || 0) +
+        num('Monthly budget', 'budget', B.budgetFor(x, thisMonth())) +
         `<label class="check-label"><input name="hidden" type="checkbox" ${x.hidden ? 'checked' : ''}> Hidden</label>`;
     else if (kind === 'group')
       fields =
         input('Group name', 'name', x.name || '', 'text', 'required maxlength="60"') +
         `<div class="full">${state.categories
           .filter((c) => c.groupId === x.id)
-          .map((c) => edit('category', c.id, `${esc(c.name)} <b>${money(c.budget)}</b>`))
+          .map((c) =>
+            edit('category', c.id, `${esc(c.name)} <b>${money(B.budgetFor(c, thisMonth()))}</b>`),
+          )
           .join('')}</div>`;
     else if (kind === 'debt')
       fields =
@@ -1797,10 +1885,14 @@
         groupId: group.id,
         type: group.type,
         hidden: data.has('hidden'),
-        budget: number('budget'),
       });
-      if (!Number.isFinite(x.budget) || x.budget < 0 || x.budget > 1e9)
+      const budget = number('budget');
+      if (!Number.isFinite(budget) || budget < 0 || budget > 1e9)
         throw Error('Enter a valid budget.');
+      // Budget edits apply from this month on, so earlier months keep their plan.
+      if (!id) x.budget = budget;
+      else if (budget !== B.budgetFor(x, thisMonth()))
+        B.setBudgetFrom(x, thisMonth(), budget, firstBudgetMonth());
       if (
         state.categories.some((c) => c.id !== id && c.name.toLowerCase() === x.name.toLowerCase())
       )
@@ -1946,7 +2038,7 @@
           throw Error('Choose where to move the linked records.');
         if (d.kind === 'category') {
           const target = created || d.targets.find((x) => x.id === targetId);
-          if (B.round((target.budget || 0) + (d.source.budget || 0)) > 1e9)
+          if (Math.max(...B.budgetAmounts(B.mergeBudgets(target, d.source))) > 1e9)
             throw Error('Combined budget is too large. Reduce it before moving.');
         }
       }
@@ -1964,7 +2056,9 @@
                 if (t.categoryId === d.id) t.categoryId = targetId;
               });
               const target = n.categories.find((c) => c.id === targetId);
-              target.budget = B.round((target.budget || 0) + (d.source.budget || 0));
+              delete target.budgetPlan;
+              delete target.budgetMonths;
+              Object.assign(target, B.mergeBudgets(target, d.source));
               // A merged budget is now user-managed, independent of demo cleanup.
               delete target.sampleBudget;
               delete target.beforeSampleBudget;
@@ -2429,6 +2523,22 @@
     )
       throw Error('Invalid preferences.');
     const finite = (v) => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 1e9,
+      monthKey = (m) => typeof m === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(m),
+      validBudgetPlan = (c) =>
+        (c.budgetPlan === undefined ||
+          (Array.isArray(c.budgetPlan) &&
+            c.budgetPlan.every(
+              (p, i) =>
+                p &&
+                monthKey(p.from) &&
+                finite(p.amount) &&
+                (!i || c.budgetPlan[i - 1].from < p.from),
+            ))) &&
+        (c.budgetMonths === undefined ||
+          (c.budgetMonths &&
+            typeof c.budgetMonths === 'object' &&
+            !Array.isArray(c.budgetMonths) &&
+            Object.entries(c.budgetMonths).every(([m, v]) => monthKey(m) && finite(v)))),
       validDate = (v) =>
         typeof v === 'string' &&
         /^(19|20|21)\d{2}-(0[1-9]|1[0-2])-\d{2}$/.test(v) &&
@@ -2466,6 +2576,7 @@
         !['Income', 'Expense'].includes(c.type) ||
         typeof c.hidden !== 'boolean' ||
         !finite(c.budget) ||
+        !validBudgetPlan(c) ||
         !s.groups.some((g) => g.id === c.groupId && g.type === c.type)
       )
         throw Error('Invalid category.');
@@ -2598,13 +2709,12 @@
           ) || originals[0];
         target.name = 'Income';
         const ids = new Set(originals.filter((c) => c.id !== target.id).map((c) => c.id));
-        target.budget = B.round(
-          (target.budget || 0) +
-            B.sum(
-              originals.filter((c) => ids.has(c.id)),
-              (c) => c.budget || 0,
-            ),
-        );
+        const merged = originals
+          .filter((c) => ids.has(c.id))
+          .reduce((sum, c) => B.mergeBudgets(sum, c), target);
+        delete target.budgetPlan;
+        delete target.budgetMonths;
+        Object.assign(target, merged);
         [...s.transactions, ...s.recurring, ...s.scheduled].forEach((t) => {
           if (ids.has(t.categoryId)) t.categoryId = target.id;
         });
@@ -2628,7 +2738,28 @@
     }
     const a = e.dataset.action,
       id = e.dataset.id;
-    if (a === 'toggle-spending') {
+    if (a === 'dash-mode') {
+      dashMode = id;
+      render();
+    } else if (a === 'dash-year') {
+      const m = B.monthShift(state.month, Number(id) * 12);
+      filters.month = m;
+      mutate((n) => (n.month = m));
+    } else if (a === 'dash-month') {
+      dashMode = 'Month';
+      filters.month = id;
+      mutate((n) => (n.month = id));
+    } else if (a === 'toggle-budget-group') {
+      if (!openBudgetGroups.delete(id)) openBudgetGroups.add(id);
+      render();
+    } else if (a === 'budget-apply')
+      mutate((n) =>
+        n.categories.forEach((c) => {
+          const own = c.budgetMonths?.[id];
+          if (own !== undefined) B.setBudgetFrom(c, id, own, firstBudgetMonth());
+        }),
+      );
+    else if (a === 'toggle-spending') {
       spendingExpanded = !spendingExpanded;
       render();
       $('[data-action="toggle-spending"]')?.focus();
@@ -2771,11 +2902,25 @@
       const m = e.value;
       filters.month = m;
       mutate((n) => (n.month = m));
+    } else if (e.dataset.monthBudget) {
+      const amount = Number(e.value),
+        id = e.dataset.monthBudget,
+        c = state.categories.find((c) => c.id === id);
+      if (!e.value.trim() || !Number.isFinite(amount) || amount < 0 || amount > 1e9) {
+        toast('Enter a valid budget.');
+        e.value = c ? B.budgetFor(c, state.month) : 0;
+        return;
+      }
+      mutate((n) => {
+        const c = n.categories.find((c) => c.id === id);
+        if (c) B.setBudgetMonth(c, n.month, amount);
+      });
     } else if (e.dataset.categoryBudget) {
       const amount = Number(e.value);
       if (!e.value.trim() || !Number.isFinite(amount) || amount < 0 || amount > 1e9) {
         toast('Enter a valid monthly budget.');
-        e.value = state.categories.find((c) => c.id === e.dataset.categoryBudget)?.budget || 0;
+        const c = state.categories.find((c) => c.id === e.dataset.categoryBudget);
+        e.value = c ? B.budgetFor(c, thisMonth()) : 0;
         return;
       }
       const id = e.dataset.categoryBudget;
@@ -2783,7 +2928,8 @@
       if (
         !mutate((n) => {
           const c = n.categories.find((c) => c.id === id);
-          if (c) c.budget = B.round(amount);
+          if (c && B.round(amount) !== B.budgetFor(c, thisMonth()))
+            B.setBudgetFrom(c, thisMonth(), amount, firstBudgetMonth());
         })
       ) {
         editingBudget = id;
@@ -2889,6 +3035,11 @@
     if (hits[index]) showDebtHover(hits[index]);
   });
   document.addEventListener('keydown', (event) => {
+    if (event.target.matches?.('[data-month-budget]') && event.key === 'Enter') {
+      event.preventDefault();
+      event.target.blur();
+      return;
+    }
     if (!event.target.matches?.('[data-category-budget]')) return;
     if (event.key === 'Enter') {
       event.preventDefault();
@@ -2908,7 +3059,8 @@
         Number.isFinite(amount) &&
         amount >= 0 &&
         amount <= 1e9 &&
-        B.round(amount) === state.categories.find((c) => c.id === editingBudget)?.budget
+        B.round(amount) ===
+          B.budgetFor(state.categories.find((c) => c.id === editingBudget) || {}, thisMonth())
       ) {
         editingBudget = null;
         render();
