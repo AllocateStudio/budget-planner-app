@@ -434,10 +434,6 @@ td:not(:first-child) {
 .net-worth strong {
   font-size: 24px;
 }
-.goal-detail {
-  font-weight: 600;
-  font-size: 14px;
-}
 .button-row {
   display: flex;
   gap: 10px;
@@ -1513,7 +1509,7 @@ td:not(:first-child) {
   }
 }
 
-/* Savings: two goal cards per row, status pill beside the type, actions at the bottom. */
+/* Savings: two goal cards per row, laid out like debt and account cards. */
 .goal-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1523,12 +1519,6 @@ td:not(:first-child) {
   margin: 0;
   display: flex;
   flex-direction: column;
-}
-.goal-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
 }
 .goal-status {
   border-radius: 6px;
@@ -1542,31 +1532,9 @@ td:not(:first-child) {
 .goal-status.is-warn {
   background: var(--blush);
 }
-.goal-detail {
-  margin: 12px 0 0;
-}
-.goal-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: auto;
-  padding-top: 18px;
-}
-.goal-actions .btn {
-  flex: 1 1 auto;
-  white-space: nowrap;
-}
 @media (max-width: 800px) {
   .goal-grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-}
-/* Narrow cards: three equal buttons on one row. */
-@media (max-width: 1000px) {
-  .goal-actions .btn {
-    flex: 1 1 0;
-    padding: 9px 10px;
-    font-size: 13px;
   }
 }
 
@@ -2362,5 +2330,65 @@ td .transaction-type-badge,
 @container (max-width: 479px) {
   .donut-layout {
     justify-content: center;
+  }
+}
+/* Goal cards reuse the debt card layout; the badge is mint like savings everywhere else. */
+.goal-badge {
+  margin-right: 8px;
+  background: var(--mint);
+}
+.goal-grid > .panel > .panel-head > .textbtn {
+  margin: -5px 0 0;
+}
+.goal-grid .goal-status {
+  display: inline-block;
+  margin-left: 10px;
+  vertical-align: 3px;
+  padding: 1px 7px;
+  font-size: 11px;
+  color: var(--ink);
+}
+.goal-status.is-muted {
+  background: var(--line);
+}
+.goal-grid .debt-card-footer {
+  flex-wrap: wrap;
+  row-gap: 4px;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 2px;
+}
+.goal-grid .progress,
+.goal-grid .meter {
+  margin: 14px 0 10px;
+}
+.goal-links {
+  display: flex;
+  gap: 14px;
+}
+.goal-links {
+  margin-left: auto;
+}
+.goal-links .textbtn,
+.goal-grid .debt-card-footer > span:first-child {
+  padding-right: 0;
+  white-space: nowrap;
+}
+/* Narrow goal cards (two per row on mid-size screens, or a phone): buttons go under the amount. */
+.goal-grid > .panel {
+  container-type: inline-size;
+}
+.goal-grid .large-value {
+  white-space: nowrap;
+}
+@container (max-width: 479px) {
+  .goal-grid .debt-card-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .goal-grid .debt-card-actions {
+    justify-content: stretch;
+  }
+  .goal-grid .debt-card-actions .btn {
+    flex: 1 1 0;
   }
 }

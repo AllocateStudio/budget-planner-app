@@ -934,6 +934,34 @@ test('Savings screen sums goals, shows status only against a plan and lists reac
   assert.ok(html.includes('goal-status is-warn">Behind'));
   assert.ok(html.includes('Edit recurring'));
 });
+test('Goal cards match debt cards and View history filters the journal to the goal', () => {
+  const h = harness();
+  h.api.sample('Jessica');
+  h.api.renderScreen('Savings');
+  const html = h.node('#main').innerHTML,
+    s = h.api.get(),
+    goal = s.goals.find((g) => B.goalPlan(s, g.id).planned > 0);
+  assert.ok(html.includes('class="debt-priority-badge goal-badge"'));
+  assert.ok(html.includes('class="debt-card-actions"'));
+  assert.ok(html.includes(' added this month</span>'));
+  assert.ok(html.includes(`data-action="goal-transactions" data-id="${goal.id}"`));
+  assert.ok(html.includes('goal-status is-good">On track'));
+  assert.ok(!html.includes('goal-actions'));
+  const button = { dataset: { action: 'goal-transactions', id: goal.id } };
+  h.fire('click', { target: { closest: (sel) => (sel === 'button' ? button : null) } });
+  const journal = h.node('#main').innerHTML;
+  assert.ok(journal.includes('<optgroup label="Goals">'));
+  assert.ok(journal.includes(`<option value="${goal.id}" selected>`));
+  const rows = (journal.match(/<tbody>([\s\S]*?)<\/tbody>/)[1].match(/<tr>/g) || []).length;
+  const expected = s.transactions.filter(
+    (t) =>
+      t.paid &&
+      (t.goalId === goal.id ||
+        (t.type === 'Transfer' && (t.toId === goal.id || t.fromId === goal.id))),
+  ).length;
+  assert.ok(expected > 0);
+  assert.equal(rows, expected);
+});
 test('Accounts reconcile with a statement and the screen sums accounts, goals and debt', () => {
   const h = harness();
   save(h, 'account', '', { name: 'Brokerage', kind: 'Investment', opening: '1000' });

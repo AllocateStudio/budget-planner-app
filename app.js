@@ -588,6 +588,12 @@
     );
   }
   function transactionScreen() {
+    // A deleted account or goal must not leave a filter the dropdown can no longer show.
+    if (
+      filters.account &&
+      ![...state.accounts, ...state.goals].some((x) => x.id === filters.account)
+    )
+      filters.account = '';
     let list = [...state.transactions]
       .filter((t) => t.paid)
       .sort((a, b) => b.date.localeCompare(a.date));
@@ -595,16 +601,19 @@
       (t) =>
         (!filters.month || t.date.startsWith(filters.month)) &&
         (!filters.category || t.categoryId === filters.category) &&
+        // The Account filter also lists goals: money moved in or out of the goal, or linked to it.
         (!filters.account ||
           t.accountId === filters.account ||
-          (t.type === 'Transfer' && t.toKind === 'account' && t.toId === filters.account)) &&
+          t.goalId === filters.account ||
+          (t.type === 'Transfer' &&
+            (t.toId === filters.account || t.fromId === filters.account))) &&
         (!filters.type || t.type === filters.type) &&
         (!filters.search ||
           `${t.name} ${t.notes || ''}`.toLowerCase().includes(filters.search.toLowerCase())),
     );
     return (
       heading('Transactions', '', edit('transaction', '', '+ Add transaction', 'btn primary')) +
-      `<section class="panel"><div class="filters"><label>Month<div class="month-filter"><input type="month" id="filter-month" value="${esc(filters.month)}">${btn('—', 'reset-month', '', 'icon-btn')}</div></label><label>Type<select data-filter="type">${options(['Income', 'Expense', 'Transfer'], filters.type, true)}</select></label><label>Category<select data-filter="category">${options(state.categories, filters.category, true)}</select></label><label>Account<select data-filter="account">${options(state.accounts, filters.account, true)}</select></label><label class="search-field">Search<input id="search" value="${esc(filters.search)}" placeholder="Name or note"></label></div><div class="table-wrap"><table><thead><tr><th>Entry</th><th>Date</th><th>Category / Account</th><th>Expected</th><th>Actual</th><th>Status</th></tr></thead><tbody>${list.map((t) => `<tr><td>${edit('transaction', t.id, esc(t.name), 'table-link')}<small class="transaction-type-badge type-${esc(t.type.toLowerCase())}">${esc(t.type)}</small></td><td>${esc(t.date)}</td><td>${entryCategory(t)}<small>${entrySource(t)}</small></td><td>${money(t.expected)}</td><td>${t.paid ? money(t.actual) : '—'}</td><td class="${status(t) === 'Overdue' ? 'terracotta' : ''}">${status(t)}</td></tr>`).join('') || '<tr><td colspan="6">No matching entries.</td></tr>'}</tbody></table></div></section>`
+      `<section class="panel"><div class="filters"><label>Month<div class="month-filter"><input type="month" id="filter-month" value="${esc(filters.month)}">${btn('—', 'reset-month', '', 'icon-btn')}</div></label><label>Type<select data-filter="type">${options(['Income', 'Expense', 'Transfer'], filters.type, true)}</select></label><label>Category<select data-filter="category">${options(state.categories, filters.category, true)}</select></label><label>Account<select data-filter="account">${options(state.accounts, filters.account, true)}${state.goals.length ? `<optgroup label="Goals">${options(state.goals, filters.account)}</optgroup>` : ''}</select></label><label class="search-field">Search<input id="search" value="${esc(filters.search)}" placeholder="Name or note"></label></div><div class="table-wrap"><table><thead><tr><th>Entry</th><th>Date</th><th>Category / Account</th><th>Expected</th><th>Actual</th><th>Status</th></tr></thead><tbody>${list.map((t) => `<tr><td>${edit('transaction', t.id, esc(t.name), 'table-link')}<small class="transaction-type-badge type-${esc(t.type.toLowerCase())}">${esc(t.type)}</small></td><td>${esc(t.date)}</td><td>${entryCategory(t)}<small>${entrySource(t)}</small></td><td>${money(t.expected)}</td><td>${t.paid ? money(t.actual) : '—'}</td><td class="${status(t) === 'Overdue' ? 'terracotta' : ''}">${status(t)}</td></tr>`).join('') || '<tr><td colspan="6">No matching entries.</td></tr>'}</tbody></table></div></section>`
     );
   }
   function nextRecurringLabel(r) {
@@ -1278,22 +1287,37 @@
       behind: ['Behind', 'is-warn'],
       overdue: ['Overdue', 'is-warn'],
     };
+    // Money added to a goal this calendar month; withdrawals are not subtracted.
+    const addedThisMonth = (id) =>
+      total(
+        state.transactions.filter(
+          (t) =>
+            t.paid &&
+            t.date.startsWith(thisMonth()) &&
+            ((t.type === 'Transfer' && t.toKind === 'goal' && t.toId === id) ||
+              (t.type === 'Expense' && t.goalId === id)),
+        ),
+        (t) => t.actual,
+      );
+    // Same layout as debt and account cards: amount and meta line, actions at the right, bar, footer.
     const card = ({ g, plan }) => {
-      // Behind is only shown against a recurring contribution, not when none is set.
+      // Without a recurring contribution a dated goal is "Not scheduled" rather than "Behind".
       const [label, tone] =
-          plan.status === 'behind' && !plan.planned ? [] : badge[plan.status] || [],
+          plan.status === 'behind' && !plan.planned
+            ? ['Not scheduled', 'is-muted']
+            : badge[plan.status] || [],
         when = g.deadline ? ' · by ' + debtMonth(g.deadline.slice(0, 7)) : '';
       const detail =
         plan.status === 'reached'
-          ? 'Goal reached'
+          ? ''
           : plan.status === 'overdue'
             ? money(plan.remaining) + ' to go · target date passed'
             : plan.status === 'open'
               ? money(plan.remaining) + ' to go'
               : money(plan.needed) + ' / month' + when;
       return panel(
-        esc(g.name),
-        `<div class="goal-meta"><span class="eyebrow">${esc(g.kind)}</span>${label ? `<span class="goal-status ${tone}">${label}</span>` : ''}</div><strong class="large-value">${money(plan.saved)} <small>/ ${money(g.target)}</small></strong>${bar(plan.saved, g.target)}<p class="goal-detail">${detail}</p><div class="goal-actions">${btn('Add money', 'goal-add', g.id, 'btn')}${plan.saved > 0 ? btn('Withdraw', 'goal-withdraw', g.id, 'btn') : ''}${plan.status !== 'reached' ? btn(plan.planned ? 'Edit recurring' : 'Set recurring', 'goal-recurring', g.id, 'btn') : ''}</div>`,
+        `<span class="debt-priority-badge goal-badge" aria-hidden="true">${esc([...g.name.trim()][0] || '?').toUpperCase()}</span><span class="goal-name">${esc(g.name)}</span>${label ? `<span class="goal-status ${tone}">${label}</span>` : ''}`,
+        `<div class="debt-card-summary"><div><strong class="large-value">${money(plan.saved)} <small>/ ${money(g.target)}</small></strong><p>${esc(g.kind)}${detail ? ' · ' + detail : ''}</p></div><div class="debt-card-actions">${btn('Add money', 'goal-add', g.id, 'btn')}${plan.saved > 0 ? btn('Withdraw', 'goal-withdraw', g.id, 'btn') : ''}</div></div>${bar(plan.saved, g.target)}<div class="debt-card-footer"><span>${money(addedThisMonth(g.id))} added this month</span><span class="goal-links">${plan.status !== 'reached' ? btn(plan.planned ? 'Edit recurring' : 'Set recurring', 'goal-recurring', g.id, 'textbtn') : ''}${btn('View history', 'goal-transactions', g.id, 'textbtn')}</span></div>`,
         edit('goal', g.id, 'Edit', 'textbtn'),
       );
     };
@@ -3049,8 +3073,10 @@
     else if (a === 'account-balance') updateAccountBalance(id);
     else if (a === 'account-transfer')
       editor('transaction', '', { type: 'Transfer', accountId: id, destination: '' });
-    else if (a === 'account-transactions') {
+    else if (a === 'account-transactions' || a === 'goal-transactions') {
       filters.account = id;
+      // A goal's history spans every month; an account opens on the current one.
+      if (a === 'goal-transactions') filters.month = '';
       screen = 'Transactions';
       render();
       globalThis.scrollTo?.(0, 0);
