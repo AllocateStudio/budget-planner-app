@@ -306,13 +306,20 @@
       ? `Transfer → ${name({ account: 'accounts', debt: 'debts', goal: 'goals' }[t.toKind], t.toId)}`
       : name('categories', t.categoryId);
   }
-  const dayLabel = (d) =>
-    B.date(d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  // One date format everywhere: "Oct 10" this year, "Jan 2, 2027" in any other year.
+  const shortDate = (d, weekday = false) =>
+      B.date(d).toLocaleDateString('en-US', {
+        ...(weekday ? { weekday: 'short' } : {}),
+        month: 'short',
+        day: 'numeric',
+        ...(d.slice(0, 4) !== B.today().slice(0, 4) ? { year: 'numeric' } : {}),
+      }),
+    dayLabel = (d) => shortDate(d, true);
   function row(t, dated = false, showPaidCheck = false) {
     return edit(
       'transaction',
       t.id,
-      `<span class="record-name">${esc(t.name)}${dated ? `<span class="record-date">${dayLabel(t.date)}</span>` : ''}<small>${esc(t.date)} · ${entryCategory(t)} · ${entrySource(t)}</small></span><span class="record-amount">${money(t.paid ? t.actual : t.expected)}<small class="${status(t) === 'Overdue' ? 'terracotta' : ''}">${showPaidCheck && t.paid ? '<i class="calendar-paid-check" aria-hidden="true">✓</i>Paid' : status(t)}</small></span>`,
+      `<span class="record-name">${esc(t.name)}${dated ? `<span class="record-date">${dayLabel(t.date)}</span>` : ''}<small>${shortDate(t.date)} · ${entryCategory(t)} · ${entrySource(t)}</small></span><span class="record-amount">${money(t.paid ? t.actual : t.expected)}<small class="${status(t) === 'Overdue' ? 'terracotta' : ''}">${showPaidCheck && t.paid ? '<i class="calendar-paid-check" aria-hidden="true">✓</i>Paid' : status(t)}</small></span>`,
     );
   }
   function rows(list, emptyText = 'No entries yet.') {
@@ -613,7 +620,7 @@
     );
     return (
       heading('Transactions', '', edit('transaction', '', '+ Add transaction', 'btn primary')) +
-      `<section class="panel"><div class="filters"><label>Month<div class="month-filter"><input type="month" id="filter-month" value="${esc(filters.month)}">${btn('—', 'reset-month', '', 'icon-btn')}</div></label><label>Type<select data-filter="type">${options(['Income', 'Expense', 'Transfer'], filters.type, true)}</select></label><label>Category<select data-filter="category">${options(state.categories, filters.category, true)}</select></label><label>Account<select data-filter="account">${options(state.accounts, filters.account, true)}${state.goals.length ? `<optgroup label="Goals">${options(state.goals, filters.account)}</optgroup>` : ''}</select></label><label class="search-field">Search<input id="search" value="${esc(filters.search)}" placeholder="Name or note"></label></div><div class="table-wrap"><table><thead><tr><th>Entry</th><th>Date</th><th>Category / Account</th><th>Expected</th><th>Actual</th><th>Status</th></tr></thead><tbody>${list.map((t) => `<tr><td>${edit('transaction', t.id, esc(t.name), 'table-link')}<small class="transaction-type-badge type-${esc(t.type.toLowerCase())}">${esc(t.type)}</small></td><td>${esc(t.date)}</td><td>${entryCategory(t)}<small>${entrySource(t)}</small></td><td>${money(t.expected)}</td><td>${t.paid ? money(t.actual) : '—'}</td><td class="${status(t) === 'Overdue' ? 'terracotta' : ''}">${status(t)}</td></tr>`).join('') || '<tr><td colspan="6">No matching entries.</td></tr>'}</tbody></table></div></section>`
+      `<section class="panel"><div class="filters"><label>Month<div class="month-filter"><input type="month" id="filter-month" value="${esc(filters.month)}">${btn('—', 'reset-month', '', 'icon-btn')}</div></label><label>Type<select data-filter="type">${options(['Income', 'Expense', 'Transfer'], filters.type, true)}</select></label><label>Category<select data-filter="category">${options(state.categories, filters.category, true)}</select></label><label>Account<select data-filter="account">${options(state.accounts, filters.account, true)}${state.goals.length ? `<optgroup label="Goals">${options(state.goals, filters.account)}</optgroup>` : ''}</select></label><label class="search-field">Search<input id="search" value="${esc(filters.search)}" placeholder="Name or note"></label></div><div class="table-wrap"><table><thead><tr><th>Entry</th><th>Date</th><th>Category / Account</th><th>Expected</th><th>Actual</th><th>Status</th></tr></thead><tbody>${list.map((t) => `<tr><td>${edit('transaction', t.id, esc(t.name), 'table-link')}<small class="transaction-type-badge type-${esc(t.type.toLowerCase())}">${esc(t.type)}</small></td><td class="journal-date">${shortDate(t.date)}</td><td>${entryCategory(t)}<small>${entrySource(t)}</small></td><td>${money(t.expected)}</td><td>${t.paid ? money(t.actual) : '—'}</td><td class="${status(t) === 'Overdue' ? 'terracotta' : ''}">${status(t)}</td></tr>`).join('') || '<tr><td colspan="6">No matching entries.</td></tr>'}</tbody></table></div></section>`
     );
   }
   function nextRecurringLabel(r) {
@@ -629,14 +636,7 @@
         excluded.has(`${r.id}@${date}`)
       )
         continue;
-      return (
-        'Next: ' +
-        B.date(date).toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          ...(date.slice(0, 4) !== today.slice(0, 4) ? { year: 'numeric' } : {}),
-        })
-      );
+      return 'Next: ' + shortDate(date);
     }
     return 'No upcoming payments';
   }
@@ -1305,7 +1305,7 @@
         g.saved > 0 && (full || rows.length <= 6)
           ? `<tr><th>—</th><td>Starting amount</td><td class="flow-in">+${money(g.saved)}</td><td>${money(g.saved)}</td></tr>`
           : '';
-    return `<div class="table-wrap"><table class="debt-schedule goal-history"><thead><tr><th>Date</th><th>Entry</th><th>Amount</th><th>Saved</th></tr></thead><tbody>${shown.map(({ t, amount, saved }) => `<tr><th>${B.date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(t.date.slice(0, 4) === B.today().slice(0, 4) ? {} : { year: 'numeric' }) })}</th><td>${edit('transaction', t.id, esc(goalEntry(t, amount)), 'table-link')}</td><td class="${amount < 0 ? 'flow-out' : 'flow-in'}">${amount < 0 ? '−' : '+'}${money(Math.abs(amount))}</td><td>${money(saved)}</td></tr>`).join('')}${start}</tbody></table></div>${rows.length > 6 ? `<div class="debt-table-actions">${btn(full ? 'Show less' : `Show all ${rows.length} entries`, 'goal-full', g.id, 'textbtn')}</div>` : ''}`;
+    return `<div class="table-wrap"><table class="debt-schedule goal-history"><thead><tr><th>Date</th><th>Entry</th><th>Amount</th><th>Saved</th></tr></thead><tbody>${shown.map(({ t, amount, saved }) => `<tr><th>${shortDate(t.date)}</th><td>${edit('transaction', t.id, esc(goalEntry(t, amount)), 'table-link')}</td><td class="${amount < 0 ? 'flow-out' : 'flow-in'}">${amount < 0 ? '−' : '+'}${money(Math.abs(amount))}</td><td>${money(saved)}</td></tr>`).join('')}${start}</tbody></table></div>${rows.length > 6 ? `<div class="debt-table-actions">${btn(full ? 'Show less' : `Show all ${rows.length} entries`, 'goal-full', g.id, 'textbtn')}</div>` : ''}`;
   }
   function savingsScreen() {
     const plans = state.goals.map((g) => ({ g, plan: B.goalPlan(state, g.id) })),

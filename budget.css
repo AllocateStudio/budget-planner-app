@@ -2424,3 +2424,6 @@ td .transaction-type-badge,
     text-align: right;
   }
 }
+.journal-date {
+  white-space: nowrap;
+}

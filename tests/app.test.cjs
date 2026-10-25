@@ -1469,6 +1469,32 @@ test('Dashboard shows the amount saved to goals for the month and the year', () 
   );
   assert.equal(tile(), B.round(yearly));
 });
+test('Dates show the year only outside the current year', () => {
+  const h = harness();
+  h.api.sample('Jessica');
+  const year = Number(B.today().slice(0, 4)),
+    accountId = h.api.get().accounts[0].id,
+    entry = (name, date) =>
+      save(h, 'transaction', '', {
+        name,
+        type: 'Income',
+        categoryId: 'Income-0',
+        accountId,
+        expected: '10',
+        actual: '10',
+        date,
+        paid: 'on',
+      });
+  entry('Old gift', `${year - 1}-12-28`);
+  entry('New gift', `${year}-03-05`);
+  h.api.renderScreen('Transactions');
+  const reset = { dataset: { action: 'reset-month', id: '' } };
+  h.fire('click', { target: { closest: (sel) => (sel === 'button' ? reset : null) } });
+  const html = h.node('#main').innerHTML;
+  assert.ok(html.includes(`journal-date">Dec 28, ${year - 1}</td>`));
+  assert.ok(html.includes('journal-date">Mar 5</td>'));
+  assert.ok(!html.includes(`<td>${year}-03-05</td>`));
+});
 test('Expected vs Actual marks only the differences that hurt the budget', () => {
   const h = harness();
   h.api.sample('Jessica');

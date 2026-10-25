@@ -26,6 +26,8 @@ A standalone budgeting app that runs entirely in the browser. There is nothing t
 - **Savings:** totals across goals, then goal cards two per row, in the same layout as debt and account cards. Each card shows the name with a status (On track, Behind, Not scheduled when a dated goal has no recurring contribution, Overdue, Reached), the saved and target amounts, the type with the monthly amount needed by the target date, Add money and Withdraw, progress, the amount added this month, Set / Edit recurring, and View history, which opens inside the card like a debt schedule: each move in or out of the goal, newest first, with the account it came from or went to and the saved amount after it (six rows, then Show all). Goals are also listed in the journal's Account filter.
 - **Setup:** preferences, categories with monthly budgets, accounts with opening balances, and data (backups, sample data).
 
+Dates are shown the same way everywhere: "Oct 10" in the current year and "Jan 2, 2027" in any other year.
+
 Any entry opened from Upcoming, the calendar or a list uses the same form, with create, edit and delete. An account, goal or debt that still has linked entries can only be deleted after those links are moved or removed.
 
 ## Setup
