@@ -2524,8 +2524,3 @@ td .transaction-type-badge,
   cursor: pointer;
 }
 
-/* Tile colours mean the same on every screen: green money you have or received, pink spending and debt,
-   yellow a milestone, blue and lilac neutral totals. */
-.stat-tile.tone-sun {
-  background: #fcefc0;
-}
