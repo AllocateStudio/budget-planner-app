@@ -1614,10 +1614,10 @@ td:not(:first-child) {
   white-space: nowrap;
 }
 .account-footer .flow-in {
-  color: var(--mint-ink);
+  color: var(--ink);
 }
 .account-footer .flow-out {
-  color: var(--blush-ink);
+  color: var(--ink);
 }
 
 /* Dashboard: Month / Year views */
@@ -2402,10 +2402,10 @@ td .transaction-type-badge,
   align-items: start;
 }
 .goal-history .flow-in {
-  color: var(--mint-ink);
+  color: var(--ink);
 }
 .goal-history .flow-out {
-  color: var(--blush-ink);
+  color: var(--ink);
 }
 .goal-history .table-link {
   text-align: left;
