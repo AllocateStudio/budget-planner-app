@@ -1672,3 +1672,24 @@ test('Mark as Paid pays in one click and Undo puts it back', () => {
   assert.equal(h.api.get().transactions.length, before);
   assert.ok(!h.api.get().transactions.some((t) => t.id === id && t.paid));
 });
+
+test('Statuses show as coloured pills in the journal and schedule rows', () => {
+  const h = harness();
+  h.api.sample('Jessica');
+  h.api.renderScreen('Transactions');
+  assert.ok(
+    h
+      .node('#main')
+      .innerHTML.includes('<td><span class="status-pill status-paid">Paid</span></td>'),
+  );
+  const html = h.api.scheduleRow({
+    id: 'u',
+    recurringId: 'r',
+    name: 'Rent',
+    type: 'Expense',
+    date: B.today(),
+    expected: 100,
+    paid: false,
+  });
+  assert.ok(html.includes('<span class="status-pill status-due-today">Due today</span>'));
+});
