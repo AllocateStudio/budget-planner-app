@@ -238,6 +238,9 @@
     `<button type="button" class="${cls}" data-action="${action}" data-id="${esc(id)}">${label}</button>`;
   const edit = (kind, id, label, cls = 'row-link') =>
     `<button type="button" class="${cls}" data-edit="${kind}" data-id="${esc(id)}">${label}</button>`;
+  // Pencil button, as in the Bill Calendar.
+  const editIcon = (kind, id, name) =>
+    `<button type="button" class="icon-btn edit-icon" data-edit="${kind}" data-id="${esc(id)}" aria-label="Edit ${esc(name)}" title="Edit">&#9998;</button>`;
   const panel = (title, body, action = '') =>
     `<section class="panel"><div class="panel-head"><h2>${title}</h2>${action}</div>${body}</section>`;
   function toast(text, undo) {
@@ -766,7 +769,7 @@
           .toLowerCase()
           .replace(' ', '-'),
         sameName = a.kind.toLowerCase() === a.name.trim().toLowerCase();
-      return `<section class="panel account-card"><div class="panel-head"><h2>${esc(a.name)}${sameName ? '' : `<span class="account-kind kind-${kind}">${esc(a.kind)}</span>`}</h2>${edit('account', a.id, 'Edit', 'textbtn')}</div><strong class="large-value${balance < 0 ? ' is-negative' : ''}">${money(balance)}</strong><div class="account-flow"><span class="flow-chip flow-in">+${money(flow.in)} in</span><span class="flow-chip flow-out">−${money(flow.out)} out</span><small>this month</small></div><div class="account-card-foot"><div class="debt-card-actions">${btn('Transfer', 'account-transfer', a.id, 'btn')}${btn('Update Balance', 'account-balance', a.id, 'btn')}</div><button type="button" class="textbtn" data-action="account-transactions" data-id="${esc(a.id)}">View transactions</button></div></section>`;
+      return `<section class="panel account-card"><div class="panel-head"><h2>${esc(a.name)}${sameName ? '' : `<span class="account-kind kind-${kind}">${esc(a.kind)}</span>`}</h2>${editIcon('account', a.id, a.name)}</div><strong class="large-value${balance < 0 ? ' is-negative' : ''}">${money(balance)}</strong><div class="account-flow"><span class="flow-chip flow-in">+${money(flow.in)} in</span><span class="flow-chip flow-out">−${money(flow.out)} out</span><small>this month</small></div><div class="account-card-foot"><div class="debt-card-actions">${btn('Transfer', 'account-transfer', a.id, 'btn')}${btn('Update Balance', 'account-balance', a.id, 'btn')}</div><button type="button" class="textbtn" data-action="account-transactions" data-id="${esc(a.id)}">View transactions</button></div></section>`;
     };
     return (
       heading('Accounts', '', edit('account', '', '+ Add account', 'btn primary')) +
@@ -1107,7 +1110,7 @@
                 ? '<small class="debt-first-label">Extra payment first</small>'
                 : ''),
             `<div class="debt-card-summary"><div><strong class="large-value">${money(balance)}</strong><p>${closed ? '<span class="paid-off-label">Paid Off</span>' : esc(d.kind || 'Other') + ' · ' + d.apr + '% APR · ' + money(d.minimum) + ' minimum'}${d.dueDay ? ' · Due ' + d.dueDay : ''}</p></div><div class="debt-card-actions">${btn('Update Balance', 'debt-balance', d.id, 'btn')}${!closed ? btn('Set recurring payment', 'debt-recurring', d.id, 'btn') : ''}</div></div>${bar(Math.max(0, d.balance - balance), d.balance)}<div class="debt-card-footer"><span>${money(B.debtPaid(state, d.id))} paid${state.strategy === 'Custom' ? ' · Priority ' + d.order : ''}</span><button type="button" class="textbtn" data-action="debt-expand" data-id="${esc(d.id)}" aria-expanded="${open}">${open ? 'Hide schedule' : 'View schedule'}</button></div>${open ? debtTable(d, plan) : ''}`,
-            edit('debt', d.id, 'Edit', 'textbtn'),
+            editIcon('debt', d.id, d.name),
           );
         })
         .join('') ||
@@ -1378,7 +1381,7 @@
       return panel(
         `<span class="goal-name">${esc(g.name)}</span>${label ? `<span class="goal-status ${tone}">${label}</span>` : ''}`,
         `<div class="debt-card-summary"><div><strong class="large-value">${money(plan.saved)} <small>/ ${money(g.target)}</small></strong><p>${esc(g.kind)}${detail ? ' · ' + detail : ''}</p></div><div class="debt-card-actions">${btn('Add money', 'goal-add', g.id, 'btn')}${plan.saved > 0 ? btn('Withdraw', 'goal-withdraw', g.id, 'btn') : ''}</div></div>${bar(plan.saved, g.target)}<div class="debt-card-footer"><span>${money(addedThisMonth(g.id))} added this month</span><span class="goal-links">${plan.status !== 'reached' ? btn(plan.planned ? 'Edit recurring' : 'Set recurring', 'goal-recurring', g.id, 'textbtn') : ''}<button type="button" class="textbtn" data-action="goal-expand" data-id="${esc(g.id)}" aria-expanded="${goalExpanded.has(g.id)}">${goalExpanded.has(g.id) ? 'Hide history' : 'View history'}</button></span></div>${goalExpanded.has(g.id) ? goalHistory(g) : ''}`,
-        edit('goal', g.id, 'Edit', 'textbtn'),
+        editIcon('goal', g.id, g.name),
       );
     };
     return (
@@ -1397,9 +1400,9 @@
       cats = state.categories.filter((c) => c.groupId === g.id),
       open = openSetupGroups.has(g.id) || cats.some((c) => c.id === editingBudget);
     const rowsHtml = open
-      ? `<div class="setup-categories">${cats.map((c) => `<div class="setup-category ${c.hidden ? 'is-hidden' : ''}"><span class="setup-cat-name">${esc(c.name)}${c.hidden ? '<small>Hidden</small>' : ''}</span>${editingBudget === c.id ? `<input id="active-budget-input" type="number" min="0" max="1000000000" step="0.01" data-category-budget="${esc(c.id)}" value="${B.budgetFor(c, month)}" aria-label="${esc(c.name)} monthly budget">` : `<button type="button" class="budget-value" data-action="edit-budget" data-id="${esc(c.id)}" aria-label="Edit ${esc(c.name)} monthly budget">${money(B.budgetFor(c, month))}</button>`}${edit('category', c.id, 'Edit', 'textbtn')}</div>`).join('')}${edit('category', '', '+ Add category', 'textbtn setup-add').replace('data-edit="category"', `data-edit="category" data-group="${esc(g.id)}"`)}</div>`
+      ? `<div class="setup-categories">${cats.map((c) => `<div class="setup-category ${c.hidden ? 'is-hidden' : ''}"><span class="setup-cat-name">${esc(c.name)}${c.hidden ? '<small>Hidden</small>' : ''}</span>${editingBudget === c.id ? `<input id="active-budget-input" type="number" min="0" max="1000000000" step="0.01" data-category-budget="${esc(c.id)}" value="${B.budgetFor(c, month)}" aria-label="${esc(c.name)} monthly budget">` : `<button type="button" class="budget-value" data-action="edit-budget" data-id="${esc(c.id)}" aria-label="Edit ${esc(c.name)} monthly budget">${money(B.budgetFor(c, month))}</button>`}${editIcon('category', c.id, c.name)}</div>`).join('')}${edit('category', '', '+ Add category', 'textbtn setup-add').replace('data-edit="category"', `data-edit="category" data-group="${esc(g.id)}"`)}</div>`
       : '';
-    return `<section class="setup-group ${open ? 'is-open' : ''}"><div class="setup-group-head"><button type="button" class="setup-toggle" data-action="toggle-setup-group" data-id="${esc(g.id)}" aria-expanded="${open}"><i class="budget-chevron" aria-hidden="true">›</i><span class="setup-group-name">${esc(g.name)}</span><span class="setup-group-total">${money(total(cats, (c) => B.budgetFor(c, month)))}</span></button>${edit('group', g.id, 'Edit', 'textbtn')}</div>${rowsHtml}</section>`;
+    return `<section class="setup-group ${open ? 'is-open' : ''}"><div class="setup-group-head"><button type="button" class="setup-toggle" data-action="toggle-setup-group" data-id="${esc(g.id)}" aria-expanded="${open}"><i class="budget-chevron" aria-hidden="true">›</i><span class="setup-group-name">${esc(g.name)}</span><span class="setup-group-total">${money(total(cats, (c) => B.budgetFor(c, month)))}</span></button>${editIcon('group', g.id, g.name)}</div>${rowsHtml}</section>`;
   }
 
   function setupScreen() {
@@ -1425,7 +1428,7 @@
       panel(
         'Accounts',
         state.accounts.length
-          ? `<div class="setup-accounts"><div class="setup-account setup-account-head"><span></span><span>Opening balance</span><span></span></div>${state.accounts.map((a) => `<div class="setup-account"><span class="setup-cat-name">${esc(a.name)}${a.kind && a.kind !== a.name ? `<small>${esc(a.kind)}</small>` : ''}</span><b>${money(a.opening)}</b>${edit('account', a.id, 'Edit', 'textbtn')}</div>`).join('')}</div>`
+          ? `<div class="setup-accounts"><div class="setup-account setup-account-head"><span></span><span>Opening balance</span><span></span></div>${state.accounts.map((a) => `<div class="setup-account"><span class="setup-cat-name">${esc(a.name)}${a.kind && a.kind !== a.name ? `<small>${esc(a.kind)}</small>` : ''}</span><b>${money(a.opening)}</b>${editIcon('account', a.id, a.name)}</div>`).join('')}</div>`
           : '<p class="empty-copy">Add an account with its opening balance.</p>',
         edit('account', '', '+ Add account', 'textbtn'),
       ) +
@@ -2002,7 +2005,7 @@
   function scheduleRow(t) {
     t = { ...t, date: t.scheduledDate || t.date };
     // Name on the left, then the actions, then the amount flush right.
-    return `<div class="schedule-record ${t.paid ? 'is-paid' : ''}">${edit('transaction', t.id, recordName(t, false, true))}<div class="schedule-actions">${t.paid ? `<button type="button" class="icon-btn" data-action="open-payment" data-id="${esc(t.id)}" aria-label="Edit ${esc(t.name)}" title="Edit">&#9998;</button>` : t.skipped ? btn('Restore', 'restore-payment', t.id, 'textbtn') : btn('Mark as Paid', 'quick-pay', t.id, 'btn pay-btn') + btn('Skip', 'skip-payment', t.id, 'textbtn')}</div>${recordAmount(t, true)}</div>`;
+    return `<div class="schedule-record ${t.paid ? 'is-paid' : ''}">${edit('transaction', t.id, recordName(t, false, true))}<div class="schedule-actions">${t.paid ? `<button type="button" class="icon-btn edit-icon" data-action="open-payment" data-id="${esc(t.id)}" aria-label="Edit ${esc(t.name)}" title="Edit">&#9998;</button>` : t.skipped ? btn('Restore', 'restore-payment', t.id, 'textbtn') : btn('Mark as Paid', 'quick-pay', t.id, 'btn pay-btn') + btn('Skip', 'skip-payment', t.id, 'textbtn')}</div>${recordAmount(t, true)}</div>`;
   }
   function editor(kind, id = '', preset = {}) {
     let record = state[collections[kind]].find((t) => t.id === id);

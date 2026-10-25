@@ -2566,3 +2566,26 @@ td .transaction-type-badge,
   background: #fbdce6;
   color: #b23a66;
 }
+
+/* Pencil Edit button: centred on the card title line, smaller in the compact Setup rows. */
+.edit-icon {
+  flex-shrink: 0;
+  min-width: 36px;
+  width: 36px;
+  height: 36px;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--ink);
+}
+.panel-head > .edit-icon {
+  margin-top: -3px;
+}
+.setup-group-head > .edit-icon,
+.setup-category > .edit-icon,
+.setup-account > .edit-icon {
+  min-width: 30px;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  font-size: 15px;
+}
