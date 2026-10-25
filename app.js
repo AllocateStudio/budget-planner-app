@@ -337,11 +337,15 @@
     ['Due today', 'Overdue'].includes(status(t))
       ? `<span class="status-pill status-${status(t).toLowerCase().replace(' ', '-')}">${status(t)}</span>`
       : status(t);
+  const recordName = (t, dated, withYear) =>
+    `<span class="record-name">${esc(t.name)}${dated ? `<span class="record-date">${dayLabel(t.date)}</span>` : ''}<small>${shortDate(t.date, false, withYear)} · ${entryCategory(t)} · ${entrySource(t)}</small></span>`;
+  const recordAmount = (t, showPaidCheck) =>
+    `<span class="record-amount">${money(t.paid ? t.actual : t.expected)}<small>${showPaidCheck && t.paid ? '<i class="calendar-paid-check" aria-hidden="true">✓</i>Paid' : statusPill(t)}</small></span>`;
   function row(t, dated = false, showPaidCheck = false, withYear = false) {
     return edit(
       'transaction',
       t.id,
-      `<span class="record-name">${esc(t.name)}${dated ? `<span class="record-date">${dayLabel(t.date)}</span>` : ''}<small>${shortDate(t.date, false, withYear)} · ${entryCategory(t)} · ${entrySource(t)}</small></span><span class="record-amount">${money(t.paid ? t.actual : t.expected)}<small>${showPaidCheck && t.paid ? '<i class="calendar-paid-check" aria-hidden="true">✓</i>Paid' : statusPill(t)}</small></span>`,
+      recordName(t, dated, withYear) + recordAmount(t, showPaidCheck),
     );
   }
   function rows(list, emptyText = 'No entries yet.') {
@@ -1997,7 +2001,8 @@
   }
   function scheduleRow(t) {
     t = { ...t, date: t.scheduledDate || t.date };
-    return `<div class="schedule-record ${t.paid ? 'is-paid' : ''}">${row(t, false, true, true)}<div class="schedule-actions">${t.paid ? btn('Edit', 'open-payment', t.id, 'textbtn') : t.skipped ? btn('Restore', 'restore-payment', t.id, 'textbtn') : btn('Mark as Paid', 'quick-pay', t.id, 'btn pay-btn') + btn('Skip', 'skip-payment', t.id, 'textbtn')}</div></div>`;
+    // Name on the left, then the actions, then the amount flush right.
+    return `<div class="schedule-record ${t.paid ? 'is-paid' : ''}">${edit('transaction', t.id, recordName(t, false, true))}<div class="schedule-actions">${t.paid ? btn('Edit', 'open-payment', t.id, 'textbtn') : t.skipped ? btn('Restore', 'restore-payment', t.id, 'textbtn') : btn('Mark as Paid', 'quick-pay', t.id, 'btn pay-btn') + btn('Skip', 'skip-payment', t.id, 'textbtn')}</div>${recordAmount(t, true)}</div>`;
   }
   function editor(kind, id = '', preset = {}) {
     let record = state[collections[kind]].find((t) => t.id === id);

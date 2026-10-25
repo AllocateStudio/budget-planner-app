@@ -182,6 +182,7 @@
   background: #fafaf7;
 }
 .row-link small,
+.schedule-record > .record-amount small,
 td small {
   display: block;
   font-size: 12px;
@@ -871,13 +872,17 @@ td:not(:first-child) {
   min-width: 0;
   border-bottom: 0;
 }
-/* Fixed width so every row's amount and status line up in one column. */
+/* Fixed widths so the actions and the amounts each line up in a column. */
 .schedule-actions {
   display: flex;
   gap: 4px;
   align-items: center;
-  justify-content: flex-end;
   flex: 0 0 172px;
+}
+.schedule-record > .record-amount {
+  flex: 0 0 104px;
+  padding: 12px 0;
+  font-weight: 600;
 }
 .schedule-actions .pay-btn {
   min-height: 34px;
@@ -945,8 +950,11 @@ td:not(:first-child) {
     flex-basis: 100%;
   }
   .schedule-actions {
-    margin-left: auto;
     flex-basis: auto;
+  }
+  .schedule-record > .record-amount {
+    margin-left: auto;
+    padding: 0;
   }
   .schedule-totals {
     gap: 12px;
