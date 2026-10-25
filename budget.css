@@ -1582,22 +1582,9 @@ td:not(:first-child) {
   margin-top: 4px;
 }
 
-/* Accounts reuse the debt card layout; the badge shows the account's initial,
-   coloured by account type. */
-.account-badge.type-checking {
-  background: var(--mint);
-}
-.account-badge.type-savings {
-  background: var(--sky);
-}
-.account-badge.type-cash {
-  background: var(--butter);
-}
-.account-badge.type-investment {
-  background: var(--blush);
-}
-.account-badge.type-other {
-  background: var(--line);
+/* Account cards have no priority number, so the title is plain text. */
+.account-list > .panel > .panel-head h2 {
+  display: block;
 }
 .large-value.is-negative {
   color: var(--blush-ink);
@@ -2332,13 +2319,22 @@ td .transaction-type-badge,
     justify-content: center;
   }
 }
-/* Goal cards reuse the debt card layout; the badge is mint like savings everywhere else. */
-.goal-badge {
-  margin-right: 8px;
-  background: var(--mint);
+/* Goal cards reuse the debt card layout and its vertical rhythm. */
+.goal-grid > .panel > .panel-head {
+  align-items: flex-start;
+  margin-bottom: 12px;
 }
-.goal-grid > .panel > .panel-head > .textbtn {
-  margin: -5px 0 0;
+/* Without a badge the title line is shorter, so Edit moves up a little more to stay centred. */
+.goal-grid > .panel > .panel-head > .textbtn,
+.account-list > .panel > .panel-head > .textbtn {
+  margin: -7px 0 0;
+  padding-right: 0;
+}
+.goal-grid .debt-card-summary .large-value {
+  margin: 0 0 6px;
+}
+.goal-grid .debt-card-summary p {
+  margin-top: 0;
 }
 .goal-grid .goal-status {
   display: inline-block;
@@ -2358,9 +2354,8 @@ td .transaction-type-badge,
   margin-top: auto;
   padding-top: 2px;
 }
-.goal-grid .progress,
 .goal-grid .meter {
-  margin: 14px 0 10px;
+  margin: 14px 0 0;
 }
 .goal-links {
   display: flex;
@@ -2373,6 +2368,10 @@ td .transaction-type-badge,
 .goal-grid .debt-card-footer > span:first-child {
   padding-right: 0;
   white-space: nowrap;
+}
+/* When the footer wraps on a phone, keep the amount clear of the progress bar. */
+.goal-grid .debt-card-footer > span:first-child {
+  padding-block: 8px;
 }
 /* Narrow goal cards (two per row on mid-size screens, or a phone): buttons go under the amount. */
 .goal-grid > .panel {

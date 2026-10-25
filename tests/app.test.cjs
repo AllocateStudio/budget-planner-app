@@ -941,7 +941,7 @@ test('Goal cards match debt cards and View history filters the journal to the go
   const html = h.node('#main').innerHTML,
     s = h.api.get(),
     goal = s.goals.find((g) => B.goalPlan(s, g.id).planned > 0);
-  assert.ok(html.includes('class="debt-priority-badge goal-badge"'));
+  assert.ok(!html.includes('debt-priority-badge'));
   assert.ok(html.includes('class="debt-card-actions"'));
   assert.ok(html.includes(' added this month</span>'));
   assert.ok(html.includes(`data-action="goal-transactions" data-id="${goal.id}"`));
@@ -1004,9 +1004,9 @@ test('Accounts reconcile with a statement and the screen sums accounts, goals an
   assert.ok(html.includes('large-value is-negative">−$120.00'));
   assert.ok(html.includes('flow-in">+$100.00</b>') && html.includes('flow-out">−$0.00</b>'));
   // Checking is listed before Investment.
-  assert.ok(html.indexOf(' Everyday</h2>') < html.indexOf(' Brokerage</h2>'));
+  assert.ok(html.indexOf('>Everyday</h2>') < html.indexOf('>Brokerage</h2>'));
   assert.ok(!html.includes('Opening balance'));
-  assert.ok(html.includes('account-badge type-investment" aria-hidden="true">B</span>'));
+  assert.ok(!html.includes('account-badge'));
 });
 test('Skipped payments disappear from calendar and restore inside their recurring template', () => {
   const { h, id } = recurringFixture(),

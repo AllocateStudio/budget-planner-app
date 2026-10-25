@@ -733,15 +733,12 @@
       (x, y) =>
         (accountKinds.indexOf(x.a.kind) + 1 || 99) - (accountKinds.indexOf(y.a.kind) + 1 || 99),
     );
-    // Same layout as debt cards: badge and name, balance with actions, monthly flow footer.
+    // Same layout as debt cards: name, balance with actions, monthly flow footer.
     const card = ({ a, balance }) => {
       const flow = B.accountMonth(state, a.id, month),
-        type =
-          'type-' +
-          (accountKinds.includes(a.kind) ? a.kind : 'Other asset').split(' ')[0].toLowerCase(),
         sameName = a.kind.toLowerCase() === a.name.trim().toLowerCase();
       return panel(
-        `<span class="debt-priority-badge account-badge ${type}" aria-hidden="true">${esc([...a.name.trim()][0] || '?').toUpperCase()}</span> ${esc(a.name)}`,
+        esc(a.name),
         `<div class="debt-card-summary"><div><strong class="large-value${balance < 0 ? ' is-negative' : ''}">${money(balance)}</strong>${sameName ? '' : `<p>${esc(a.kind)}</p>`}</div><div class="debt-card-actions">${btn('Transfer', 'account-transfer', a.id, 'btn')}${btn('Update Balance', 'account-balance', a.id, 'btn')}</div></div><div class="debt-card-footer account-footer"><span>This month <span class="flow-part"><b class="flow-in">+${money(flow.in)}</b> in</span> <span class="flow-part"><b class="flow-out">−${money(flow.out)}</b> out</span></span><button type="button" class="textbtn" data-action="account-transactions" data-id="${esc(a.id)}">View transactions</button></div>`,
         edit('account', a.id, 'Edit', 'textbtn'),
       );
@@ -1316,7 +1313,7 @@
               ? money(plan.remaining) + ' to go'
               : money(plan.needed) + ' / month' + when;
       return panel(
-        `<span class="debt-priority-badge goal-badge" aria-hidden="true">${esc([...g.name.trim()][0] || '?').toUpperCase()}</span><span class="goal-name">${esc(g.name)}</span>${label ? `<span class="goal-status ${tone}">${label}</span>` : ''}`,
+        `<span class="goal-name">${esc(g.name)}</span>${label ? `<span class="goal-status ${tone}">${label}</span>` : ''}`,
         `<div class="debt-card-summary"><div><strong class="large-value">${money(plan.saved)} <small>/ ${money(g.target)}</small></strong><p>${esc(g.kind)}${detail ? ' · ' + detail : ''}</p></div><div class="debt-card-actions">${btn('Add money', 'goal-add', g.id, 'btn')}${plan.saved > 0 ? btn('Withdraw', 'goal-withdraw', g.id, 'btn') : ''}</div></div>${bar(plan.saved, g.target)}<div class="debt-card-footer"><span>${money(addedThisMonth(g.id))} added this month</span><span class="goal-links">${plan.status !== 'reached' ? btn(plan.planned ? 'Edit recurring' : 'Set recurring', 'goal-recurring', g.id, 'textbtn') : ''}${btn('View history', 'goal-transactions', g.id, 'textbtn')}</span></div>`,
         edit('goal', g.id, 'Edit', 'textbtn'),
       );
