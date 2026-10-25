@@ -17,7 +17,7 @@ A standalone budgeting app that runs entirely in the browser. There is nothing t
 
 ## Screens
 
-- **Dashboard:** a Month / Year switch. Month shows income, expenses, left to spend and savings rate, upcoming bills next to the spending breakdown, Expected vs Actual with the difference (less income or money left than expected, or more spent, is shown in red), and group budgets that can be edited for that month. Year shows the same totals for the calendar year, Expected vs Actual, income vs expenses by month with the amounts under each month, the yearly spending breakdown (the 14 largest categories, the rest grouped as Other); hovering or tapping a chart segment or legend row shows the period, amount spent, share of expenses and the budget with what is left or over and yearly group budgets.
+- **Dashboard:** a Month / Year switch. Month shows income, expenses, left to spend and the amount saved to goals, upcoming bills next to the spending breakdown, Expected vs Actual with the difference (less income or money left than expected, or more spent, is shown in red), and group budgets that can be edited for that month. Year shows the same totals for the calendar year, Expected vs Actual, income vs expenses by month with the amounts under each month, the yearly spending breakdown (the 14 largest categories, the rest grouped as Other) and yearly group budgets. In both views, hovering or tapping a spending chart segment or legend row shows the period, amount spent, share of expenses and the budget with what is left or over.
 - **Transactions:** one journal for income, expenses and transfers. Filter by month, category, account and type, or search by name and notes. Choosing "—" clears a filter. Only saved transactions appear here; a recurring payment shows up once it is marked Paid.
 - **Recurring:** create and edit schedules. The Payment Schedule tab lists the occurrences for the selected month.
 - **Bill Calendar:** recurring payments and income only, including occurrences that were already paid. One-off transactions stay in the journal. Click an entry to open it; Paid / Received is always set by hand. Unpaid entries past their date are highlighted. Up to 1000 px wide, entries show a one-line name and a whole amount (for example $1,800); the status is shown by colour and the paid check.
@@ -65,7 +65,7 @@ One-off income and expenses take effect immediately and have no status or Expect
 - To a debt: the source account and the debt balance both decrease by the full amount. Interest charges are recorded separately.
 - To a goal: the source account decreases and the goal's saved amount increases. The money is still counted as an asset in Net Worth.
 - From a goal (a withdrawal): choose the goal in **From** and an account in **To**. The goal decreases and the account increases. A withdrawal cannot exceed what is saved in the goal, and no change may leave a goal below zero. Withdrawals are one-off only.
-- Transfers never count as income or expenses. Transfers to goals count toward the savings rate.
+- Transfers never count as income or expenses. Transfers to goals count as saved.
 - Editing or deleting a transfer recalculates both sides. An account, debt or goal referenced by a transfer cannot be deleted.
 
 One-off transfers stay in the journal. Recurring transfers appear in the Bill Calendar and create a journal entry only when marked Paid.
@@ -116,7 +116,7 @@ Each debt has a Name, Type, Starting balance, Start date, APR, Minimum payment, 
 - Only entries marked Paid / Received count toward actual totals, balances and progress. An actual amount of zero is allowed.
 - **Account balance** = opening balance + balance adjustments + received income − paid expenses ± transfers for that account. The app never makes real bank payments.
 - **Left to spend** = actual income − actual expenses.
-- **Savings rate** = (paid expenses linked to a savings goal + transfers to goals) ÷ actual income. Withdrawals do not reduce it.
+- **Saved** = paid expenses linked to a savings goal + transfers to goals. Withdrawals do not reduce it.
 - A category budget has a base amount and can change from a given month on. On the Dashboard, clicking a subcategory's budget opens an editor for the selected month: **This month only** changes just that month; **Apply to following months** sets the amount from that month on and replaces later changes. Months before the selected one never change.
 - A year's group budget is the sum of its monthly budgets from the budget start date. Overspending is measured against Actual.
 - In Group budgets, an expense bar turns red as soon as spending passes the budget. An income bar turns red only once the month (or year) is over and less came in than the target, so a paycheck that is still due does not look like a shortfall.

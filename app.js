@@ -360,7 +360,7 @@
       expectedIncome: add('expectedIncome'),
       expectedExpense: add('expectedExpense'),
       left: add('left'),
-      rate: income ? (savings / income) * 100 : 0,
+      savings,
     };
   }
   // Tooltip contents for the current Spending breakdown, by segment index.
@@ -545,7 +545,7 @@
   function dashboard() {
     const year = state.month.slice(0, 4),
       s = dashMode === 'Year' ? yearSummary(year) : B.summary(state, state.month);
-    const tiles = `<div class="stats-strip">${stat('Income', money(s.income), 'Expected ' + money(s.expectedIncome), 'tone-mint')}${stat('Expenses', money(s.expense), 'Expected ' + money(s.expectedExpense), 'tone-blush')}${stat('Left to spend', money(s.left), 'Expected ' + money(s.expectedIncome - s.expectedExpense), 'tone-sky')}${stat('Savings rate', `${s.rate.toFixed(1)}%`, '', 'tone-ink')}</div>`;
+    const tiles = `<div class="stats-strip">${stat('Income', money(s.income), 'Expected ' + money(s.expectedIncome), 'tone-mint')}${stat('Expenses', money(s.expense), 'Expected ' + money(s.expectedExpense), 'tone-blush')}${stat('Left to spend', money(s.left), 'Expected ' + money(s.expectedIncome - s.expectedExpense), 'tone-sky')}${stat('Saved', money(s.savings), '', 'tone-ink')}</div>`;
     let body;
     if (dashMode === 'Year')
       body =

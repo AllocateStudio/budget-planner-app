@@ -1402,6 +1402,30 @@ test('Income below target is flagged only after the month is over', () => {
   h.api.render();
   assert.ok(incomeLine().includes('over-budget'));
 });
+test('Dashboard shows the amount saved to goals for the month and the year', () => {
+  const h = harness();
+  h.api.sample('Jessica');
+  const s = h.api.get(),
+    year = s.month.slice(0, 4),
+    tile = () =>
+      Number(
+        h
+          .node('#main')
+          .innerHTML.match(/stat-label">Saved<\/span><strong class="stat-value">\$([\d,.]+)</)[1]
+          .replaceAll(',', ''),
+      );
+  h.api.renderScreen('Dashboard');
+  assert.ok(!h.node('#main').innerHTML.includes('Savings rate'));
+  const month = B.summary(s, s.month).savings;
+  assert.ok(month > 0);
+  assert.equal(tile(), B.round(month));
+  h.api.setDashMode('Year');
+  const yearly = B.sum(
+    Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`),
+    (m) => B.summary(s, m).savings,
+  );
+  assert.equal(tile(), B.round(yearly));
+});
 test('Expected vs Actual marks only the differences that hurt the budget', () => {
   const h = harness();
   h.api.sample('Jessica');
