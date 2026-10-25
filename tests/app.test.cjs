@@ -1689,3 +1689,31 @@ test('Only Due today and Overdue show as pills; other statuses stay plain', () =
   });
   assert.ok(html.includes('<span class="status-pill status-due-today">Due today</span>'));
 });
+
+test('Expected vs Actual: plus is better than expected; this year is compared through this month', () => {
+  const h = harness();
+  h.api.sample('Jessica');
+  const s = h.api.get(),
+    m = B.summary(s, s.month),
+    diffCell = (html, label) =>
+      html
+        .split('<tr>')
+        .find((row) => row.startsWith(`<th>${label}</th>`))
+        .split('<td')
+        .pop();
+  const under = B.round(m.expectedExpense - m.expense);
+  const cell = diffCell(h.node('#main').innerHTML, 'Expenses');
+  assert.equal(cell.includes('is-worse'), under < 0);
+  if (under > 0) assert.ok(cell.includes('>+'));
+  h.api.setDashMode('Year');
+  const year = s.month.slice(0, 4),
+    now = B.today().slice(0, 7),
+    months = Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`),
+    sofar = year === now.slice(0, 4) ? months.filter((x) => x <= now) : months,
+    expected = B.sum(sofar, (x) => B.summary(s, x).expectedIncome),
+    html = h.node('#main').innerHTML,
+    row = html.split('<tr>').find((r) => r.startsWith('<th>Income</th>'));
+  const fmt =
+    '$' + expected.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  assert.ok(row.includes(`>${fmt}<`), fmt);
+});

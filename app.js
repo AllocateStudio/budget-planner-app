@@ -385,7 +385,11 @@
       month: `${year}-${String(i + 1).padStart(2, '0')}`,
       ...B.summary(state, `${year}-${String(i + 1).padStart(2, '0')}`),
     }));
-    const add = (key) => total(months, (m) => m[key]),
+    // The current year is compared only through this month, so months still ahead
+    // do not show up as a shortfall.
+    const now = B.today().slice(0, 7),
+      sofar = String(year) === now.slice(0, 4) ? months.filter((m) => m.month <= now) : months,
+      add = (key, list = months) => total(list, (m) => m[key]),
       income = add('income'),
       savings = add('savings');
     return {
@@ -393,8 +397,8 @@
       rows: months.flatMap((m) => m.rows),
       income,
       expense: add('expense'),
-      expectedIncome: add('expectedIncome'),
-      expectedExpense: add('expectedExpense'),
+      expectedIncome: add('expectedIncome', sofar),
+      expectedExpense: add('expectedExpense', sofar),
       left: add('left'),
       savings,
     };
@@ -491,12 +495,13 @@
   }
   function expectedPanel(s) {
     // Phones get rounded amounts so all four columns fit.
-    // A shortfall is marked: less income or money left than expected, or more spent.
+    // Difference is plus when better than expected and minus (marked) when worse:
+    // for expenses, spending less than expected is a plus.
     const cell = (v, sign = '', cls = '') =>
         `<td${cls ? ` class="${cls}"` : ''}><span class="amt-full">${sign}${money(v)}</span><span class="amt-short">${sign}${shortMoney(v)}</span></td>`,
       line = (label, expected, actual, higherIsBetter = true) => {
-        const diff = B.round(actual - expected);
-        return `<tr><th>${label}</th>${cell(expected)}${cell(actual)}${cell(actual - expected, diff > 0 ? '+' : '', (higherIsBetter ? diff < 0 : diff > 0) ? 'is-worse' : '')}</tr>`;
+        const diff = B.round(higherIsBetter ? actual - expected : expected - actual);
+        return `<tr><th>${label}</th>${cell(expected)}${cell(actual)}${cell(diff, diff > 0 ? '+' : '', diff < 0 ? 'is-worse' : '')}</tr>`;
       };
     return panel(
       'Expected vs Actual',
