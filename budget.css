@@ -2026,19 +2026,21 @@ td .transaction-type-badge,
   margin-top: 7px;
   padding: 4px 12px;
   border-radius: 999px;
-  color: var(--ink);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.4;
 }
 .transaction-type-badge.type-income {
-  background: var(--mint);
+  background: #D8F3DE;
+  color: #2F7D4C;
 }
 .transaction-type-badge.type-expense {
-  background: var(--blush);
+  background: #FBDCE6;
+  color: #B23A66;
 }
 .transaction-type-badge.type-transfer {
-  background: var(--sky);
+  background: #D8ECFB;
+  color: #2A6CA8;
 }
 
 .schedule-record .record-amount .transaction-type-badge {

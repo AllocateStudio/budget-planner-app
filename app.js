@@ -700,7 +700,7 @@
             outside = !stamp.startsWith(state.month),
             payments = list.filter((t) => (t.scheduledDate || t.date) === stamp),
             income = payments.filter((t) => t.type === 'Income');
-          return `<div class="cal-day ${outside ? 'outside' : ''} ${stamp === B.today() ? 'is-today' : ''}">${income.length ? income.map((t, i) => `<button type="button" class="day-heading has-payday payday-band" data-edit="transaction" data-id="${esc(t.id)}" title="${esc(t.name + ' · ' + money(t.paid ? t.actual : t.expected) + ' · ' + status(t))}"><span class="day-num">${i === 0 ? day.getDate() : ''}</span><span class="calendar-paydays"><span class="payday-pill">${esc(t.name)}</span></span></button>`).join('') : `<div class="day-heading"><span class="day-num">${day.getDate()}</span></div>`}<div class="day-pills">${payments
+          return `<div class="cal-day ${outside ? 'outside' : ''} ${stamp === B.today() ? 'is-today' : ''}">${income.length ? income.map((t, i) => `<button type="button" class="day-heading has-payday payday-band" data-edit="transaction" data-id="${esc(t.id)}" title="${esc(t.name + ' · ' + money(t.paid ? t.actual : t.expected) + ' · ' + status(t))}"><span class="day-num">${i === 0 ? day.getDate() : ''}</span><span class="calendar-paydays"><span class="payday-pill">Payday</span></span></button>`).join('') : `<div class="day-heading"><span class="day-num">${day.getDate()}</span></div>`}<div class="day-pills">${payments
             .filter((t) => t.type !== 'Income')
             .map((t) =>
               edit(
