@@ -934,33 +934,48 @@ test('Savings screen sums goals, shows status only against a plan and lists reac
   assert.ok(html.includes('goal-status is-warn">Behind'));
   assert.ok(html.includes('Edit recurring'));
 });
-test('Goal cards match debt cards and View history filters the journal to the goal', () => {
+test('Goal cards match debt cards and View history opens inside the card', () => {
   const h = harness();
   h.api.sample('Jessica');
   h.api.renderScreen('Savings');
-  const html = h.node('#main').innerHTML,
-    s = h.api.get(),
-    goal = s.goals.find((g) => B.goalPlan(s, g.id).planned > 0);
+  const s = h.api.get(),
+    goal = s.goals.find((g) => B.goalPlan(s, g.id).planned > 0),
+    click = (action, id) => {
+      const button = { dataset: { action, id } };
+      h.fire('click', { target: { closest: (sel) => (sel === 'button' ? button : null) } });
+    },
+    history = () =>
+      (h.node('#main').innerHTML.match(/class="debt-schedule goal-history">([\s\S]*?)<\/tbody>/) ||
+        [])[1] || '';
+  let html = h.node('#main').innerHTML;
   assert.ok(!html.includes('debt-priority-badge'));
   assert.ok(html.includes('class="debt-card-actions"'));
   assert.ok(html.includes(' added this month</span>'));
-  assert.ok(html.includes(`data-action="goal-transactions" data-id="${goal.id}"`));
   assert.ok(html.includes('goal-status is-good">On track'));
-  assert.ok(!html.includes('goal-actions'));
-  const button = { dataset: { action: 'goal-transactions', id: goal.id } };
-  h.fire('click', { target: { closest: (sel) => (sel === 'button' ? button : null) } });
-  const journal = h.node('#main').innerHTML;
-  assert.ok(journal.includes('<optgroup label="Goals">'));
-  assert.ok(journal.includes(`<option value="${goal.id}" selected>`));
-  const rows = (journal.match(/<tbody>([\s\S]*?)<\/tbody>/)[1].match(/<tr>/g) || []).length;
-  const expected = s.transactions.filter(
+  assert.ok(
+    html.includes(
+      `data-action="goal-expand" data-id="${goal.id}" aria-expanded="false">View history`,
+    ),
+  );
+  assert.equal(history(), '');
+  click('goal-expand', goal.id);
+  html = h.node('#main').innerHTML;
+  assert.ok(html.includes('class="goal-grid"') && !html.includes('data-filter="account"'));
+  assert.ok(html.includes('Hide history'));
+  const moves = s.transactions.filter(
     (t) =>
       t.paid &&
       (t.goalId === goal.id ||
         (t.type === 'Transfer' && (t.toId === goal.id || t.fromId === goal.id))),
-  ).length;
-  assert.ok(expected > 0);
-  assert.equal(rows, expected);
+  );
+  assert.ok(moves.length > 6);
+  assert.equal((history().match(/<tr>/g) || []).length - 1, 6); // header row + six newest
+  click('goal-full', goal.id);
+  const rows = (history().match(/<tr>/g) || []).length - 1;
+  assert.equal(rows, moves.length + (goal.saved > 0 ? 1 : 0));
+  // The newest row shows the current saved amount.
+  const firstSaved = history().match(/<tbody><tr>.*?<td>\$([\d,.]+)<\/td><\/tr>/)[1];
+  assert.equal(Number(firstSaved.replaceAll(',', '')), B.goalSaved(s, goal.id));
 });
 test('Accounts reconcile with a statement and the screen sums accounts, goals and debt', () => {
   const h = harness();

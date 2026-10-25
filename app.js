@@ -757,7 +757,9 @@
   let debtChartBottom = 380,
     redrawDebtPlot = null;
   const debtExpanded = new Set(),
-    debtFull = new Set();
+    debtFull = new Set(),
+    goalExpanded = new Set(),
+    goalFull = new Set();
   const debtMonth = (m) =>
     B.date(m + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
   const debtDay = (d) =>
@@ -1269,6 +1271,42 @@
       toId: id,
     });
   }
+  // A goal row names the other side of the move; the goal itself is already the card title.
+  function goalEntry(t, amount) {
+    const account = (id) => state.accounts.find((x) => x.id === id)?.name || 'account';
+    if (t.type === 'Expense') return t.name || 'Linked expense';
+    return amount < 0 ? 'To ' + account(t.toId) : 'From ' + account(t.accountId);
+  }
+  // Money in and out of a goal, newest first, with the saved amount after each entry.
+  function goalHistory(g) {
+    const moves = state.transactions
+      .filter(
+        (t) =>
+          t.paid &&
+          ((t.type === 'Transfer' &&
+            ((t.toKind === 'goal' && t.toId === g.id) ||
+              (t.fromKind === 'goal' && t.fromId === g.id))) ||
+            (t.type === 'Expense' && t.goalId === g.id)),
+      )
+      .sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+    let saved = g.saved || 0;
+    const rows = moves
+      .map((t) => {
+        const amount = t.type === 'Transfer' && t.fromKind === 'goal' ? -t.actual : t.actual;
+        saved = B.round(saved + amount);
+        return { t, amount, saved };
+      })
+      .reverse();
+    if (!rows.length && !(g.saved > 0))
+      return '<p class="empty-copy goal-history-empty">No money added yet.</p>';
+    const full = goalFull.has(g.id),
+      shown = full ? rows : rows.slice(0, 6),
+      start =
+        g.saved > 0 && (full || rows.length <= 6)
+          ? `<tr><th>—</th><td>Starting amount</td><td class="flow-in">+${money(g.saved)}</td><td>${money(g.saved)}</td></tr>`
+          : '';
+    return `<div class="table-wrap"><table class="debt-schedule goal-history"><thead><tr><th>Date</th><th>Entry</th><th>Amount</th><th>Saved</th></tr></thead><tbody>${shown.map(({ t, amount, saved }) => `<tr><th>${B.date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(t.date.slice(0, 4) === B.today().slice(0, 4) ? {} : { year: 'numeric' }) })}</th><td>${edit('transaction', t.id, esc(goalEntry(t, amount)), 'table-link')}</td><td class="${amount < 0 ? 'flow-out' : 'flow-in'}">${amount < 0 ? '−' : '+'}${money(Math.abs(amount))}</td><td>${money(saved)}</td></tr>`).join('')}${start}</tbody></table></div>${rows.length > 6 ? `<div class="debt-table-actions">${btn(full ? 'Show less' : `Show all ${rows.length} entries`, 'goal-full', g.id, 'textbtn')}</div>` : ''}`;
+  }
   function savingsScreen() {
     const plans = state.goals.map((g) => ({ g, plan: B.goalPlan(state, g.id) })),
       reached = plans.filter(({ plan }) => plan.status === 'reached').length;
@@ -1314,7 +1352,7 @@
               : money(plan.needed) + ' / month' + when;
       return panel(
         `<span class="goal-name">${esc(g.name)}</span>${label ? `<span class="goal-status ${tone}">${label}</span>` : ''}`,
-        `<div class="debt-card-summary"><div><strong class="large-value">${money(plan.saved)} <small>/ ${money(g.target)}</small></strong><p>${esc(g.kind)}${detail ? ' · ' + detail : ''}</p></div><div class="debt-card-actions">${btn('Add money', 'goal-add', g.id, 'btn')}${plan.saved > 0 ? btn('Withdraw', 'goal-withdraw', g.id, 'btn') : ''}</div></div>${bar(plan.saved, g.target)}<div class="debt-card-footer"><span>${money(addedThisMonth(g.id))} added this month</span><span class="goal-links">${plan.status !== 'reached' ? btn(plan.planned ? 'Edit recurring' : 'Set recurring', 'goal-recurring', g.id, 'textbtn') : ''}${btn('View history', 'goal-transactions', g.id, 'textbtn')}</span></div>`,
+        `<div class="debt-card-summary"><div><strong class="large-value">${money(plan.saved)} <small>/ ${money(g.target)}</small></strong><p>${esc(g.kind)}${detail ? ' · ' + detail : ''}</p></div><div class="debt-card-actions">${btn('Add money', 'goal-add', g.id, 'btn')}${plan.saved > 0 ? btn('Withdraw', 'goal-withdraw', g.id, 'btn') : ''}</div></div>${bar(plan.saved, g.target)}<div class="debt-card-footer"><span>${money(addedThisMonth(g.id))} added this month</span><span class="goal-links">${plan.status !== 'reached' ? btn(plan.planned ? 'Edit recurring' : 'Set recurring', 'goal-recurring', g.id, 'textbtn') : ''}<button type="button" class="textbtn" data-action="goal-expand" data-id="${esc(g.id)}" aria-expanded="${goalExpanded.has(g.id)}">${goalExpanded.has(g.id) ? 'Hide history' : 'View history'}</button></span></div>${goalExpanded.has(g.id) ? goalHistory(g) : ''}`,
         edit('goal', g.id, 'Edit', 'textbtn'),
       );
     };
@@ -3053,6 +3091,10 @@
     else if (a === 'debt-expand') {
       debtExpanded.has(id) ? debtExpanded.delete(id) : debtExpanded.add(id);
       render();
+    } else if (a === 'goal-expand' || a === 'goal-full') {
+      const set = a === 'goal-expand' ? goalExpanded : goalFull;
+      set.has(id) ? set.delete(id) : set.add(id);
+      render();
     } else if (a === 'debt-full') {
       debtFull.has(id) ? debtFull.delete(id) : debtFull.add(id);
       render();
@@ -3070,10 +3112,8 @@
     else if (a === 'account-balance') updateAccountBalance(id);
     else if (a === 'account-transfer')
       editor('transaction', '', { type: 'Transfer', accountId: id, destination: '' });
-    else if (a === 'account-transactions' || a === 'goal-transactions') {
+    else if (a === 'account-transactions') {
       filters.account = id;
-      // A goal's history spans every month; an account opens on the current one.
-      if (a === 'goal-transactions') filters.month = '';
       screen = 'Transactions';
       render();
       globalThis.scrollTo?.(0, 0);

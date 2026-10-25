@@ -2391,3 +2391,36 @@ td .transaction-type-badge,
     flex: 1 1 0;
   }
 }
+/* Goal history opens inside the card like the debt schedule; the other card in the row keeps its height. */
+.goal-grid {
+  align-items: start;
+}
+.goal-history .flow-in {
+  color: var(--mint-ink);
+}
+.goal-history .flow-out {
+  color: var(--blush-ink);
+}
+.goal-history .table-link {
+  text-align: left;
+}
+.goal-history-empty {
+  margin: 16px 0 0;
+}
+/* Narrow goal cards: tighter history cells so all four columns fit without scrolling. */
+@container (max-width: 479px) {
+  .goal-history th,
+  .goal-history td {
+    padding: 11px 4px;
+    font-size: 13px;
+  }
+  .goal-history th:first-child,
+  .goal-history td:first-child {
+    padding-left: 0;
+  }
+  .goal-history th:last-child,
+  .goal-history td:last-child {
+    padding-right: 0;
+    text-align: right;
+  }
+}
