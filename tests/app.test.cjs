@@ -1021,9 +1021,12 @@ test('Accounts reconcile with a statement and the screen sums accounts, goals an
   assert.ok(html.includes('In accounts') && html.includes('$1,230.00'));
   assert.ok(html.includes('In goals') && html.includes('Net worth'));
   assert.ok(html.includes('large-value is-negative">−$120.00'));
-  assert.ok(html.includes('flow-in">+$100.00</b>') && html.includes('flow-out">−$0.00</b>'));
+  assert.ok(
+    html.includes('flow-in">+$100.00 in</span>') && html.includes('flow-out">−$0.00 out</span>'),
+  );
+  assert.ok(html.includes('class="account-kind kind-checking"'));
   // Checking is listed before Investment.
-  assert.ok(html.indexOf('>Everyday</h2>') < html.indexOf('>Brokerage</h2>'));
+  assert.ok(html.indexOf('<h2>Everyday<') < html.indexOf('<h2>Brokerage<'));
   assert.ok(!html.includes('Opening balance'));
   assert.ok(!html.includes('account-badge'));
 });

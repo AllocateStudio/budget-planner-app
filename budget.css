@@ -1586,38 +1586,110 @@ td:not(:first-child) {
   margin-top: 4px;
 }
 
-/* Account cards have no priority number, so the title is plain text. */
-.account-list > .panel > .panel-head h2 {
-  display: block;
-}
 .large-value.is-negative {
   color: var(--blush-ink);
 }
-.account-footer {
-  margin-top: 14px;
-  padding-top: 12px;
+
+/* Accounts: two cards per row; the type chip and flow chips use the Bill Calendar chip colours. */
+.account-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  align-items: start;
+}
+.account-card {
+  margin: 0;
+}
+.account-card > .panel-head {
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+.account-card > .panel-head h2 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.account-card > .panel-head > .textbtn {
+  margin: -7px 0 0;
+  padding-right: 0;
+}
+.account-kind {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.kind-checking {
+  background: #d8ecfb;
+  color: #2a6ca8;
+}
+.kind-savings {
+  background: #d8f3de;
+  color: #2f7d4c;
+}
+.kind-cash {
+  background: #fcefc0;
+  color: #8a6d12;
+}
+.kind-investment {
+  background: #e6ddf8;
+  color: #5b3f99;
+}
+.kind-other-asset {
+  background: #fbdce6;
+  color: #b23a66;
+}
+.account-card .large-value {
+  display: block;
+  margin: 0;
+}
+.account-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.flow-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.flow-chip.flow-in {
+  background: #d8f3de;
+}
+.flow-chip.flow-out {
+  background: #fbdce6;
+}
+.account-flow small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.account-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 16px;
   border-top: 1px solid var(--line);
 }
-.account-footer {
-  flex-wrap: wrap;
-  row-gap: 6px;
-}
-.account-footer .flow-part {
-  margin-left: 8px;
+.account-card-foot .textbtn {
+  padding-right: 0;
   white-space: nowrap;
 }
-.account-footer b {
-  font-weight: 700;
-}
-.account-footer .textbtn {
-  margin-left: auto;
-  white-space: nowrap;
-}
-.account-footer .flow-in {
-  color: var(--ink);
-}
-.account-footer .flow-out {
-  color: var(--ink);
+@media (max-width: 800px) {
+  .account-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* Dashboard: Month / Year views */
@@ -2331,8 +2403,7 @@ td .transaction-type-badge,
   margin-bottom: 12px;
 }
 /* Without a badge the title line is shorter, so Edit moves up a little more to stay centred. */
-.goal-grid > .panel > .panel-head > .textbtn,
-.account-list > .panel > .panel-head > .textbtn {
+.goal-grid > .panel > .panel-head > .textbtn {
   margin: -7px 0 0;
   padding-right: 0;
 }

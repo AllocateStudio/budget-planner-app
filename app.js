@@ -750,20 +750,19 @@
       (x, y) =>
         (accountKinds.indexOf(x.a.kind) + 1 || 99) - (accountKinds.indexOf(y.a.kind) + 1 || 99),
     );
-    // Same layout as debt cards: name, balance with actions, monthly flow footer.
+    // Two cards per row: name with a type chip, balance, this month's flow, actions.
     const card = ({ a, balance }) => {
       const flow = B.accountMonth(state, a.id, month),
+        kind = (accountKinds.includes(a.kind) ? a.kind : 'Other asset')
+          .toLowerCase()
+          .replace(' ', '-'),
         sameName = a.kind.toLowerCase() === a.name.trim().toLowerCase();
-      return panel(
-        esc(a.name),
-        `<div class="debt-card-summary"><div><strong class="large-value${balance < 0 ? ' is-negative' : ''}">${money(balance)}</strong>${sameName ? '' : `<p>${esc(a.kind)}</p>`}</div><div class="debt-card-actions">${btn('Transfer', 'account-transfer', a.id, 'btn')}${btn('Update Balance', 'account-balance', a.id, 'btn')}</div></div><div class="debt-card-footer account-footer"><span>This month <span class="flow-part"><b class="flow-in">+${money(flow.in)}</b> in</span> <span class="flow-part"><b class="flow-out">−${money(flow.out)}</b> out</span></span><button type="button" class="textbtn" data-action="account-transactions" data-id="${esc(a.id)}">View transactions</button></div>`,
-        edit('account', a.id, 'Edit', 'textbtn'),
-      );
+      return `<section class="panel account-card"><div class="panel-head"><h2>${esc(a.name)}${sameName ? '' : `<span class="account-kind kind-${kind}">${esc(a.kind)}</span>`}</h2>${edit('account', a.id, 'Edit', 'textbtn')}</div><strong class="large-value${balance < 0 ? ' is-negative' : ''}">${money(balance)}</strong><div class="account-flow"><span class="flow-chip flow-in">+${money(flow.in)} in</span><span class="flow-chip flow-out">−${money(flow.out)} out</span><small>this month</small></div><div class="account-card-foot"><div class="debt-card-actions">${btn('Transfer', 'account-transfer', a.id, 'btn')}${btn('Update Balance', 'account-balance', a.id, 'btn')}</div><button type="button" class="textbtn" data-action="account-transactions" data-id="${esc(a.id)}">View transactions</button></div></section>`;
     };
     return (
       heading('Accounts', '', edit('account', '', '+ Add account', 'btn primary')) +
       (state.accounts.length
-        ? `<div class="stats-strip">${stat('In accounts', money(inAccounts), '', 'tone-mint')}${stat('In goals', money(inGoals), '', 'tone-sky')}${stat('Debt', money(debt), '', 'tone-blush')}${stat('Net worth', money(inAccounts + inGoals - debt), '', 'tone-ink')}</div><div class="debt-list account-list">${balances.map(card).join('')}</div>`
+        ? `<div class="stats-strip">${stat('In accounts', money(inAccounts), '', 'tone-mint')}${stat('In goals', money(inGoals), '', 'tone-sky')}${stat('Debt', money(debt), '', 'tone-blush')}${stat('Net worth', money(inAccounts + inGoals - debt), '', 'tone-ink')}</div><div class="account-grid">${balances.map(card).join('')}</div>`
         : panel(
             'Your accounts',
             '<p class="empty-copy">Add your first account and opening balance.</p>',
