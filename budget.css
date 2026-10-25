@@ -2270,10 +2270,26 @@ td .transaction-type-badge,
 @container (min-width: 480px) and (max-width: 719px) {
   .donut-layout {
     justify-content: center;
-    gap: 40px;
+    flex-wrap: nowrap;
+    gap: 36px;
+  }
+  .donut {
+    width: 230px;
+    height: 230px;
+  }
+  .donut > div {
+    width: 160px;
+    height: 160px;
+  }
+  .donut b {
+    font-size: 18px;
   }
   .chart-legend {
     flex: 0 1 290px;
+  }
+  .chart-legend li {
+    margin: 13px 0;
+    font-size: 13px;
   }
 }
 .expected-table td.is-worse {
