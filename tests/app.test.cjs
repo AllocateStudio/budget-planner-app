@@ -1673,15 +1673,11 @@ test('Mark as Paid pays in one click and Undo puts it back', () => {
   assert.ok(!h.api.get().transactions.some((t) => t.id === id && t.paid));
 });
 
-test('Statuses show as coloured pills in the journal and schedule rows', () => {
+test('Only Due today and Overdue show as pills; other statuses stay plain', () => {
   const h = harness();
   h.api.sample('Jessica');
   h.api.renderScreen('Transactions');
-  assert.ok(
-    h
-      .node('#main')
-      .innerHTML.includes('<td><span class="status-pill status-paid">Paid</span></td>'),
-  );
+  assert.ok(h.node('#main').innerHTML.includes('<td>Paid</td>'));
   const html = h.api.scheduleRow({
     id: 'u',
     recurringId: 'r',

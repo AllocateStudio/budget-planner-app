@@ -332,9 +332,11 @@
       }),
     fullDate = (d) => shortDate(d, false, true),
     dayLabel = (d) => shortDate(d, true);
-  // Status as a small pill in the Bill Calendar colours.
+  // Only statuses that need attention get a pill; the rest stay plain text.
   const statusPill = (t) =>
-    `<span class="status-pill status-${status(t).toLowerCase().replace(' ', '-')}">${status(t)}</span>`;
+    ['Due today', 'Overdue'].includes(status(t))
+      ? `<span class="status-pill status-${status(t).toLowerCase().replace(' ', '-')}">${status(t)}</span>`
+      : status(t);
   function row(t, dated = false, showPaidCheck = false, withYear = false) {
     return edit(
       'transaction',

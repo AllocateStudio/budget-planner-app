@@ -2524,8 +2524,7 @@ td .transaction-type-badge,
   cursor: pointer;
 }
 
-/* Status pills: Upcoming lilac, Due today yellow and Overdue pink as in the Bill Calendar,
-   Paid / Received green, Transferred blue, Skipped grey. */
+/* Status pills only for Due today (yellow) and Overdue (pink), as in the Bill Calendar. */
 .status-pill {
   display: inline-block;
   padding: 4px 12px;
@@ -2538,10 +2537,6 @@ td .transaction-type-badge,
 .record-amount small .status-pill {
   margin-top: 4px;
 }
-.status-upcoming {
-  background: #e6ddf8;
-  color: #5b3f99;
-}
 .status-due-today {
   background: #fcefc0;
   color: #8a6d12;
@@ -2549,17 +2544,4 @@ td .transaction-type-badge,
 .status-overdue {
   background: #fbdce6;
   color: #b23a66;
-}
-.status-paid,
-.status-received {
-  background: #d8f3de;
-  color: #2f7d4c;
-}
-.status-transferred {
-  background: #d8ecfb;
-  color: #2a6ca8;
-}
-.status-skipped {
-  background: #eeede8;
-  color: var(--muted);
 }
