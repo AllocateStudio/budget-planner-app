@@ -876,6 +876,10 @@ td:not(:first-child) {
   gap: 8px;
   align-items: center;
 }
+/* Same pink as the active Recurring / Payment Schedule switch. */
+.schedule-actions .btn.primary {
+  background: var(--blush);
+}
 .schedule-totals {
   display: flex;
   gap: 28px;
