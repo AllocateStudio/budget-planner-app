@@ -1469,7 +1469,7 @@ test('Dashboard shows the amount saved to goals for the month and the year', () 
   );
   assert.equal(tile(), B.round(yearly));
 });
-test('Dates show the year only outside the current year', () => {
+test('The journal always shows the year', () => {
   const h = harness();
   h.api.sample('Jessica');
   const year = Number(B.today().slice(0, 4)),
@@ -1492,7 +1492,7 @@ test('Dates show the year only outside the current year', () => {
   h.fire('click', { target: { closest: (sel) => (sel === 'button' ? reset : null) } });
   const html = h.node('#main').innerHTML;
   assert.ok(html.includes(`journal-date">Dec 28, ${year - 1}</td>`));
-  assert.ok(html.includes('journal-date">Mar 5</td>'));
+  assert.ok(html.includes(`journal-date">Mar 5, ${year}</td>`));
   assert.ok(!html.includes(`<td>${year}-03-05</td>`));
 });
 test('Expected vs Actual marks only the differences that hurt the budget', () => {
@@ -1623,11 +1623,7 @@ test('Recurring shows the next unpaid date and schedule marks paid records', () 
   const r = { id: 'next-test', name: 'Rent', active: true, start: today, frequency: 'Monthly' };
   const label = (d) =>
     'Next: ' +
-    B.date(d).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      ...(d.slice(0, 4) !== today.slice(0, 4) ? { year: 'numeric' } : {}),
-    });
+    B.date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   assert.equal(h.api.nextRecurringLabel(r), label(today));
   h.api.mutate((n) => {
     n.skipped.push(r.id + '@' + today);
