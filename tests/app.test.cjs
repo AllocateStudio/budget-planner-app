@@ -1436,7 +1436,7 @@ test('Year dashboard sums the months and shows read-only yearly budgets', () => 
   const legend = html.match(/<ul class="chart-legend" id="spending-legend">([\s\S]*?)<\/ul>/)[1];
   assert.equal((legend.match(/<li[ >]/g) || []).length, 15); // 14 largest categories + Other
   assert.ok(legend.includes('<span>Other categories</span>'));
-  assert.ok(legend.includes('%</small>'));
+  assert.ok(!legend.includes('%</small>')); // the share is in the tooltip only
   assert.ok(legend.includes('<li tabindex="0" data-seg="0">'));
   const stops = html
     .match(/class="donut" data-stops="([^"]*)"/)[1]

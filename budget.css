@@ -299,9 +299,6 @@ td:not(:first-child) {
 .chart-legend b {
   white-space: nowrap;
 }
-.chart-legend small {
-  display: none;
-}
 .meter {
   height: 10px;
   border: 1px solid var(--ink);
@@ -1895,38 +1892,38 @@ td:not(:first-child) {
 .donut-wrap {
   container-type: inline-size;
 }
-@container (min-width: 720px) {
+@container (min-width: 780px) {
   .donut-layout {
+    justify-content: center;
     flex-wrap: nowrap;
     gap: 40px;
   }
   .donut {
-    width: 210px;
-    height: 210px;
+    width: 240px;
+    height: 240px;
   }
   .donut > div {
-    width: 146px;
-    height: 146px;
+    width: 168px;
+    height: 168px;
   }
+  .donut b {
+    font-size: 18px;
+  }
+  /* Two columns on smaller screens, three on wide ones, each about 240px so names stay near amounts. */
   .chart-legend {
-    columns: 3 260px;
+    flex: 0 1 520px;
+    columns: 2;
     column-gap: 32px;
     min-width: 0;
     max-width: none;
   }
   .chart-legend li {
     display: grid;
-    grid-template-columns: 14px minmax(0, 1fr) auto auto;
+    grid-template-columns: 14px minmax(0, 1fr) auto;
     break-inside: avoid;
     margin: 0;
-    padding: 10px 16px 10px 0;
+    padding: 8px 12px 8px 0;
     font-size: 13px;
-  }
-  .chart-legend small {
-    display: block;
-    min-width: 32px;
-    text-align: right;
-    color: var(--muted);
   }
   .chart-legend b {
     text-align: right;
@@ -2277,7 +2274,7 @@ td .transaction-type-badge,
   margin-bottom: auto;
 }
 /* Side by side in a half-width panel: keep names close to their amounts and centre chart and legend. */
-@container (min-width: 480px) and (max-width: 719px) {
+@container (min-width: 480px) and (max-width: 779px) {
   .donut-layout {
     justify-content: center;
     flex-wrap: nowrap;
@@ -2295,7 +2292,7 @@ td .transaction-type-badge,
     font-size: 18px;
   }
   .chart-legend {
-    flex: 0 1 290px;
+    flex: 0 1 250px;
   }
   .chart-legend li {
     margin: 13px 0;
@@ -2340,4 +2337,30 @@ td .transaction-type-badge,
 #spending-legend [data-seg]:focus-visible {
   background: var(--line);
   box-shadow: 0 0 0 4px var(--line);
+}
+/* The yearly list is long: beside it, a larger chart and tighter rows keep the two in proportion. */
+@container (min-width: 480px) and (max-width: 779px) {
+  .donut-wrap.is-long .donut {
+    width: 260px;
+    height: 260px;
+  }
+  .donut-wrap.is-long .donut > div {
+    width: 182px;
+    height: 182px;
+  }
+  .donut-wrap.is-long .chart-legend li {
+    margin: 8px 0;
+  }
+}
+@container (min-width: 1060px) {
+  .chart-legend {
+    flex-basis: 780px;
+    columns: 3;
+  }
+}
+/* Narrow panels stack the chart above the list; centre the chart. */
+@container (max-width: 479px) {
+  .donut-layout {
+    justify-content: center;
+  }
 }
