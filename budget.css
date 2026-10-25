@@ -1014,9 +1014,11 @@ td:not(:first-child) {
   margin-top: 8px;
 }
 .paid-off-label {
-  background: var(--accent);
-  border-radius: 6px;
-  padding: 3px 8px;
+  background: #d8f3de;
+  color: #2f7d4c;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 11px;
   font-weight: 700;
 }
 .debt-schedule {
@@ -1067,7 +1069,7 @@ td:not(:first-child) {
   padding: 0 6px;
   margin-right: 6px;
   border: 1.5px solid var(--ink);
-  border-radius: 8px;
+  border-radius: 999px;
   /* Same pink as the active Recurring / Payment Schedule switch. */
   background: var(--blush);
   font-size: 14px;
@@ -1525,16 +1527,19 @@ td:not(:first-child) {
   flex-direction: column;
 }
 .goal-status {
-  border-radius: 6px;
-  padding: 3px 8px;
-  font-size: 12px;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 11px;
   font-weight: 700;
+  line-height: 1.4;
 }
 .goal-status.is-good {
-  background: var(--accent);
+  background: #d8f3de;
+  color: #2f7d4c;
 }
 .goal-status.is-warn {
-  background: var(--blush);
+  background: #fbdce6;
+  color: #b23a66;
 }
 @media (max-width: 800px) {
   .goal-grid {
@@ -2417,12 +2422,10 @@ td .transaction-type-badge,
   display: inline-block;
   margin-left: 10px;
   vertical-align: 3px;
-  padding: 1px 7px;
-  font-size: 11px;
-  color: var(--ink);
 }
 .goal-status.is-muted {
-  background: var(--line);
+  background: #eeede8;
+  color: var(--muted);
 }
 .goal-grid .debt-card-footer {
   flex-wrap: wrap;
@@ -2519,4 +2522,10 @@ td .transaction-type-badge,
   font-weight: 700;
   padding: 0;
   cursor: pointer;
+}
+
+/* Tile colours mean the same on every screen: green money you have or received, pink spending and debt,
+   yellow a milestone, blue and lilac neutral totals. */
+.stat-tile.tone-sun {
+  background: #fcefc0;
 }

@@ -1066,7 +1066,7 @@
     );
     return (
       heading('Debt Payoff', '', edit('debt', '', '+ Add Debt', 'btn primary')) +
-      `<div class="stats-strip debt-stats">${stat('Total debt', money(totalDebt), '', 'tone-sky')}${stat('Paid', money(paid), '', 'tone-mint')}${stat('Debt-free date', finish(plan), '', 'tone-ink')}${stat('Total interest', plan.paidOff ? money(plan.interest) : '—', '', 'tone-blush')}</div>` +
+      `<div class="stats-strip debt-stats">${stat('Total debt', money(totalDebt), '', 'tone-blush')}${stat('Paid', money(paid), '', 'tone-mint')}${stat('Debt-free date', finish(plan), '', 'tone-sun')}${stat('Total interest', plan.paidOff ? money(plan.interest) : '—', '', 'tone-ink')}</div>` +
       (debts.length
         ? '<div class="debt-overview">' +
           panel(
@@ -1375,7 +1375,7 @@
     return (
       heading('Savings', '', edit('goal', '', '+ Add goal', 'btn primary')) +
       (plans.length
-        ? `<div class="stats-strip">${stat('Total saved', money(total(plans, ({ plan }) => plan.saved)), '', 'tone-mint')}${stat('Total target', money(total(state.goals, (g) => g.target)), '', 'tone-sky')}${stat('Needed / month', money(total(plans, ({ plan }) => plan.needed || 0)), '', 'tone-ink')}${stat('Goals reached', reached + ' of ' + plans.length, '', 'tone-blush')}</div><div class="goal-grid">${plans.map(card).join('')}</div>`
+        ? `<div class="stats-strip">${stat('Total saved', money(total(plans, ({ plan }) => plan.saved)), '', 'tone-mint')}${stat('Total target', money(total(state.goals, (g) => g.target)), '', 'tone-sky')}${stat('Needed / month', money(total(plans, ({ plan }) => plan.needed || 0)), '', 'tone-ink')}${stat('Goals reached', reached + ' of ' + plans.length, '', 'tone-sun')}</div><div class="goal-grid">${plans.map(card).join('')}</div>`
         : panel(
             'Savings goals',
             '<p class="empty-copy">Create a savings goal or sinking fund.</p>',
