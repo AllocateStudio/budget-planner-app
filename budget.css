@@ -2611,8 +2611,8 @@ td .transaction-type-badge,
   .debt-list .debt-card-summary {
     grid-template-columns: minmax(0, 1fr);
   }
-  .debt-list .debt-card-actions {
-    justify-content: flex-start;
+  .debt-list .debt-card-actions .btn {
+    flex: 1 1 0;
   }
   .debt-list .debt-schedule th,
   .debt-list .debt-schedule td {
