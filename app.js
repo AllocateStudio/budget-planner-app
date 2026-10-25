@@ -2009,8 +2009,18 @@
   }
   function scheduleRow(t) {
     t = { ...t, date: t.scheduledDate || t.date };
-    // Name on the left, then the actions, then the amount flush right.
-    return `<div class="schedule-record ${t.paid ? 'is-paid' : ''}">${edit('transaction', t.id, recordName(t, false, true))}<div class="schedule-actions">${t.paid ? `<button type="button" class="icon-btn edit-icon" data-action="open-payment" data-id="${esc(t.id)}" aria-label="Edit ${esc(t.name)}" title="Edit">&#9998;</button>` : t.skipped ? btn('Restore', 'restore-payment', t.id, 'textbtn') : btn('Mark as paid', 'quick-pay', t.id, 'btn pay-btn') + btn('Skip', 'skip-payment', t.id, 'textbtn')}</div>${recordAmount(t, true)}</div>`;
+    // Name, then Mark as paid / Skip, then the amount, and the pencil last.
+    // Unpaid rows keep an empty pencil slot so the amounts stay in one column.
+    const actions = t.paid
+        ? ''
+        : t.skipped
+          ? btn('Restore', 'restore-payment', t.id, 'textbtn')
+          : btn('Mark as paid', 'quick-pay', t.id, 'btn pay-btn') +
+            btn('Skip', 'skip-payment', t.id, 'textbtn'),
+      pencil = t.paid
+        ? `<button type="button" class="icon-btn edit-icon" data-action="open-payment" data-id="${esc(t.id)}" aria-label="Edit ${esc(t.name)}" title="Edit">&#9998;</button>`
+        : '';
+    return `<div class="schedule-record ${t.paid ? 'is-paid' : ''}">${edit('transaction', t.id, recordName(t, false, true))}<div class="schedule-actions">${actions}</div>${recordAmount(t, true)}<span class="schedule-edit">${pencil}</span></div>`;
   }
   function editor(kind, id = '', preset = {}) {
     let record = state[collections[kind]].find((t) => t.id === id);

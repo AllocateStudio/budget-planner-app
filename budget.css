@@ -884,6 +884,11 @@ td:not(:first-child) {
   padding: 12px 0;
   font-weight: 600;
 }
+.schedule-edit {
+  flex: 0 0 36px;
+  display: flex;
+  justify-content: flex-end;
+}
 .schedule-actions .pay-btn {
   min-height: 34px;
   padding: 6px 14px;
@@ -955,6 +960,13 @@ td:not(:first-child) {
   .schedule-record > .record-amount {
     margin-left: auto;
     padding: 0;
+  }
+  .schedule-edit {
+    flex-basis: auto;
+    margin-left: 10px;
+  }
+  .schedule-edit:empty {
+    display: none;
   }
   .schedule-totals {
     gap: 12px;
