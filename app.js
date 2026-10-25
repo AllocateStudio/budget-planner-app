@@ -363,7 +363,8 @@
       rate: income ? (savings / income) * 100 : 0,
     };
   }
-  function spendingPanel(s) {
+  // The yearly panel spans the full width, so it lists more categories before grouping the rest.
+  function spendingPanel(s, top = 8) {
     const spent = state.categories
       .filter((c) => c.type !== 'Income')
       .map((c) => ({
@@ -377,23 +378,27 @@
       .filter((c) => c.amount > 0)
       .sort((a, b) => b.amount - a.amount || a.name.localeCompare(b.name));
     const segments =
-      spendingExpanded || allSegments.length <= 8
+      spendingExpanded || allSegments.length <= top + 1
         ? allSegments
         : [
-            ...allSegments.slice(0, 8),
-            { name: 'Other categories', amount: total(allSegments.slice(8), (c) => c.amount) },
+            ...allSegments.slice(0, top),
+            {
+              name: 'Other categories',
+              amount: total(allSegments.slice(top), (c) => c.amount),
+              colour: '#D9D8D2',
+            },
           ];
     let offset = 0;
     const gradient = segments
       .map((c, i) => {
         const from = offset;
         offset += s.expense ? (c.amount / s.expense) * 100 : 0;
-        return `${colours[i % colours.length]} ${from}% ${offset}%`;
+        return `${c.colour || colours[i % colours.length]} ${from}% ${offset}%`;
       })
       .join(',');
     return panel(
       'Spending breakdown',
-      `<div class="donut-wrap"><div class="donut-layout"><div class="donut" role="img" aria-label="Total actual expenses ${esc(state.currency)}${s.expense}" style="background:${segments.length ? 'conic-gradient(' + gradient + ')' : '#dededb'}"><div><small>Actual expenses</small><b>${money(s.expense)}</b></div></div><ul class="chart-legend" id="spending-legend">${segments.map((c, i) => `<li><i style="background:${colours[i % colours.length]}"></i><span>${esc(c.name)}</span><b>${money(c.amount)}</b></li>`).join('') || '<li>No expenses yet.</li>'}</ul></div></div>${allSegments.length > 8 ? `<div class="breakdown-actions"><button type="button" class="textbtn" data-action="toggle-spending" aria-expanded="${spendingExpanded}" aria-controls="spending-legend">${spendingExpanded ? 'Show less' : `Show all ${allSegments.length} categories`}</button></div>` : ''}`,
+      `<div class="donut-wrap"><div class="donut-layout"><div class="donut" role="img" aria-label="Total actual expenses ${esc(state.currency)}${s.expense}" style="background:${segments.length ? 'conic-gradient(' + gradient + ')' : '#dededb'}"><div><small>Actual expenses</small><b>${money(s.expense)}</b></div></div><ul class="chart-legend" id="spending-legend">${segments.map((c, i) => `<li><i style="background:${c.colour || colours[i % colours.length]}"></i><span>${esc(c.name)}</span><small>${s.expense ? Math.round((c.amount / s.expense) * 100) : 0}%</small><b>${money(c.amount)}</b></li>`).join('') || '<li>No expenses yet.</li>'}</ul></div></div>${allSegments.length > top + 1 ? `<div class="breakdown-actions"><button type="button" class="textbtn" data-action="toggle-spending" aria-expanded="${spendingExpanded}" aria-controls="spending-legend">${spendingExpanded ? 'Show less' : `Show all ${allSegments.length} categories`}</button></div>` : ''}`,
     );
   }
   function expectedPanel(s) {
@@ -494,7 +499,7 @@
       body =
         expectedPanel(s) +
         yearChart(s) +
-        spendingPanel(s) +
+        spendingPanel(s, 14) +
         budgetPanel(s.rows, budgetMonthsOf(year), false);
     else {
       const end = B.date(B.today());

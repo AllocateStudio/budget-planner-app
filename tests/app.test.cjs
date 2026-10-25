@@ -1433,6 +1433,10 @@ test('Year dashboard sums the months and shows read-only yearly budgets', () => 
     html = h.node('#main').innerHTML;
   assert.ok(html.includes('class="year-chart"'));
   assert.ok(html.includes('data-action="dash-year"'));
+  const legend = html.match(/<ul class="chart-legend" id="spending-legend">([\s\S]*?)<\/ul>/)[1];
+  assert.equal((legend.match(/<li>/g) || []).length, 15); // 14 largest categories + Other
+  assert.ok(legend.includes('<span>Other categories</span>'));
+  assert.ok(legend.includes('%</small>'));
   assert.ok(
     html.includes(
       `<strong class="stat-value">$${income.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,

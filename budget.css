@@ -299,6 +299,9 @@ td:not(:first-child) {
 .chart-legend b {
   white-space: nowrap;
 }
+.chart-legend small {
+  display: none;
+}
 .meter {
   height: 10px;
   border: 1px solid var(--ink);
@@ -1906,17 +1909,24 @@ td:not(:first-child) {
     height: 146px;
   }
   .chart-legend {
-    columns: 3 190px;
+    columns: 3 260px;
     column-gap: 32px;
     min-width: 0;
     max-width: none;
   }
   .chart-legend li {
     display: grid;
-    grid-template-columns: 14px minmax(0, 1fr) auto;
+    grid-template-columns: 14px minmax(0, 1fr) auto auto;
     break-inside: avoid;
     margin: 0;
-    padding: 6px 16px 6px 0;
+    padding: 10px 16px 10px 0;
+    font-size: 13px;
+  }
+  .chart-legend small {
+    display: block;
+    min-width: 32px;
+    text-align: right;
+    color: var(--muted);
   }
   .chart-legend b {
     text-align: right;
