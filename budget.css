@@ -346,16 +346,13 @@ td:not(:first-child) {
   font-weight: 400;
 }
 .over-budget .meter span {
-  background: #ff304f;
+  background: #ff7385;
 }
 .over-budget > small {
   display: block;
   width: 100%;
   text-align: center;
   font-size: 12px;
-}
-.over-budget > small.terracotta {
-  color: #ff304f !important;
 }
 .filters {
   display: grid;
