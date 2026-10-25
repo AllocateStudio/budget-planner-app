@@ -363,8 +363,52 @@
       rate: income ? (savings / income) * 100 : 0,
     };
   }
+  // Tooltip contents for the current Spending breakdown, by segment index.
+  let spendingTips = [];
+  // Index of the ring segment under the pointer, or -1 over the hole and outside the ring.
+  function donutSegment(donut, event) {
+    const r = donut.getBoundingClientRect(),
+      x = event.clientX - r.left - r.width / 2,
+      y = event.clientY - r.top - r.height / 2,
+      dist = Math.hypot(x, y),
+      hole = donut.firstElementChild.offsetWidth / 2;
+    if (dist < hole || dist > r.width / 2) return -1;
+    // The conic gradient starts at 12 o'clock and runs clockwise.
+    const turn = (Math.atan2(x, -y) / (2 * Math.PI) + 1) % 1;
+    let end = 0;
+    return donut.dataset.stops.split(',').findIndex((part) => turn < (end += Number(part)));
+  }
+  // Near the pointer over the chart; above the row in the legend.
+  function showSpendingTip(target, index, event) {
+    const wrap = target.closest('.donut-wrap'),
+      tip = wrap?.querySelector('.spend-tip');
+    if (!tip) return;
+    if (!(index >= 0) || !spendingTips[index]) return hideSpendingTip();
+    tip.innerHTML = spendingTips[index];
+    tip.hidden = false;
+    const box = wrap.getBoundingClientRect(),
+      at = event
+        ? { x: event.clientX - box.left + 14, y: event.clientY - box.top + 14 }
+        : (() => {
+            const r = target.getBoundingClientRect();
+            return { x: r.left - box.left, y: r.bottom - box.top + 6 };
+          })();
+    tip.style.left = Math.max(0, Math.min(at.x, box.width - tip.offsetWidth)) + 'px';
+    tip.style.top = at.y + 'px';
+    document
+      .querySelectorAll('#spending-legend [data-seg]')
+      .forEach((li) => li.classList.toggle('is-active', Number(li.dataset.seg) === index));
+  }
+  function hideSpendingTip() {
+    const tip = $('.spend-tip');
+    if (tip) tip.hidden = true;
+    document
+      .querySelectorAll('#spending-legend .is-active')
+      .forEach((li) => li.classList.remove('is-active'));
+  }
   // The yearly panel spans the full width, so it lists more categories before grouping the rest.
-  function spendingPanel(s, top = 8) {
+  function spendingPanel(s, period, months, top = 8) {
+    const budgetOf = (c) => total(months, (m) => B.budgetFor(c, m));
     const spent = state.categories
       .filter((c) => c.type !== 'Income')
       .map((c) => ({
@@ -386,19 +430,27 @@
               name: 'Other categories',
               amount: total(allSegments.slice(top), (c) => c.amount),
               colour: '#D9D8D2',
+              rest: allSegments.slice(top),
             },
           ];
+    const colourOf = (c, i) => c.colour || colours[i % colours.length],
+      share = (c) => (s.expense ? Math.round((c.amount / s.expense) * 100) : 0),
+      tipRow = (label, value) => `<span>${label}<b>${value}</b></span>`;
+    spendingTips = segments.map((c, i) => {
+      const budget = c.rest ? total(c.rest, budgetOf) : budgetOf(c);
+      return `<b><i style="background:${colourOf(c, i)}"></i>${esc(c.name)}</b><small>${esc(period)}</small>${tipRow('Spent', money(c.amount))}${tipRow('Share of expenses', share(c) + '%')}${budget > 0 ? tipRow('Budget', money(budget)) + tipRow(c.amount > budget ? 'Over budget' : 'Left', money(Math.abs(budget - c.amount))) : ''}${c.rest ? tipRow('Categories', c.rest.length) : ''}`;
+    });
     let offset = 0;
     const gradient = segments
       .map((c, i) => {
         const from = offset;
         offset += s.expense ? (c.amount / s.expense) * 100 : 0;
-        return `${c.colour || colours[i % colours.length]} ${from}% ${offset}%`;
+        return `${colourOf(c, i)} ${from}% ${offset}%`;
       })
       .join(',');
     return panel(
       'Spending breakdown',
-      `<div class="donut-wrap"><div class="donut-layout"><div class="donut" role="img" aria-label="Total actual expenses ${esc(state.currency)}${s.expense}" style="background:${segments.length ? 'conic-gradient(' + gradient + ')' : '#dededb'}"><div><small>Actual expenses</small><b>${money(s.expense)}</b></div></div><ul class="chart-legend" id="spending-legend">${segments.map((c, i) => `<li><i style="background:${c.colour || colours[i % colours.length]}"></i><span>${esc(c.name)}</span><small>${s.expense ? Math.round((c.amount / s.expense) * 100) : 0}%</small><b>${money(c.amount)}</b></li>`).join('') || '<li>No expenses yet.</li>'}</ul></div></div>${allSegments.length > top + 1 ? `<div class="breakdown-actions"><button type="button" class="textbtn" data-action="toggle-spending" aria-expanded="${spendingExpanded}" aria-controls="spending-legend">${spendingExpanded ? 'Show less' : `Show all ${allSegments.length} categories`}</button></div>` : ''}`,
+      `<div class="donut-wrap"><span class="year-tip spend-tip" aria-hidden="true" hidden></span><div class="donut-layout"><div class="donut" data-stops="${segments.map((c) => (s.expense ? c.amount / s.expense : 0)).join(',')}" role="img" aria-label="Total actual expenses ${esc(state.currency)}${s.expense}" style="background:${segments.length ? 'conic-gradient(' + gradient + ')' : '#dededb'}"><div><small>Actual expenses</small><b>${money(s.expense)}</b></div></div><ul class="chart-legend" id="spending-legend">${segments.map((c, i) => `<li tabindex="0" data-seg="${i}"><i style="background:${colourOf(c, i)}"></i><span>${esc(c.name)}</span><small>${share(c)}%</small><b>${money(c.amount)}</b></li>`).join('') || '<li>No expenses yet.</li>'}</ul></div></div>${allSegments.length > top + 1 ? `<div class="breakdown-actions"><button type="button" class="textbtn" data-action="toggle-spending" aria-expanded="${spendingExpanded}" aria-controls="spending-legend">${spendingExpanded ? 'Show less' : `Show all ${allSegments.length} categories`}</button></div>` : ''}`,
     );
   }
   function expectedPanel(s) {
@@ -499,7 +551,7 @@
       body =
         expectedPanel(s) +
         yearChart(s) +
-        spendingPanel(s, 14) +
+        spendingPanel(s, year, budgetMonthsOf(year), 14) +
         budgetPanel(s.rows, budgetMonthsOf(year), false);
     else {
       const end = B.date(B.today());
@@ -509,7 +561,7 @@
         .sort((a, b) => a.date.localeCompare(b.date))
         .slice(0, 12);
       body =
-        `<div class="dashboard-grid">${panel('Upcoming Bills', upcoming.length ? `<div class="record-list upcoming-list">${upcoming.map((t, i) => row(t, true).replace('<button ', `<button ${i >= 5 ? 'style="display:none" ' : ''}`)).join('')}</div>` : '<p class="empty-copy">No upcoming bills.</p>')}${spendingPanel(s)}</div>` +
+        `<div class="dashboard-grid">${panel('Upcoming Bills', upcoming.length ? `<div class="record-list upcoming-list">${upcoming.map((t, i) => row(t, true).replace('<button ', `<button ${i >= 5 ? 'style="display:none" ' : ''}`)).join('')}</div>` : '<p class="empty-copy">No upcoming bills.</p>')}${spendingPanel(s, debtMonth(state.month), [state.month])}</div>` +
         expectedPanel(s) +
         budgetPanel(s.rows, [state.month], true);
     }
@@ -3170,7 +3222,32 @@
   document.addEventListener('pointermove', (event) => {
     const hit = event.target.closest?.('[data-chart-tip]');
     if (hit) showDebtHover(hit);
+    const donut = event.target.closest?.('.donut[data-stops]');
+    if (donut) showSpendingTip(donut, donutSegment(donut, event), event);
   });
+  document.addEventListener('pointerover', (event) => {
+    const li = event.target.closest?.('#spending-legend [data-seg]');
+    if (li) showSpendingTip(li, Number(li.dataset.seg));
+  });
+  document.addEventListener('focusin', (event) => {
+    if (event.target.matches?.('#spending-legend [data-seg]'))
+      showSpendingTip(event.target, Number(event.target.dataset.seg));
+  });
+  // On touch screens a tap shows the card and a tap elsewhere hides it.
+  document.addEventListener('pointerdown', (event) => {
+    if (event.pointerType !== 'touch') return;
+    const donut = event.target.closest?.('.donut[data-stops]'),
+      li = event.target.closest?.('#spending-legend [data-seg]');
+    if (donut) showSpendingTip(donut, donutSegment(donut, event), event);
+    else if (li) showSpendingTip(li, Number(li.dataset.seg));
+    else hideSpendingTip();
+  });
+  for (const type of ['pointerout', 'focusout'])
+    document.addEventListener(type, (event) => {
+      if (event.pointerType === 'touch') return;
+      const from = event.target.closest?.('.donut[data-stops], #spending-legend [data-seg]');
+      if (from && !from.contains(event.relatedTarget)) hideSpendingTip();
+    });
   document.addEventListener('pointerout', (event) => {
     const plot = event.target.closest?.('.debt-chart-plot');
     if (plot && !plot.contains(event.relatedTarget)) hideDebtHover(plot);

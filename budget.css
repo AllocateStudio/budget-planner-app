@@ -2305,3 +2305,39 @@ td .transaction-type-badge,
 .expected-table td.is-worse {
   color: var(--terracotta);
 }
+/* Spending breakdown tooltip: same card as Income vs Expenses, placed by script. */
+.donut-wrap {
+  position: relative;
+}
+.spend-tip {
+  display: block;
+  left: 0;
+  transform: none;
+}
+.spend-tip[hidden] {
+  display: none;
+}
+.spend-tip > b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 0;
+}
+.spend-tip > small {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+}
+.donut[data-stops] {
+  cursor: pointer;
+}
+#spending-legend [data-seg] {
+  cursor: default;
+  border-radius: 6px;
+  outline: none;
+}
+#spending-legend [data-seg].is-active,
+#spending-legend [data-seg]:focus-visible {
+  background: var(--line);
+  box-shadow: 0 0 0 4px var(--line);
+}

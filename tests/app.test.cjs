@@ -574,7 +574,7 @@ test('Spending breakdown sorts descending and expands from eight categories plus
       .node('#main')
       .innerHTML.match(/<ul class="chart-legend" id="spending-legend">([\s\S]*?)<\/ul>/)[1];
   let html = legend();
-  assert.equal((html.match(/<li>/g) || []).length, 9);
+  assert.equal((html.match(/<li[ >]/g) || []).length, 9);
   assert.ok(html.includes('Other categories'));
   const amounts = Array.from(html.matchAll(/<b>\$([\d,.]+)<\/b>/g), (m) =>
     Number(m[1].replaceAll(',', '')),
@@ -585,7 +585,7 @@ test('Spending breakdown sorts descending and expands from eight categories plus
   );
   h.api.setSpendingExpanded(true);
   html = legend();
-  assert.equal((html.match(/<li>/g) || []).length, expected.length);
+  assert.equal((html.match(/<li[ >]/g) || []).length, expected.length);
   assert.ok(!html.includes('Other categories'));
   const names = Array.from(html.matchAll(/<span>(.*?)<\/span>/g), (m) => m[1]);
   assert.deepEqual(
@@ -594,7 +594,7 @@ test('Spending breakdown sorts descending and expands from eight categories plus
   );
   assert.ok(h.node('#main').innerHTML.includes('Show less'));
   h.api.setSpendingExpanded(false);
-  assert.equal((legend().match(/<li>/g) || []).length, 9);
+  assert.equal((legend().match(/<li[ >]/g) || []).length, 9);
 });
 test('Simple transaction has type buttons, optional description, positive amount and today default', () => {
   const h = harness();
@@ -1434,9 +1434,16 @@ test('Year dashboard sums the months and shows read-only yearly budgets', () => 
   assert.ok(html.includes('class="year-chart"'));
   assert.ok(html.includes('data-action="dash-year"'));
   const legend = html.match(/<ul class="chart-legend" id="spending-legend">([\s\S]*?)<\/ul>/)[1];
-  assert.equal((legend.match(/<li>/g) || []).length, 15); // 14 largest categories + Other
+  assert.equal((legend.match(/<li[ >]/g) || []).length, 15); // 14 largest categories + Other
   assert.ok(legend.includes('<span>Other categories</span>'));
   assert.ok(legend.includes('%</small>'));
+  assert.ok(legend.includes('<li tabindex="0" data-seg="0">'));
+  const stops = html
+    .match(/class="donut" data-stops="([^"]*)"/)[1]
+    .split(',')
+    .map(Number);
+  assert.equal(stops.length, 15);
+  assert.ok(Math.abs(B.sum(stops, (x) => x) - 1) < 1e-9);
   assert.ok(
     html.includes(
       `<strong class="stat-value">$${income.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
