@@ -769,7 +769,7 @@
           .toLowerCase()
           .replace(' ', '-'),
         sameName = a.kind.toLowerCase() === a.name.trim().toLowerCase();
-      return `<section class="panel account-card"><div class="panel-head"><h2>${esc(a.name)}${sameName ? '' : `<span class="account-kind kind-${kind}">${esc(a.kind)}</span>`}</h2>${editIcon('account', a.id, a.name)}</div><strong class="large-value${balance < 0 ? ' is-negative' : ''}">${money(balance)}</strong><div class="account-flow"><span class="flow-chip flow-in">+${money(flow.in)} in</span><span class="flow-chip flow-out">−${money(flow.out)} out</span><small>this month</small></div><div class="account-card-foot"><div class="debt-card-actions">${btn('Transfer', 'account-transfer', a.id, 'btn')}${btn('Update Balance', 'account-balance', a.id, 'btn')}</div><button type="button" class="textbtn" data-action="account-transactions" data-id="${esc(a.id)}">View transactions</button></div></section>`;
+      return `<section class="panel account-card"><div class="panel-head"><h2>${esc(a.name)}${sameName ? '' : `<span class="account-kind kind-${kind}">${esc(a.kind)}</span>`}</h2>${editIcon('account', a.id, a.name)}</div><strong class="large-value${balance < 0 ? ' is-negative' : ''}">${money(balance)}</strong><div class="account-flow"><span class="flow-chip flow-in">+${money(flow.in)} in</span><span class="flow-chip flow-out">−${money(flow.out)} out</span><small>this month</small></div><div class="account-card-foot"><div class="debt-card-actions">${btn('Transfer', 'account-transfer', a.id, 'btn')}${btn('Update balance', 'account-balance', a.id, 'btn')}</div><button type="button" class="textbtn" data-action="account-transactions" data-id="${esc(a.id)}">View transactions</button></div></section>`;
     };
     return (
       heading('Accounts', '', edit('account', '', '+ Add account', 'btn primary')) +
@@ -1066,7 +1066,7 @@
       totalDebt = total(state.debts, (d) => B.debtBalance(state, d.id)),
       paid = total(state.debts, (d) => B.debtPaid(state, d.id));
     const finish = (p) =>
-      p.paidOff ? (p.months === 0 ? 'Paid Off' : debtMonth(p.end)) : 'Increase payment';
+      p.paidOff ? (p.months === 0 ? 'Paid off' : debtMonth(p.end)) : 'Increase payment';
     const debts = [...state.debts].sort(
       (a, b) =>
         (B.debtBalance(state, a.id) === 0) - (B.debtBalance(state, b.id) === 0) ||
@@ -1077,7 +1077,7 @@
         ),
     );
     return (
-      heading('Debt Payoff', '', edit('debt', '', '+ Add Debt', 'btn primary')) +
+      heading('Debt Payoff', '', edit('debt', '', '+ Add debt', 'btn primary')) +
       `<div class="stats-strip debt-stats">${stat('Total debt', money(totalDebt), '', 'tone-blush')}${stat('Paid', money(paid), '', 'tone-mint')}${stat('Debt-free date', finish(plan), '', 'tone-sky')}${stat('Total interest', plan.paidOff ? money(plan.interest) : '—', '', 'tone-ink')}</div>` +
       (debts.length
         ? '<div class="debt-overview">' +
@@ -1109,7 +1109,7 @@
               (!closed && index === 0
                 ? '<small class="debt-first-label">Extra payment first</small>'
                 : ''),
-            `<div class="debt-card-summary"><div><strong class="large-value">${money(balance)}</strong><p>${closed ? '<span class="paid-off-label">Paid Off</span>' : esc(d.kind || 'Other') + ' · ' + d.apr + '% APR · ' + money(d.minimum) + ' minimum'}${d.dueDay ? ' · Due ' + d.dueDay : ''}</p></div><div class="debt-card-actions">${btn('Update Balance', 'debt-balance', d.id, 'btn')}${!closed ? btn('Set recurring payment', 'debt-recurring', d.id, 'btn') : ''}</div></div>${bar(Math.max(0, d.balance - balance), d.balance)}<div class="debt-card-footer"><span>${money(B.debtPaid(state, d.id))} paid${state.strategy === 'Custom' ? ' · Priority ' + d.order : ''}</span><button type="button" class="textbtn" data-action="debt-expand" data-id="${esc(d.id)}" aria-expanded="${open}">${open ? 'Hide schedule' : 'View schedule'}</button></div>${open ? debtTable(d, plan) : ''}`,
+            `<div class="debt-card-summary"><div><strong class="large-value">${money(balance)}</strong><p>${closed ? '<span class="paid-off-label">Paid off</span>' : esc(d.kind || 'Other') + ' · ' + d.apr + '% APR · ' + money(d.minimum) + ' minimum'}${d.dueDay ? ' · Due ' + d.dueDay : ''}</p></div><div class="debt-card-actions">${btn('Update balance', 'debt-balance', d.id, 'btn')}${!closed ? btn('Set recurring payment', 'debt-recurring', d.id, 'btn') : ''}</div></div>${bar(Math.max(0, d.balance - balance), d.balance)}<div class="debt-card-footer"><span>${money(B.debtPaid(state, d.id))} paid${state.strategy === 'Custom' ? ' · Priority ' + d.order : ''}</span><button type="button" class="textbtn" data-action="debt-expand" data-id="${esc(d.id)}" aria-expanded="${open}">${open ? 'Hide schedule' : 'View schedule'}</button></div>${open ? debtTable(d, plan) : ''}`,
             editIcon('debt', d.id, d.name),
           );
         })
@@ -1124,7 +1124,7 @@
     editing = { kind: 'debt-balance', id, record: d };
     const earliest = debtBalanceEarliest(d);
     $('#editor').innerHTML =
-      `<form id="debt-balance-form"><div class="dialog-head"><h2>Update Balance</h2>${btn('×', 'close', '', 'icon-btn')}</div><h3>${esc(d.name)}</h3><div class="form-grid">${input('Statement balance *', 'balance', B.debtBalance(state, id), 'number', 'required min="0" max="1000000000" step="0.01"')}${input('Statement date *', 'date', B.today(), 'date', `required max="${B.today()}"${earliest ? ` min="${earliest}"` : ''}`)}</div><p class="settings-note">Payments recorded after the statement date are subtracted automatically. This does not create a payment or change your account balance.</p><p id="form-error" class="form-error" role="alert"></p><div class="dialog-actions">${btn('Cancel', 'close', '', 'btn ghost')}<button type="submit" class="btn primary">Update Balance</button></div></form>`;
+      `<form id="debt-balance-form"><div class="dialog-head"><h2>Update balance</h2>${btn('×', 'close', '', 'icon-btn')}</div><h3>${esc(d.name)}</h3><div class="form-grid">${input('Statement balance *', 'balance', B.debtBalance(state, id), 'number', 'required min="0" max="1000000000" step="0.01"')}${input('Statement date *', 'date', B.today(), 'date', `required max="${B.today()}"${earliest ? ` min="${earliest}"` : ''}`)}</div><p class="settings-note">Payments recorded after the statement date are subtracted automatically. This does not create a payment or change your account balance.</p><p id="form-error" class="form-error" role="alert"></p><div class="dialog-actions">${btn('Cancel', 'close', '', 'btn ghost')}<button type="submit" class="btn primary">Update balance</button></div></form>`;
     $('#editor').showModal();
   }
   // A statement cannot predate the debt or its latest balance update.
@@ -1207,7 +1207,7 @@
         .sort()
         .at(-1) || '';
     $('#editor').innerHTML =
-      `<form id="account-balance-form"><div class="dialog-head"><h2>Update Balance</h2>${btn('×', 'close', '', 'icon-btn')}</div><h3>${esc(a.name)}</h3><div class="form-grid">${input('Statement balance *', 'balance', B.accountBalance(state, id), 'number', 'required min="-1000000000" max="1000000000" step="0.01"')}${input('Statement date *', 'date', B.today(), 'date', `required max="${B.today()}"${earliest ? ` min="${earliest}"` : ''}`)}</div><p class="settings-note">Entries recorded after the statement date still apply. The difference is not counted as income or an expense.</p><p id="form-error" class="form-error" role="alert"></p><div class="dialog-actions">${btn('Cancel', 'close', '', 'btn ghost')}<button type="submit" class="btn primary">Update Balance</button></div></form>`;
+      `<form id="account-balance-form"><div class="dialog-head"><h2>Update balance</h2>${btn('×', 'close', '', 'icon-btn')}</div><h3>${esc(a.name)}</h3><div class="form-grid">${input('Statement balance *', 'balance', B.accountBalance(state, id), 'number', 'required min="-1000000000" max="1000000000" step="0.01"')}${input('Statement date *', 'date', B.today(), 'date', `required max="${B.today()}"${earliest ? ` min="${earliest}"` : ''}`)}</div><p class="settings-note">Entries recorded after the statement date still apply. The difference is not counted as income or an expense.</p><p id="form-error" class="form-error" role="alert"></p><div class="dialog-actions">${btn('Cancel', 'close', '', 'btn ghost')}<button type="submit" class="btn primary">Update balance</button></div></form>`;
     $('#editor').showModal();
   }
   function saveAccountBalance(data) {
@@ -1742,13 +1742,13 @@
     fields +=
       requiredSelect('Frequency', 'frequency', frequencyOptions, x.frequency || 'Monthly') +
       input(
-        'Start Date *',
+        'Start date *',
         'start',
         x.start || B.today(),
         'date',
         'required min="1900-01-01" max="2199-12-31"',
       ) +
-      input('End Date', 'end', x.end || '', 'date', 'min="1900-01-01" max="2199-12-31"');
+      input('End date', 'end', x.end || '', 'date', 'min="1900-01-01" max="2199-12-31"');
     if (type === 'Transfer') {
       fields += requiredSelect('From', 'accountId', state.accounts, account);
       fields += requiredSelect(
@@ -1936,7 +1936,7 @@
   function drawPayment(t) {
     editing = { kind: 'transaction', id: t.id, record: t };
     $('#editor').innerHTML =
-      `<form id="payment-record-form"><div class="dialog-head"><h2 id="editor-title">${t.paid ? 'Edit payment' : 'Mark as Paid'}</h2>${btn('×', 'close', '', 'icon-btn')}</div><h3>${esc(t.name)}</h3><p class="settings-note">Expected ${money(t.expected)} · ${esc(t.scheduledDate || t.date)}</p><div class="form-grid">${input('Actual amount *', 'amount', t.paid ? t.actual : t.expected, 'number', 'required min="0.01" max="1000000000" step="0.01"')}${input('Payment date *', 'date', t.date, 'date', 'required min="1900-01-01" max="2199-12-31"')}<label class="full">Notes<textarea name="notes" maxlength="1000">${esc(t.notes || '')}</textarea></label></div><p id="form-error" class="form-error" role="alert"></p><div class="dialog-actions">${!t.paid ? btn(t.skipped ? 'Restore payment' : 'Skip this time', t.skipped ? 'restore-payment' : 'skip-payment', t.id) : ''}<span class="spacer"></span>${btn('Cancel', 'close', '', 'btn ghost')}<button type="submit" class="btn primary">${t.paid ? 'Save payment' : 'Mark as Paid'}</button></div></form>`;
+      `<form id="payment-record-form"><div class="dialog-head"><h2 id="editor-title">${t.paid ? 'Edit payment' : 'Mark as paid'}</h2>${btn('×', 'close', '', 'icon-btn')}</div><h3>${esc(t.name)}</h3><p class="settings-note">Expected ${money(t.expected)} · ${esc(t.scheduledDate || t.date)}</p><div class="form-grid">${input('Actual amount *', 'amount', t.paid ? t.actual : t.expected, 'number', 'required min="0.01" max="1000000000" step="0.01"')}${input('Payment date *', 'date', t.date, 'date', 'required min="1900-01-01" max="2199-12-31"')}<label class="full">Notes<textarea name="notes" maxlength="1000">${esc(t.notes || '')}</textarea></label></div><p id="form-error" class="form-error" role="alert"></p><div class="dialog-actions">${!t.paid ? btn(t.skipped ? 'Restore payment' : 'Skip this time', t.skipped ? 'restore-payment' : 'skip-payment', t.id) : ''}<span class="spacer"></span>${btn('Cancel', 'close', '', 'btn ghost')}<button type="submit" class="btn primary">${t.paid ? 'Save payment' : 'Mark as paid'}</button></div></form>`;
     $('#editor').showModal();
   }
   function savePayment(data) {
@@ -2005,7 +2005,7 @@
   function scheduleRow(t) {
     t = { ...t, date: t.scheduledDate || t.date };
     // Name on the left, then the actions, then the amount flush right.
-    return `<div class="schedule-record ${t.paid ? 'is-paid' : ''}">${edit('transaction', t.id, recordName(t, false, true))}<div class="schedule-actions">${t.paid ? `<button type="button" class="icon-btn edit-icon" data-action="open-payment" data-id="${esc(t.id)}" aria-label="Edit ${esc(t.name)}" title="Edit">&#9998;</button>` : t.skipped ? btn('Restore', 'restore-payment', t.id, 'textbtn') : btn('Mark as Paid', 'quick-pay', t.id, 'btn pay-btn') + btn('Skip', 'skip-payment', t.id, 'textbtn')}</div>${recordAmount(t, true)}</div>`;
+    return `<div class="schedule-record ${t.paid ? 'is-paid' : ''}">${edit('transaction', t.id, recordName(t, false, true))}<div class="schedule-actions">${t.paid ? `<button type="button" class="icon-btn edit-icon" data-action="open-payment" data-id="${esc(t.id)}" aria-label="Edit ${esc(t.name)}" title="Edit">&#9998;</button>` : t.skipped ? btn('Restore', 'restore-payment', t.id, 'textbtn') : btn('Mark as paid', 'quick-pay', t.id, 'btn pay-btn') + btn('Skip', 'skip-payment', t.id, 'textbtn')}</div>${recordAmount(t, true)}</div>`;
   }
   function editor(kind, id = '', preset = {}) {
     let record = state[collections[kind]].find((t) => t.id === id);
@@ -2066,14 +2066,14 @@
           x.kind || 'Other',
         ) +
         input(
-          'Starting Balance *',
+          'Starting balance *',
           'balance',
           x.balance ?? '',
           'number',
           'required min="0.01" max="1000000000" step="0.01"',
         ) +
         input(
-          'Start Date *',
+          'Start date *',
           'start',
           x.start || state.budgetStart || B.today(),
           'date',
@@ -2081,13 +2081,13 @@
         ) +
         input('APR (%) *', 'apr', x.apr ?? '', 'number', 'required min="0" max="100" step="0.01"') +
         input(
-          'Minimum Payment *',
+          'Minimum payment *',
           'minimum',
           x.minimum ?? '',
           'number',
           'required min="0" max="1000000000" step="0.01"',
         ) +
-        input('Due Day', 'dueDay', x.dueDay || '', 'number', 'min="1" max="31" step="1"') +
+        input('Due day', 'dueDay', x.dueDay || '', 'number', 'min="1" max="31" step="1"') +
         input(
           'Custom priority',
           'order',
@@ -2193,7 +2193,7 @@
         throw Error('Choose a valid due day or priority.');
       if (B.debtBasis(x) < B.debtPaid(state, id))
         throw Error(
-          'Starting balance cannot be less than recorded payments. Use Update Balance to reconcile.',
+          'Starting balance cannot be less than recorded payments. Use Update balance to reconcile.',
         );
     } else if (kind === 'goal') {
       Object.assign(x, {

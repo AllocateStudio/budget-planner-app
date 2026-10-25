@@ -1106,7 +1106,7 @@ test('Debt form, statement reconciliation and recurring shortcut keep the ledger
     'Balance over time',
     'Snowball',
     'Avalanche',
-    'Update Balance',
+    'Update balance',
     'View schedule',
   ])
     assert.ok(h.node('#main').innerHTML.includes(label));
@@ -1654,7 +1654,7 @@ test('Recurring shows the next unpaid date and schedule marks paid records', () 
   assert.ok(html.includes('data-action="open-payment"'));
 });
 
-test('Mark as Paid pays in one click and Undo puts it back', () => {
+test('Mark as paid pays in one click and Undo puts it back', () => {
   const h = harness();
   h.api.sample('Jessica');
   h.api.renderScreen('Recurring');
