@@ -2035,16 +2035,16 @@ td .transaction-type-badge,
   line-height: 1.4;
 }
 .transaction-type-badge.type-income {
-  background: #D8F3DE;
-  color: #2F7D4C;
+  background: #d8f3de;
+  color: #2f7d4c;
 }
 .transaction-type-badge.type-expense {
-  background: #FBDCE6;
-  color: #B23A66;
+  background: #fbdce6;
+  color: #b23a66;
 }
 .transaction-type-badge.type-transfer {
-  background: #D8ECFB;
-  color: #2A6CA8;
+  background: #d8ecfb;
+  color: #2a6ca8;
 }
 
 .schedule-record .record-amount .transaction-type-badge {
@@ -2432,4 +2432,20 @@ td .transaction-type-badge,
 }
 .journal-date {
   white-space: nowrap;
+}
+
+#toast.has-action {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  pointer-events: auto;
+}
+#toast button {
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 700;
+  padding: 0;
+  cursor: pointer;
 }

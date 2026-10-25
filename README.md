@@ -86,7 +86,7 @@ Schedules support Expense, Income, and Transfer to an account, debt or goal. Nam
 
 **Changing a schedule** takes effect from the next day. Occurrences whose date has already passed keep their original terms. **Pause** hides future occurrences until **Resume**; periods skipped while paused are not restored. Deleting a schedule keeps paid transactions and occurrences that have already passed.
 
-Calendar colours distinguish Upcoming, Due, Overdue, Paid and Skipped. Payment Schedule offers Paid / Skip / Restore and shows the month's expected expense and transfer totals. Dashboard Upcoming Bills lists the next five unpaid outgoing payments.
+Calendar colours distinguish Upcoming, Due, Overdue, Paid and Skipped. Payment Schedule offers Paid / Skip / Restore and shows the month's expected expense and transfer totals. Mark as Paid records the payment in one click at the expected amount on its scheduled date, with Undo in the notice; Edit on a paid row changes the amount, date or notes. Dashboard Upcoming Bills lists the next five unpaid outgoing payments.
 
 ## Debt Payoff
 

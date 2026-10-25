@@ -240,11 +240,26 @@
     `<button type="button" class="${cls}" data-edit="${kind}" data-id="${esc(id)}">${label}</button>`;
   const panel = (title, body, action = '') =>
     `<section class="panel"><div class="panel-head"><h2>${title}</h2>${action}</div>${body}</section>`;
-  function toast(text) {
-    $('#toast').textContent = text;
-    $('#toast').classList.add('visible');
+  function toast(text, undo) {
+    const el = $('#toast');
+    el.textContent = text;
+    el.classList.toggle('has-action', !!undo);
+    if (undo) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = 'Undo';
+      b.onclick = () => {
+        el.classList.remove('visible', 'has-action');
+        undo();
+      };
+      el.append(b);
+    }
+    el.classList.add('visible');
     clearTimeout(toast.timer);
-    toast.timer = setTimeout(() => $('#toast').classList.remove('visible'), 3500);
+    toast.timer = setTimeout(
+      () => el.classList.remove('visible', 'has-action'),
+      undo ? 6000 : 3500,
+    );
   }
   function commit(next) {
     if (blocked) {
@@ -1933,6 +1948,28 @@
     editing.record = { ...t, scheduledDate: t.scheduledDate || t.date };
     saveTransaction(payload);
   }
+  // One click: paid at the expected amount on the scheduled date. Edit changes it later.
+  function quickPay(id) {
+    const t = findPayment(id);
+    if (!t || t.paid || t.skipped) return;
+    const before = state,
+      data = new FormData();
+    data.set('amount', t.expected);
+    data.set('date', t.scheduledDate || t.date);
+    data.set('notes', t.notes || '');
+    editing = { kind: 'transaction', id: t.id, record: t };
+    try {
+      savePayment(data);
+    } catch (error) {
+      drawPayment(t);
+      $('#form-error').textContent = error.message;
+      return;
+    }
+    if (state !== before)
+      toast('Marked as paid', () => {
+        if (commit(before)) render();
+      });
+  }
   function skipPayment(id, restore = false) {
     const t = findPayment(id);
     if (!t || t.paid) return;
@@ -1956,7 +1993,7 @@
   }
   function scheduleRow(t) {
     t = { ...t, date: t.scheduledDate || t.date };
-    return `<div class="schedule-record ${t.paid ? 'is-paid' : ''}">${row(t, false, true, true)}<div class="schedule-actions">${t.paid ? btn('Edit', 'open-payment', t.id, 'textbtn') : t.skipped ? btn('Restore', 'restore-payment', t.id, 'textbtn') : btn('Mark as Paid', 'open-payment', t.id, 'btn primary') + btn('Skip this time', 'skip-payment', t.id, 'btn')}</div></div>`;
+    return `<div class="schedule-record ${t.paid ? 'is-paid' : ''}">${row(t, false, true, true)}<div class="schedule-actions">${t.paid ? btn('Edit', 'open-payment', t.id, 'textbtn') : t.skipped ? btn('Restore', 'restore-payment', t.id, 'textbtn') : btn('Mark as Paid', 'quick-pay', t.id, 'btn primary') + btn('Skip this time', 'skip-payment', t.id, 'btn')}</div></div>`;
   }
   function editor(kind, id = '', preset = {}) {
     let record = state[collections[kind]].find((t) => t.id === id);
@@ -3044,7 +3081,8 @@
     } else if (a === 'open-payment') {
       const t = findPayment(id);
       if (t) drawPayment(t);
-    } else if (a === 'skip-payment') skipPayment(id);
+    } else if (a === 'quick-pay') quickPay(id);
+    else if (a === 'skip-payment') skipPayment(id);
     else if (a === 'restore-payment') skipPayment(id, true);
     else if (a === 'pause-recurring') pauseRecurring(id);
     else if (a === 'recurring-type') {

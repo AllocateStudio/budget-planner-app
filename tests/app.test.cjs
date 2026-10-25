@@ -27,7 +27,10 @@ function harness(startupState) {
         removeAttribute(name) {
           delete this[name];
         },
-        classList: { add() {}, remove() {} },
+        classList: { add() {}, remove() {}, toggle() {} },
+        append(child) {
+          this.child = child;
+        },
         showModal() {
           this.open = true;
         },
@@ -41,6 +44,7 @@ function harness(startupState) {
     Budget: B,
     document: {
       querySelector: node,
+      createElement: () => ({}),
       addEventListener(type, fn) {
         (listeners[type] ||= []).push(fn);
       },
@@ -1645,4 +1649,23 @@ test('Recurring shows the next unpaid date and schedule marks paid records', () 
   assert.ok(html.includes('calendar-paid-check'));
   assert.ok(html.includes('>✓</i>Paid'));
   assert.ok(html.includes('data-action="open-payment"'));
+});
+
+test('Mark as Paid pays in one click and Undo puts it back', () => {
+  const h = harness();
+  h.api.sample('Jessica');
+  h.api.renderScreen('Recurring');
+  const id = h.node('#main').innerHTML.match(/data-action="quick-pay" data-id="([^"]+)"/)[1],
+    before = h.api.get().transactions.length,
+    button = { dataset: { action: 'quick-pay', id } };
+  h.fire('click', { target: { closest: (sel) => (sel === 'button' ? button : null) } });
+  const paid = h.api.get().transactions.find((t) => t.id === id);
+  assert.ok(paid.paid);
+  assert.equal(paid.actual, paid.expected);
+  assert.equal(paid.date, id.slice(-10));
+  assert.ok(!h.node('#editor').open);
+  assert.equal(h.node('#toast').textContent, 'Marked as paid');
+  h.node('#toast').child.onclick();
+  assert.equal(h.api.get().transactions.length, before);
+  assert.ok(!h.api.get().transactions.some((t) => t.id === id && t.paid));
 });
