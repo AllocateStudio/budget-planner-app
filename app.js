@@ -2002,7 +2002,7 @@
   function scheduleRow(t) {
     t = { ...t, date: t.scheduledDate || t.date };
     // Name on the left, then the actions, then the amount flush right.
-    return `<div class="schedule-record ${t.paid ? 'is-paid' : ''}">${edit('transaction', t.id, recordName(t, false, true))}<div class="schedule-actions">${t.paid ? btn('Edit', 'open-payment', t.id, 'textbtn') : t.skipped ? btn('Restore', 'restore-payment', t.id, 'textbtn') : btn('Mark as Paid', 'quick-pay', t.id, 'btn pay-btn') + btn('Skip', 'skip-payment', t.id, 'textbtn')}</div>${recordAmount(t, true)}</div>`;
+    return `<div class="schedule-record ${t.paid ? 'is-paid' : ''}">${edit('transaction', t.id, recordName(t, false, true))}<div class="schedule-actions">${t.paid ? `<button type="button" class="icon-btn" data-action="open-payment" data-id="${esc(t.id)}" aria-label="Edit ${esc(t.name)}" title="Edit">&#9998;</button>` : t.skipped ? btn('Restore', 'restore-payment', t.id, 'textbtn') : btn('Mark as Paid', 'quick-pay', t.id, 'btn pay-btn') + btn('Skip', 'skip-payment', t.id, 'textbtn')}</div>${recordAmount(t, true)}</div>`;
   }
   function editor(kind, id = '', preset = {}) {
     let record = state[collections[kind]].find((t) => t.id === id);
