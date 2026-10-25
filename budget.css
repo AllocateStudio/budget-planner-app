@@ -383,9 +383,12 @@ td:not(:first-child) {
 .month-filter input {
   min-width: 110px;
 }
-.month-filter .icon-btn {
-  min-width: 30px;
-  width: 30px;
+.month-filter .month-all {
+  width: auto;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
 }
 .cards-grid {
   display: grid;
