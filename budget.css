@@ -871,14 +871,26 @@ td:not(:first-child) {
   min-width: 0;
   border-bottom: 0;
 }
+/* Fixed width so every row's amount and status line up in one column. */
 .schedule-actions {
   display: flex;
-  gap: 8px;
+  gap: 4px;
   align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 172px;
 }
-/* Same pink as the active Recurring / Payment Schedule switch. */
-.schedule-actions .btn.primary {
-  background: var(--blush);
+.schedule-actions .pay-btn {
+  min-height: 34px;
+  padding: 6px 14px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.schedule-actions .textbtn {
+  padding-right: 0;
+}
+.schedule-record .calendar-paid-check {
+  color: var(--ink);
+  -webkit-text-stroke: 0;
 }
 .schedule-totals {
   display: flex;
@@ -934,6 +946,7 @@ td:not(:first-child) {
   }
   .schedule-actions {
     margin-left: auto;
+    flex-basis: auto;
   }
   .schedule-totals {
     gap: 12px;

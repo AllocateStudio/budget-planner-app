@@ -1997,7 +1997,7 @@
   }
   function scheduleRow(t) {
     t = { ...t, date: t.scheduledDate || t.date };
-    return `<div class="schedule-record ${t.paid ? 'is-paid' : ''}">${row(t, false, true, true)}<div class="schedule-actions">${t.paid ? btn('Edit', 'open-payment', t.id, 'textbtn') : t.skipped ? btn('Restore', 'restore-payment', t.id, 'textbtn') : btn('Mark as Paid', 'quick-pay', t.id, 'btn primary') + btn('Skip this time', 'skip-payment', t.id, 'btn')}</div></div>`;
+    return `<div class="schedule-record ${t.paid ? 'is-paid' : ''}">${row(t, false, true, true)}<div class="schedule-actions">${t.paid ? btn('Edit', 'open-payment', t.id, 'textbtn') : t.skipped ? btn('Restore', 'restore-payment', t.id, 'textbtn') : btn('Mark as Paid', 'quick-pay', t.id, 'btn pay-btn') + btn('Skip', 'skip-payment', t.id, 'textbtn')}</div></div>`;
   }
   function editor(kind, id = '', preset = {}) {
     let record = state[collections[kind]].find((t) => t.id === id);
