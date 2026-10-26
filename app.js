@@ -775,8 +775,6 @@
                   ' ' +
                   (t.paid ? 'paid' : '') +
                   ' ' +
-                  (status(t) === 'Overdue' ? 'overdue' : '') +
-                  ' ' +
                   (t.type === 'Income' ? 'income' : ''),
               ),
             )
