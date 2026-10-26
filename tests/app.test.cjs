@@ -1905,3 +1905,17 @@ test('Bill Calendar List view groups the month by day with Payment Schedule rows
   assert.ok((html.match(/class="cal-list-day/g) || []).length > 3);
   assert.ok(html.includes('schedule-record payment-row'));
 });
+
+test('Transactions also render as phone rows: name, amount, badge, then date, category and account', () => {
+  const h = harness();
+  h.api.sample('Jessica');
+  h.api.renderScreen('Transactions');
+  const html = h.node('#main').innerHTML;
+  const rows = html.split('<div class="tx-list">')[1];
+  assert.ok(rows);
+  assert.match(
+    rows,
+    /class="tx-row" data-edit="transaction" data-id="[^"]+"><span class="tx-name">[^<]+<\/span><span class="tx-amount">\$[\d,.]+<\/span><span class="tx-meta"><small class="transaction-type-badge type-(income|expense|transfer)">/,
+  );
+  assert.ok(!rows.includes('Transfer →'));
+});

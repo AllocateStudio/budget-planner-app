@@ -637,6 +637,22 @@
         .join('')
     );
   }
+  // Phones: the journal as rows that fit the screen (the table is hidden there). Line one is the
+  // name and the amount; line two the type badge, then date, category and account.
+  function txList(list) {
+    return `<div class="tx-list">${
+      list
+        .map((t) =>
+          edit(
+            'transaction',
+            t.id,
+            `<span class="tx-name">${esc(t.name)}</span><span class="tx-amount">${money(t.actual)}</span><span class="tx-meta"><small class="transaction-type-badge type-${esc(t.type.toLowerCase())}">${esc(t.type)}</small><span>${shortDate(t.date)} · ${t.type === 'Transfer' ? entryCategory(t).replace('Transfer → ', 'To ') : entryCategory(t)} · ${entrySource(t)}</span></span>`,
+            'tx-row',
+          ),
+        )
+        .join('') || '<p class="empty-copy">No matching entries.</p>'
+    }</div>`;
+  }
   function transactionScreen() {
     // A deleted account or goal must not leave a filter the dropdown can no longer show.
     if (
@@ -663,7 +679,7 @@
     );
     return (
       heading('Transactions', '', edit('transaction', '', '+ Add transaction', 'btn primary')) +
-      `<section class="panel"><div class="filters"><label>Month<div class="month-filter"><input type="month" id="filter-month" value="${esc(filters.month)}"><button type="button" class="icon-btn month-all" data-action="reset-month" data-id="" aria-label="Show all months" title="Show all months">All</button></div></label><label>Type<select data-filter="type">${options(['Income', 'Expense', 'Transfer'], filters.type, true)}</select></label><label>Category<select data-filter="category">${options(state.categories, filters.category, true)}</select></label><label>Account<select data-filter="account">${options(state.accounts, filters.account, true)}${state.goals.length ? `<optgroup label="Goals">${options(state.goals, filters.account)}</optgroup>` : ''}</select></label><label class="search-field">Search<input id="search" value="${esc(filters.search)}" placeholder="Name or note"></label></div><div class="table-wrap"><table><thead><tr><th>Entry</th><th>Date</th><th>Category / Account</th><th>Amount</th></tr></thead><tbody>${list.map((t) => `<tr><td>${edit('transaction', t.id, esc(t.name), 'table-link')}<small class="transaction-type-badge type-${esc(t.type.toLowerCase())}">${esc(t.type)}</small></td><td class="journal-date">${fullDate(t.date)}</td><td>${entryCategory(t)}<small>${entrySource(t)}</small></td><td>${money(t.actual)}</td></tr>`).join('') || '<tr><td colspan="4">No matching entries.</td></tr>'}</tbody></table></div></section>`
+      `<section class="panel"><div class="filters"><label>Month<div class="month-filter"><input type="month" id="filter-month" value="${esc(filters.month)}"><button type="button" class="icon-btn month-all" data-action="reset-month" data-id="" aria-label="Show all months" title="Show all months">All</button></div></label><label>Type<select data-filter="type">${options(['Income', 'Expense', 'Transfer'], filters.type, true)}</select></label><label>Category<select data-filter="category">${options(state.categories, filters.category, true)}</select></label><label>Account<select data-filter="account">${options(state.accounts, filters.account, true)}${state.goals.length ? `<optgroup label="Goals">${options(state.goals, filters.account)}</optgroup>` : ''}</select></label><label class="search-field">Search<input id="search" value="${esc(filters.search)}" placeholder="Name or note"></label></div><div class="table-wrap"><table><thead><tr><th>Entry</th><th>Date</th><th>Category / Account</th><th>Amount</th></tr></thead><tbody>${list.map((t) => `<tr><td>${edit('transaction', t.id, esc(t.name), 'table-link')}<small class="transaction-type-badge type-${esc(t.type.toLowerCase())}">${esc(t.type)}</small></td><td class="journal-date">${fullDate(t.date)}</td><td>${entryCategory(t)}<small>${entrySource(t)}</small></td><td>${money(t.actual)}</td></tr>`).join('') || '<tr><td colspan="4">No matching entries.</td></tr>'}</tbody></table></div>${txList(list)}</section>`
     );
   }
   function nextRecurringDate(r) {

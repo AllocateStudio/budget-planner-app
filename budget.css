@@ -2814,3 +2814,66 @@ td .transaction-type-badge,
   font-size: 11px;
   font-weight: 700;
 }
+
+/* Transactions on phones: rows instead of the table. Name and amount on one line; the type badge
+   (fixed width, so the details line up) with date, category and account below. */
+.tx-list {
+  display: none;
+}
+@media (max-width: 600px) {
+  .panel:has(> .tx-list) > .table-wrap {
+    display: none;
+  }
+  .tx-list {
+    display: block;
+    margin-top: 8px;
+  }
+  .tx-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px 10px;
+    width: 100%;
+    padding: 12px 0;
+    border: 0;
+    border-top: 1px solid var(--line);
+    background: none;
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+  }
+  .tx-name,
+  .tx-amount {
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .tx-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tx-meta {
+    grid-column: 1/-1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .tx-meta > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tx-meta .transaction-type-badge {
+    flex: 0 0 66px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.4;
+    margin: 0;
+    padding: 3px 0;
+    text-align: center;
+  }
+}
