@@ -2752,22 +2752,43 @@ td .transaction-type-badge,
   }
 }
 
-/* Phones: the month (or year) picker spans the full width on every screen. Dashboard hides
-   Add transaction; it is added from the Transactions screen. */
+/* Phones: the lime Add button sits at the right of the title row on every screen, and the month
+   (or year) picker spans the full width below. Dashboard hides Add transaction; it is added from
+   the Transactions screen. */
 @media (max-width: 600px) {
+  .budget-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px 12px;
+  }
   .heading-actions {
-    width: 100%;
+    display: contents;
+  }
+  .heading-actions > .btn.primary {
+    grid-column: 2;
+    grid-row: 1;
+    padding-inline: 14px;
+    white-space: nowrap;
   }
   .dashboard-view .heading-actions > .btn.primary {
     display: none;
   }
   .heading-actions > .mp-picker,
   .heading-actions > .year-picker {
+    grid-column: 1/-1;
     display: flex;
     width: 100%;
   }
   .heading-actions .mp-trigger {
     flex: 1 1 auto;
     justify-content: center;
+  }
+}
+/* Narrowest phones: a slightly smaller Add button keeps clear of long titles like Transactions. */
+@media (max-width: 360px) {
+  .heading-actions > .btn.primary {
+    font-size: 13px;
+    padding-inline: 11px;
   }
 }
