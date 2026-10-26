@@ -683,30 +683,20 @@
       '<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><rect x="2" y="1.5" width="2.6" height="9" rx=".6"/><rect x="7.4" y="1.5" width="2.6" height="9" rx=".6"/></svg>',
     playIcon =
       '<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M3 1.6v8.8a.6.6 0 0 0 .9.5l7-4.4a.6.6 0 0 0 0-1L3.9 1.1a.6.6 0 0 0-.9.5z"/></svg>';
-  // Template row: like a payment row, the whole row opens the template; the square button pauses it.
+  // Template row: name and how often, the amount (income with a plus), a square pause button.
+  // The whole row opens the template.
+  const templateEnded = (r) => Boolean(r.end && r.end < B.today());
   function templateRow(r) {
-    const next = nextRecurringDate(r),
-      label = r.active ? 'Pause' : 'Resume';
-    return `<div class="schedule-record payment-row template-row ${r.active ? '' : 'is-paused'}">${edit('recurring', r.id, `<span class="record-name">${esc(r.name)}<small>${r.active ? `${esc(r.frequency)} · ${name('accounts', r.accountId)}` : 'Paused'}</small></span>`)}<span class="template-next">${next ? shortDate(next) : '–'}</span><span class="record-amount">${money(r.expected)}</span><button type="button" class="pay-check template-toggle" data-action="pause-recurring" data-id="${esc(r.id)}" aria-label="${label} ${esc(r.name)}" title="${label}">${r.active ? pauseIcon : playIcon}</button></div>`;
+    const label = r.active ? 'Pause' : 'Resume',
+      note = !r.active ? 'Paused' : templateEnded(r) ? 'Ended' : esc(r.frequency);
+    return `<div class="schedule-record payment-row template-row ${r.active && !templateEnded(r) ? '' : 'is-paused'}">${edit('recurring', r.id, `<span class="record-name">${esc(r.name)}<small>${note}</small></span>`)}<span class="record-amount">${r.type === 'Income' ? '+' : ''}${money(r.expected)}</span><button type="button" class="pay-check template-toggle" data-action="pause-recurring" data-id="${esc(r.id)}" aria-label="${label} ${esc(r.name)}" title="${label}">${r.active ? pauseIcon : playIcon}</button></div>`;
   }
-  // Templates grouped by type, active first, with the monthly total of the active ones.
-  function templateGroups() {
-    return [
-      ['Income', 'Income'],
-      ['Expense', 'Expenses'],
-      ['Transfer', 'Transfers'],
-    ]
-      .map(([type, title]) => {
-        const list = state.recurring
-          .filter((r) => r.type === type)
-          .sort((a, b) => Number(!a.active) - Number(!b.active));
-        if (!list.length) return '';
-        const monthly = B.sum(
-          list.filter((r) => r.active && (!r.end || r.end >= B.today())),
-          B.monthlyAmount,
-        );
-        return `<div class="template-group group-${type.toLowerCase()}"><span>${title}</span><span class="group-total">${money(monthly)} / mo</span></div>${list.map(templateRow).join('')}`;
-      })
+  // One plain list: income first, then the rest by name; paused and ended templates last.
+  function templateList() {
+    const rank = (r) => (!r.active || templateEnded(r) ? 2 : r.type === 'Income' ? 0 : 1);
+    return [...state.recurring]
+      .sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name))
+      .map(templateRow)
       .join('');
   }
   function recurringScreen() {
@@ -734,7 +724,7 @@
           )
         : panel(
             'Recurring templates',
-            templateGroups() || '<p class="empty-copy">Add a recurring template.</p>',
+            templateList() || '<p class="empty-copy">Add a recurring template.</p>',
           ))
     );
   }

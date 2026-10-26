@@ -82,7 +82,7 @@ function harness(startupState) {
   source = source.replace(
     /if\s*\(\s*state\.sampleProfile[\s\S]*?else render\(\);\s*\}\)\(\);\s*$/,
     (startup) =>
-      'globalThis.api={get:()=>state,openSetupGroup:id=>{openSetupGroups.add(id);render();},setSetupTab:t=>{setupTab=t;render();},nextRecurringLabel,scheduleRow,templateRow,templateGroups,editMonthBudget,saveMonthBudget,setDashMode:m=>{dashMode=m;render();},openBudgetGroup:id=>{openBudgetGroups.add(id);render();},setSpendingExpanded:value=>{spendingExpanded=value;render();},showDebtHover,hideDebtHover,applyDebtPlan,addSampleDebtPayments,updateDebtBalance,saveDebtBalance,updateAccountBalance,saveAccountBalance,debtRecurring,pauseRecurring,skipPayment,findPayment,mutate,empty,sample,cleanSamples,validateImport,editor,saveRecord,deleteRecord,removeRecord,commit,renderScreen:s=>{screen=s;render();},render};' +
+      'globalThis.api={get:()=>state,openSetupGroup:id=>{openSetupGroups.add(id);render();},setSetupTab:t=>{setupTab=t;render();},nextRecurringLabel,scheduleRow,templateRow,templateList,editMonthBudget,saveMonthBudget,setDashMode:m=>{dashMode=m;render();},openBudgetGroup:id=>{openBudgetGroups.add(id);render();},setSpendingExpanded:value=>{spendingExpanded=value;render();},showDebtHover,hideDebtHover,applyDebtPlan,addSampleDebtPayments,updateDebtBalance,saveDebtBalance,updateAccountBalance,saveAccountBalance,debtRecurring,pauseRecurring,skipPayment,findPayment,mutate,empty,sample,cleanSamples,validateImport,editor,saveRecord,deleteRecord,removeRecord,commit,renderScreen:s=>{screen=s;render();},render};' +
       (startupState ? startup : 'render();})();'),
   );
   vm.runInContext(source, ctx);
@@ -1738,19 +1738,10 @@ test('A paid check box marks the payment unpaid, and Undo pays it again', () => 
   assert.ok(h.api.get().transactions.some((t) => t.id === id && t.paid));
 });
 
-test('Recurring templates are grouped by type with monthly totals and a pause button', () => {
+test('Recurring templates are one plain list: income first, then by name, paused last', () => {
   const h = harness();
   h.api.mutate((n) => {
     n.recurring = [
-      {
-        id: 'a',
-        name: 'Pay',
-        type: 'Income',
-        active: true,
-        start: '2026-01-02',
-        frequency: 'Bi-weekly',
-        expected: 1200,
-      },
       {
         id: 'b',
         name: 'Gym',
@@ -1769,13 +1760,35 @@ test('Recurring templates are grouped by type with monthly totals and a pause bu
         frequency: 'Monthly',
         expected: 1800,
       },
+      {
+        id: 'd',
+        name: 'Car',
+        type: 'Expense',
+        active: true,
+        start: '2026-01-01',
+        frequency: 'Monthly',
+        expected: 320,
+      },
+      {
+        id: 'a',
+        name: 'Pay',
+        type: 'Income',
+        active: true,
+        start: '2026-01-02',
+        frequency: 'Bi-weekly',
+        expected: 1200,
+      },
     ];
   });
-  const html = h.api.templateGroups();
-  assert.match(html, /Income<\/span><span class="group-total">\$2,600\.00 \/ mo/);
-  assert.match(html, /Expenses<\/span><span class="group-total">\$1,800\.00 \/ mo/);
-  assert.doesNotMatch(html, /Transfers/);
-  assert.ok(html.indexOf('Rent') < html.indexOf('Gym'), 'paused templates go last');
+  const html = h.api.templateList();
+  const order = ['Pay', 'Car', 'Rent', 'Gym'].map((n) => html.indexOf(`>${n}<small>`));
+  assert.deepEqual(
+    [...order].sort((x, y) => x - y),
+    order,
+  );
+  assert.ok(order.every((i) => i >= 0));
+  assert.match(html, /\+\$1,200\.00/);
+  assert.doesNotMatch(html, /template-group|\/ mo|Next/);
   const paused = h.api.templateRow(h.api.get().recurring.find((r) => r.id === 'b'));
   assert.match(paused, /template-row is-paused/);
   assert.match(paused, /<small>Paused<\/small>/);
@@ -1839,26 +1852,17 @@ test('Undo does not overwrite a subsequent edit to the same payment', () => {
   assert.equal(h.api.get().transactions.find((t) => t.id === id).notes, 'Edited after payment');
   assert.ok(h.node('#toast').textContent.includes('payment has changed'));
 });
-test('Template monthly total excludes expired and paused templates, including end-date boundary', () => {
+test('Ended templates stay in the list, marked Ended and placed last', () => {
   const h = harness();
-  const today = B.today(),
-    yesterday = B.date(today);
+  const yesterday = B.date(B.today());
   yesterday.setDate(yesterday.getDate() - 1);
   h.api.mutate((n) => {
     n.recurring = [
-      { id: 'expired', expected: 99, end: B.iso(yesterday), active: true },
-      { id: 'ends-today', expected: 20, end: today, active: true },
-      { id: 'ongoing', expected: 30, active: true },
-      { id: 'paused', expected: 100, active: false },
-    ].map((r) => ({
-      name: r.id,
-      type: 'Expense',
-      start: '2025-01-01',
-      frequency: 'Monthly',
-      ...r,
-    }));
+      { id: 'old', name: 'Alpha', expected: 99, end: B.iso(yesterday), active: true },
+      { id: 'now', name: 'Zeta', expected: 30, active: true },
+    ].map((r) => ({ type: 'Expense', start: '2025-01-01', frequency: 'Monthly', ...r }));
   });
-  const html = h.api.templateGroups();
-  assert.ok(html.includes('$50.00 / mo'));
-  assert.ok(html.includes('expired')); // Keep the template available to edit.
+  const html = h.api.templateList();
+  assert.ok(html.indexOf('Zeta') < html.indexOf('Alpha'));
+  assert.match(html, /Alpha<small>Ended<\/small>/);
 });

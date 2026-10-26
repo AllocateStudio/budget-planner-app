@@ -2660,33 +2660,7 @@ td .transaction-type-badge,
   z-index: 1;
 }
 
-/* Recurring templates use quiet group headings and the journal's type badges. */
-.template-group {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 16px;
-  margin: 26px 0 4px;
-  padding: 0 0 8px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--ink);
-}
-.template-group:first-child {
-  margin-top: 0;
-}
-.template-group .group-total {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 400;
-  white-space: nowrap;
-}
-.template-next {
-  flex: 0 0 72px;
-  text-align: right;
-  font-size: 13px;
-  color: var(--muted);
-}
+/* Recurring templates: one plain list, amount column and a square pause button. */
 .template-row > .record-amount {
   text-align: right;
 }
@@ -2698,9 +2672,6 @@ td .transaction-type-badge,
   color: var(--muted);
 }
 @media (max-width: 700px) {
-  .template-next {
-    flex-basis: 46px;
-  }
   .template-row > .record-amount {
     flex-basis: 78px;
   }
