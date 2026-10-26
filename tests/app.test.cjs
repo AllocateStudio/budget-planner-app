@@ -1869,3 +1869,23 @@ test('Extra sample accounts are added once without replacing saved accounts', ()
   assert.equal(harness(upgraded).api.get().accounts.length, upgraded.accounts.length);
   assert.doesNotThrow(() => h.api.validateImport(upgraded));
 });
+
+test('Two extra sample goals upgrade existing demos without duplicates or replacing goals', () => {
+  const h = harness();
+  h.api.sample();
+  const state = structuredClone(h.api.get());
+  assert.equal(state.goals.length, 4);
+  assert.equal(state.goals.find((g) => g.id === 'sample-extra-goal-car').target, 12000);
+  assert.equal(state.goals.find((g) => g.id === 'sample-extra-goal-laptop').saved, 650);
+  const old = structuredClone(state);
+  old.goals = old.goals.filter((g) => !g.id.startsWith('sample-extra-goal-'));
+  delete old.sampleGoalsVersion;
+  const upgraded = harness(old).api.get();
+  assert.equal(upgraded.goals.length, old.goals.length + 2);
+  assert.equal(
+    JSON.stringify(upgraded.goals.slice(0, old.goals.length)),
+    JSON.stringify(old.goals),
+  );
+  assert.equal(harness(upgraded).api.get().goals.length, upgraded.goals.length);
+  assert.doesNotThrow(() => h.api.validateImport(upgraded));
+});

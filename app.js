@@ -2469,6 +2469,7 @@
     delete n.sampleIncomeVersion;
     delete n.samplePaycheckVersion;
     delete n.sampleAccountsVersion;
+    delete n.sampleGoalsVersion;
   }
   function addExtraSampleDebts(n) {
     if (n.extraSampleDebtsVersion === 1) return;
@@ -2619,6 +2620,18 @@
         n.accounts.push({ id, name, kind, opening, sample: true });
     }
     n.sampleAccountsVersion = 1;
+  }
+  function addSampleGoals(n) {
+    if (n.sampleGoalsVersion === 1) return;
+    for (const [key, name, kind, target, saved, deadline] of [
+      ['car', 'New car', 'Savings goal', 12000, 2400, '2028-06-30'],
+      ['laptop', 'New laptop', 'Sinking fund', 2000, 650, '2027-04-30'],
+    ]) {
+      const id = 'sample-extra-goal-' + key;
+      if (!n.goals.some((g) => g.id === id))
+        n.goals.push({ id, name, kind, target, saved, deadline, sample: true });
+    }
+    n.sampleGoalsVersion = 1;
   }
   function sample() {
     mutate((n) => {
@@ -2873,6 +2886,7 @@
       addSampleIncome(n);
       renameSampleIncome(n);
       addSampleAccounts(n);
+      addSampleGoals(n);
     });
     filters.month = state.month;
     render();
@@ -3505,7 +3519,8 @@
       state.sampleDebtPaymentsVersion !== 1 ||
       state.sampleIncomeVersion !== 1 ||
       state.samplePaycheckVersion !== 1 ||
-      state.sampleAccountsVersion !== 1)
+      state.sampleAccountsVersion !== 1 ||
+      state.sampleGoalsVersion !== 1)
   )
     mutate((n) => {
       addExtraSampleDebts(n);
@@ -3513,6 +3528,7 @@
       addSampleIncome(n);
       renameSampleIncome(n);
       addSampleAccounts(n);
+      addSampleGoals(n);
     });
   else render();
 })();
