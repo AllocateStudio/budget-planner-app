@@ -705,7 +705,7 @@
           list.filter((r) => r.active),
           B.monthlyAmount,
         );
-        return `<div class="template-group"><span>${title}</span><span>${money(monthly)} / mo</span></div>${list.map(templateRow).join('')}`;
+        return `<div class="template-group group-${type.toLowerCase()}"><span class="group-chip">${title}</span><span class="group-total">${money(monthly)} / mo</span></div>${list.map(templateRow).join('')}`;
       })
       .join('');
   }

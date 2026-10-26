@@ -2669,10 +2669,36 @@ td .transaction-type-badge,
   border-bottom: 1px solid var(--line);
   font-size: 12px;
   font-weight: 700;
-  color: var(--muted);
+  align-items: center;
 }
 .template-group:first-child {
   padding-top: 0;
+}
+/* Group label as a chip in the Bill Calendar colors; the monthly total in the same tone. */
+.group-chip {
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+.group-income .group-chip {
+  background: #d8f3de;
+  color: #2f7d4c;
+}
+.group-expense .group-chip {
+  background: #fbdce6;
+  color: #b23a66;
+}
+.group-transfer .group-chip {
+  background: #d8ecfb;
+  color: #2a6ca8;
+}
+.group-income .group-total {
+  color: #2f7d4c;
+}
+.group-expense .group-total {
+  color: #b23a66;
+}
+.group-transfer .group-total {
+  color: #2a6ca8;
 }
 .template-next {
   flex: 0 0 72px;

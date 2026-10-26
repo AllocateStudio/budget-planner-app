@@ -1772,8 +1772,8 @@ test('Recurring templates are grouped by type with monthly totals and a pause bu
     ];
   });
   const html = h.api.templateGroups();
-  assert.match(html, /Income<\/span><span>\$2,600\.00 \/ mo/);
-  assert.match(html, /Expenses<\/span><span>\$1,800\.00 \/ mo/);
+  assert.match(html, /Income<\/span><span class="group-total">\$2,600\.00 \/ mo/);
+  assert.match(html, /Expenses<\/span><span class="group-total">\$1,800\.00 \/ mo/);
   assert.doesNotMatch(html, /Transfers/);
   assert.ok(html.indexOf('Rent') < html.indexOf('Gym'), 'paused templates go last');
   const paused = h.api.templateRow(h.api.get().recurring.find((r) => r.id === 'b'));
