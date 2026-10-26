@@ -2660,32 +2660,26 @@ td .transaction-type-badge,
   z-index: 1;
 }
 
-/* Recurring templates: grouped by type under a colored band (Bill Calendar colors),
-   next date and amount in fixed columns, a square pause button at the end. */
+/* Recurring templates use quiet group headings and the journal's type badges. */
 .template-group {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin: 18px 0 4px;
-  padding: 9px 12px;
-  border-radius: 10px;
-  font-size: 12px;
+  align-items: baseline;
+  gap: 16px;
+  margin: 26px 0 4px;
+  padding: 0 0 8px;
+  font-size: 14px;
   font-weight: 700;
+  color: var(--ink);
 }
 .template-group:first-child {
   margin-top: 0;
 }
-.group-income {
-  background: #d8f3de;
-  color: #2f7d4c;
-}
-.group-expense {
-  background: #fbdce6;
-  color: #b23a66;
-}
-.group-transfer {
-  background: #d8ecfb;
-  color: #2a6ca8;
+.template-group .group-total {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
 }
 .template-next {
   flex: 0 0 72px;

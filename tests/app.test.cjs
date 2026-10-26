@@ -1782,3 +1782,83 @@ test('Recurring templates are grouped by type with monthly totals and a pause bu
   assert.match(paused, /data-action="pause-recurring" data-id="b" aria-label="Resume Gym"/);
   assert.doesNotMatch(paused, /transaction-type-badge/);
 });
+
+test('Paid and unpaid Undo preserve later edits to unrelated records', () => {
+  for (const action of ['quick-pay', 'unpay']) {
+    const h = harness();
+    h.api.sample();
+    h.api.renderScreen('Recurring');
+    const id = h.node('#main').innerHTML.match(/data-action="quick-pay" data-id="([^"]+)"/)[1];
+    const click = (action) =>
+      h.fire('click', {
+        target: {
+          closest: (sel) => (sel === 'button' ? { dataset: { action, id } } : null),
+        },
+      });
+    click('quick-pay');
+    if (action === 'unpay') click('unpay');
+    const undo = h.node('#toast').child.onclick;
+    const accountId = h.api.get().accounts[0].id;
+    h.api.mutate((n) => {
+      n.accounts[0].name = 'Keep my edit';
+      n.transactions.push({
+        id: 'later-income',
+        name: 'Later income',
+        type: 'Income',
+        accountId,
+        categoryId: 'Income-0',
+        date: B.today(),
+        expected: 25,
+        actual: 25,
+        paid: true,
+      });
+    });
+    undo();
+    assert.equal(h.api.get().accounts[0].name, 'Keep my edit');
+    assert.ok(h.api.get().transactions.some((t) => t.id === 'later-income'));
+    assert.equal(
+      h.api.get().transactions.some((t) => t.id === id && t.paid),
+      action === 'unpay',
+    );
+    assert.doesNotThrow(() => h.api.validateImport(h.api.get()));
+  }
+});
+test('Undo does not overwrite a subsequent edit to the same payment', () => {
+  const h = harness();
+  h.api.sample();
+  h.api.renderScreen('Recurring');
+  const id = h.node('#main').innerHTML.match(/data-action="quick-pay" data-id="([^"]+)"/)[1];
+  h.fire('click', {
+    target: {
+      closest: (sel) => (sel === 'button' ? { dataset: { action: 'quick-pay', id } } : null),
+    },
+  });
+  const undo = h.node('#toast').child.onclick;
+  h.api.mutate((n) => (n.transactions.find((t) => t.id === id).notes = 'Edited after payment'));
+  undo();
+  assert.equal(h.api.get().transactions.find((t) => t.id === id).notes, 'Edited after payment');
+  assert.ok(h.node('#toast').textContent.includes('payment has changed'));
+});
+test('Template monthly total excludes expired and paused templates, including end-date boundary', () => {
+  const h = harness();
+  const today = B.today(),
+    yesterday = B.date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  h.api.mutate((n) => {
+    n.recurring = [
+      { id: 'expired', expected: 99, end: B.iso(yesterday), active: true },
+      { id: 'ends-today', expected: 20, end: today, active: true },
+      { id: 'ongoing', expected: 30, active: true },
+      { id: 'paused', expected: 100, active: false },
+    ].map((r) => ({
+      name: r.id,
+      type: 'Expense',
+      start: '2025-01-01',
+      frequency: 'Monthly',
+      ...r,
+    }));
+  });
+  const html = h.api.templateGroups();
+  assert.ok(html.includes('$50.00 / mo'));
+  assert.ok(html.includes('expired')); // Keep the template available to edit.
+});

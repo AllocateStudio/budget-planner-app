@@ -702,7 +702,7 @@
           .sort((a, b) => Number(!a.active) - Number(!b.active));
         if (!list.length) return '';
         const monthly = B.sum(
-          list.filter((r) => r.active),
+          list.filter((r) => r.active && (!r.end || r.end >= B.today())),
           B.monthlyAmount,
         );
         return `<div class="template-group group-${type.toLowerCase()}"><span>${title}</span><span class="group-total">${money(monthly)} / mo</span></div>${list.map(templateRow).join('')}`;
@@ -1994,6 +1994,52 @@
     editing.record = { ...t, scheduledDate: t.scheduledDate || t.date };
     saveTransaction(payload);
   }
+  // Undo only this occurrence; preserve edits made elsewhere since the action.
+  function paymentUndo(before, after, id, originalPayment) {
+    const snapshot = (s) => ({
+      transaction: s.transactions.find((t) => t.id === id),
+      scheduled: (s.scheduled || []).find((t) => t.id === id),
+      skipped: s.skipped.includes(id),
+    });
+    const previous = structuredClone(snapshot(before)),
+      expected = JSON.stringify(snapshot(after));
+    return () => {
+      if (JSON.stringify(snapshot(state)) !== expected) {
+        toast('This payment has changed. Open it to make changes.');
+        return;
+      }
+      const next = structuredClone(state);
+      for (const [key, value] of [
+        ['transactions', previous.transaction],
+        ['scheduled', previous.scheduled],
+      ]) {
+        next[key] = (next[key] || []).filter((t) => t.id !== id);
+        if (value) next[key].push(structuredClone(value));
+      }
+      next.skipped = next.skipped.filter((key) => key !== id);
+      if (previous.skipped) next.skipped.push(id);
+      // Keep the original unpaid occurrence if its template was paused or deleted meanwhile.
+      if (!previous.transaction && !previous.scheduled && originalPayment) {
+        const due = originalPayment.scheduledDate || originalPayment.date;
+        if (!B.generated(next, due, true).some((t) => t.id === id))
+          next.scheduled.push({
+            ...structuredClone(originalPayment),
+            date: due,
+            paid: false,
+            actual: 0,
+          });
+      }
+      try {
+        validateImport(next);
+        if (next.debts.some((d) => B.debtPaid(next, d.id) > B.debtBasis(d)))
+          throw Error('Debt payments would exceed the debt balance.');
+      } catch {
+        toast('Related records have changed. Open the payment to make changes.');
+        return;
+      }
+      if (commit(next)) render();
+    };
+  }
   // One click: paid at the expected amount on the scheduled date. Edit changes it later.
   function quickPay(id) {
     const t = findPayment(id);
@@ -2011,10 +2057,7 @@
       $('#form-error').textContent = error.message;
       return;
     }
-    if (state !== before)
-      toast('Marked as paid', () => {
-        if (commit(before)) render();
-      });
+    if (state !== before) toast('Marked as paid', paymentUndo(before, state, id, t));
   }
   // Clicking a filled check box undoes the payment: the occurrence is due again.
   function unpay(id) {
@@ -2034,9 +2077,7 @@
         }
       })
     )
-      toast('Marked as unpaid', () => {
-        if (commit(before)) render();
-      });
+      toast('Marked as unpaid', paymentUndo(before, state, id, t));
   }
   function skipPayment(id, restore = false) {
     const t = findPayment(id);
