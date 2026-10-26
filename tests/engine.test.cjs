@@ -353,6 +353,16 @@ test('Debt history distinguishes paid, partial, missed, future and shows future 
   assert.equal(r.at(-1).month, '2027-10');
   assert.equal(r.at(-1).balance, 0);
 });
+test('Debt without a due day is not missed before the month ends', () => {
+  const s = base();
+  s.extra = 0;
+  s.budgetStart = '2026-09-01';
+  s.debts = [{ id: 'd', balance: 1000, minimum: 100, apr: 0, start: '2026-09-01', dueDay: null }];
+  const p = B.debtProjection(s, 'Snowball', '2026-10-02'),
+    r = B.debtSchedule(s, 'd', p, '2026-10-02');
+  assert.equal(r.find((x) => x.month === '2026-09').state, 'missed');
+  assert.equal(r.find((x) => x.month === '2026-10').state, 'future');
+});
 test('Debt strategy comparison, monthly interest and impossible plan are deterministic', () => {
   const s = base();
   s.extra = 50;

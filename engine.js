@@ -549,8 +549,9 @@
             ? 'complete'
             : r.paid > 0
               ? 'partial'
-              : r.planned > 0 &&
-                  (r.month < current || Number(asOf.slice(-2)) >= Number(d.dueDay || 1))
+              : // Without a due day the current month stays open until it ends.
+                r.planned > 0 &&
+                  (r.month < current || (d.dueDay && Number(asOf.slice(-2)) >= d.dueDay))
                 ? 'missed'
                 : 'future',
     }));
