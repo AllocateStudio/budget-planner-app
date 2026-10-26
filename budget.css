@@ -2877,3 +2877,20 @@ td .transaction-type-badge,
     text-align: center;
   }
 }
+
+/* Phones: the edit window's buttons stay pinned to its bottom edge while the form scrolls. */
+@media (max-width: 600px) {
+  #editor {
+    --editor-pad: 16px;
+  }
+  #editor .dialog-actions {
+    flex-wrap: nowrap;
+    gap: 8px;
+    position: sticky;
+    bottom: calc(-1 * var(--editor-pad, 26px));
+    z-index: 2;
+    margin: 20px calc(-1 * var(--editor-pad, 26px)) calc(-1 * var(--editor-pad, 26px));
+    padding: 14px var(--editor-pad, 26px) var(--editor-pad, 26px);
+    background: var(--bg);
+  }
+}

@@ -154,5 +154,6 @@ Data is saved in the browser's localStorage under `allocate-studio.ultimate-budg
 - Run the tests with `node --test tests/*.test.cjs`.
 - Code is formatted with Prettier using `.prettierrc` (print width 100, single quotes). Keep new code in that style.
 - `tests/app.test.cjs` loads `app.js` by matching its last few lines. Keep the shape of the final `if (state.sampleProfile …) … else render();` block, or update the test harness with it.
+- On phones, the Save, Delete and Cancel buttons of every edit window stay pinned to its bottom edge while the form scrolls.
 - The tests check state and HTML output without a real browser. Layout and CSS changes still need a check in a browser at phone (375 px) and desktop widths.
 - Commit after each step and push to `origin` (`main`). Pull before starting work.
