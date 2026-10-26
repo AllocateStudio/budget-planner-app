@@ -1676,7 +1676,8 @@ test('Only Due today and Overdue show as pills; other statuses stay plain', () =
   const h = harness();
   h.api.sample('Jessica');
   h.api.renderScreen('Transactions');
-  assert.ok(h.node('#main').innerHTML.includes('<td>Paid</td>'));
+  // The journal lists paid entries only, so it has no Status column.
+  assert.ok(!h.node('#main').innerHTML.includes('<th>Status</th>'));
   const html = h.api.scheduleRow({
     id: 'u',
     recurringId: 'r',
