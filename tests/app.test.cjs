@@ -1648,10 +1648,11 @@ test('Recurring shows the next unpaid date and schedule marks paid records', () 
     expected: 100,
     paid: true,
   });
-  assert.ok(html.includes('schedule-record is-paid'));
-  assert.ok(html.includes('calendar-paid-check'));
-  assert.ok(html.includes('>✓</i>Paid'));
+  assert.ok(html.includes('schedule-record payment-row is-paid'));
+  assert.ok(html.includes('class="pay-check is-done"'));
+  assert.ok(html.includes('<small>Paid</small>'));
   assert.ok(html.includes('data-action="open-payment"'));
+  assert.ok(!html.includes('data-action="quick-pay"'));
 });
 
 test('Mark as paid pays in one click and Undo puts it back', () => {

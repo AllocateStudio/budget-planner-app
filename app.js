@@ -2009,18 +2009,14 @@
   }
   function scheduleRow(t) {
     t = { ...t, date: t.scheduledDate || t.date };
-    // Name, then Mark as paid / Skip, then the amount, and the pencil last.
-    // Unpaid rows keep an empty pencil slot so the amounts stay in one column.
-    const actions = t.paid
-        ? ''
-        : t.skipped
-          ? btn('Restore', 'restore-payment', t.id, 'textbtn')
-          : btn('Mark as paid', 'quick-pay', t.id, 'btn pay-btn') +
-            btn('Skip', 'skip-payment', t.id, 'textbtn'),
-      pencil = t.paid
-        ? `<button type="button" class="icon-btn edit-icon" data-action="open-payment" data-id="${esc(t.id)}" aria-label="Edit ${esc(t.name)}" title="Edit">&#9998;</button>`
-        : '';
-    return `<div class="schedule-record ${t.paid ? 'is-paid' : ''}">${edit('transaction', t.id, recordName(t, false, true))}<div class="schedule-actions">${actions}</div>${recordAmount(t, true)}<span class="schedule-edit">${pencil}</span></div>`;
+    // As in the Bill Calendar: a check box marks the payment paid in one click, the pencil
+    // opens the payment (amount, date, notes, Skip or Restore). Paid rows show a filled box.
+    const check = t.paid
+      ? '<span class="pay-check is-done" role="img" aria-label="Paid">✓</span>'
+      : t.skipped
+        ? '<span class="pay-check is-empty" aria-hidden="true"></span>'
+        : `<button type="button" class="pay-check" data-action="quick-pay" data-id="${esc(t.id)}" aria-label="Mark ${esc(t.name)} as paid" title="Mark as paid"></button>`;
+    return `<div class="schedule-record payment-row ${t.paid ? 'is-paid' : ''}">${check}${edit('transaction', t.id, recordName(t, false, true))}${recordAmount(t, false)}<button type="button" class="icon-btn edit-icon" data-action="open-payment" data-id="${esc(t.id)}" aria-label="Edit ${esc(t.name)}" title="Edit">&#9998;</button></div>`;
   }
   function editor(kind, id = '', preset = {}) {
     let record = state[collections[kind]].find((t) => t.id === id);

@@ -872,35 +872,39 @@ td:not(:first-child) {
   min-width: 0;
   border-bottom: 0;
 }
-/* Fixed widths so the actions and the amounts each line up in a column. */
-.schedule-actions {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  flex: 0 0 172px;
-}
-.schedule-record > .record-amount {
+/* Payment rows: check box, name, amount (fixed width so amounts line up), pencil. */
+.payment-row > .record-amount {
   flex: 0 0 104px;
   padding: 12px 0;
   font-weight: 600;
 }
-.schedule-edit {
-  flex: 0 0 36px;
-  display: flex;
-  justify-content: flex-end;
-}
-.schedule-actions .pay-btn {
-  min-height: 34px;
-  padding: 6px 14px;
-  font-size: 13px;
-  white-space: nowrap;
-}
-.schedule-actions .textbtn {
-  padding-right: 0;
-}
-.schedule-record .calendar-paid-check {
+.pay-check {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1.5px solid var(--ink);
+  border-radius: 7px;
+  background: var(--card);
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
   color: var(--ink);
-  -webkit-text-stroke: 0;
+  cursor: pointer;
+}
+.pay-check:hover {
+  background: #f3fad9;
+}
+.pay-check.is-done {
+  background: var(--accent);
+  cursor: default;
+}
+.pay-check.is-empty {
+  border-style: dashed;
+  border-color: var(--muted);
+  cursor: default;
 }
 .schedule-totals {
   display: flex;
@@ -954,19 +958,16 @@ td:not(:first-child) {
   .schedule-record > .row-link {
     flex-basis: 100%;
   }
-  .schedule-actions {
+  .schedule-record.payment-row {
+    flex-wrap: nowrap;
+    gap: 10px;
+    padding-bottom: 0;
+  }
+  .payment-row > .row-link {
     flex-basis: auto;
   }
-  .schedule-record > .record-amount {
-    margin-left: auto;
-    padding: 0;
-  }
-  .schedule-edit {
+  .payment-row > .record-amount {
     flex-basis: auto;
-    margin-left: 10px;
-  }
-  .schedule-edit:empty {
-    display: none;
   }
   .schedule-totals {
     gap: 12px;
