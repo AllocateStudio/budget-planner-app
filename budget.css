@@ -905,10 +905,10 @@ td:not(:first-child) {
   background: #f3fad9;
 }
 .pay-check.is-done {
-  background: var(--accent);
+  background: var(--blush);
 }
 .pay-check.is-done:hover {
-  background: #c7e84b;
+  background: #eaa3c6;
 }
 .pay-check.is-empty {
   border-style: dashed;
@@ -2714,5 +2714,17 @@ td .transaction-type-badge,
   }
   .template-row > .template-toggle {
     grid-area: toggle;
+  }
+}
+
+/* Phones: Month / Year, Payment Schedule / Recurring and the Setup switch fill the screen width,
+   each pill taking an equal half. */
+@media (max-width: 600px) {
+  .screen-switch {
+    display: flex;
+    width: 100%;
+  }
+  .screen-switch .switch-pill {
+    flex: 1 1 0;
   }
 }
