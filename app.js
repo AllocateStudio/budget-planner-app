@@ -194,7 +194,8 @@
   }
   let editingBudget = null,
     spendingExpanded = false,
-    dashMode = 'Month';
+    dashMode = 'Month',
+    calView = 'Month';
   const openBudgetGroups = new Set(),
     openSetupGroups = new Set();
   let setupTab = 'Expenses';
@@ -729,7 +730,7 @@
             'Payment Schedule',
             `<div class="schedule-totals"><span>Monthly expenses <b>${money(expected)}</b></span><span>Monthly transfers <b>${money(transfers)}</b></span></div>` +
               (list.length
-                ? list.map(scheduleRow).join('')
+                ? list.map((t) => scheduleRow(t)).join('')
                 : '<p class="empty-copy">No scheduled payments this month.</p>'),
           )
         : panel(
@@ -753,35 +754,52 @@
         : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     return (
       heading('Bill Calendar', '', edit('recurring', '', '+ Add recurring', 'btn primary')) +
-      `<div class="calendar-preferences"><label>Week starts on<select id="calendar-week">${options(['Monday', 'Sunday'], state.week)}</select></label></div><div id="cal-body"><div class="cal-grid">${weekdays.map((x) => `<div class="cal-weekday">${x}</div>`).join('')}${Array.from(
-        { length: 42 },
-        (_, i) => {
-          const day = new Date(start);
-          day.setDate(start.getDate() + i);
-          const stamp = B.iso(day),
-            outside = !stamp.startsWith(state.month),
-            payments = list.filter((t) => (t.scheduledDate || t.date) === stamp),
-            income = payments.filter((t) => t.type === 'Income');
-          return `<div class="cal-day ${outside ? 'outside' : ''} ${stamp === B.today() ? 'is-today' : ''}">${income.length ? income.map((t, i) => `<button type="button" class="day-heading has-payday payday-band" data-edit="transaction" data-id="${esc(t.id)}" title="${esc(t.name + ' · ' + money(t.paid ? t.actual : t.expected) + ' · ' + status(t))}"><span class="day-num">${i === 0 ? day.getDate() : ''}</span><span class="calendar-paydays"><span class="payday-pill">Payday</span></span></button>`).join('') : `<div class="day-heading"><span class="day-num">${day.getDate()}</span></div>`}<div class="day-pills">${payments
-            .filter((t) => t.type !== 'Income')
-            .map((t) =>
-              edit(
-                'transaction',
-                t.id,
-                // Phones show the short amount and hide the status word (colour shows it).
-                `<span class="cal-entry-name">${t.paid ? '<i class="calendar-paid-check" aria-hidden="true">✓</i>' : ''}${esc(t.name)}</span><small><span class="cal-amount">${money(t.paid ? t.actual : t.expected)}</span><span class="cal-amount-short">${shortMoney(t.paid ? t.actual : t.expected)}</span><span class="cal-entry-status"> · ${status(t)}</span></small>`,
-                'calendar-entry status-' +
-                  status(t).toLowerCase().replace(' today', '') +
-                  ' ' +
-                  (t.paid ? 'paid' : '') +
-                  ' ' +
-                  (t.type === 'Income' ? 'income' : ''),
-              ),
-            )
-            .join('')}</div></div>`;
-        },
-      ).join('')}</div></div>`
+      `<div class="screen-switch">${['Month', 'List'].map((t) => btn(t, 'cal-view', t, 'switch-pill ' + (calView === t ? 'active' : ''))).join('')}</div>` +
+      (calView === 'List' ? calendarList(list) : calendarGrid(list, start, weekdays))
     );
+  }
+  // List view: the month's payments and paydays grouped by day, each row like Payment Schedule.
+  function calendarList(list) {
+    const days = [...new Set(list.map((t) => t.scheduledDate || t.date))].sort();
+    return panel(
+      'Payments',
+      days
+        .map((day) => {
+          const rows = list.filter((t) => (t.scheduledDate || t.date) === day);
+          return `<div class="cal-list-day${day === B.today() ? ' is-today' : ''}"><span>${shortDate(day, true)}</span>${day === B.today() ? '<small>Today</small>' : ''}</div>${rows.map((t) => scheduleRow(t, false)).join('')}`;
+        })
+        .join('') || '<p class="empty-copy">No payments this month.</p>',
+    );
+  }
+  function calendarGrid(list, start, weekdays) {
+    return `<div class="calendar-preferences"><label>Week starts on<select id="calendar-week">${options(['Monday', 'Sunday'], state.week)}</select></label></div><div id="cal-body"><div class="cal-grid">${weekdays.map((x) => `<div class="cal-weekday">${x}</div>`).join('')}${Array.from(
+      { length: 42 },
+      (_, i) => {
+        const day = new Date(start);
+        day.setDate(start.getDate() + i);
+        const stamp = B.iso(day),
+          outside = !stamp.startsWith(state.month),
+          payments = list.filter((t) => (t.scheduledDate || t.date) === stamp),
+          income = payments.filter((t) => t.type === 'Income');
+        return `<div class="cal-day ${outside ? 'outside' : ''} ${stamp === B.today() ? 'is-today' : ''}">${income.length ? income.map((t, i) => `<button type="button" class="day-heading has-payday payday-band" data-edit="transaction" data-id="${esc(t.id)}" title="${esc(t.name + ' · ' + money(t.paid ? t.actual : t.expected) + ' · ' + status(t))}"><span class="day-num">${i === 0 ? day.getDate() : ''}</span><span class="calendar-paydays"><span class="payday-pill">Payday</span></span></button>`).join('') : `<div class="day-heading"><span class="day-num">${day.getDate()}</span></div>`}<div class="day-pills">${payments
+          .filter((t) => t.type !== 'Income')
+          .map((t) =>
+            edit(
+              'transaction',
+              t.id,
+              // Phones show the short amount and hide the status word (colour shows it).
+              `<span class="cal-entry-name">${t.paid ? '<i class="calendar-paid-check" aria-hidden="true">✓</i>' : ''}${esc(t.name)}</span><small><span class="cal-amount">${money(t.paid ? t.actual : t.expected)}</span><span class="cal-amount-short">${shortMoney(t.paid ? t.actual : t.expected)}</span><span class="cal-entry-status"> · ${status(t)}</span></small>`,
+              'calendar-entry status-' +
+                status(t).toLowerCase().replace(' today', '') +
+                ' ' +
+                (t.paid ? 'paid' : '') +
+                ' ' +
+                (t.type === 'Income' ? 'income' : ''),
+            ),
+          )
+          .join('')}</div></div>`;
+      },
+    ).join('')}</div></div>`;
   }
   const accountKinds = ['Checking', 'Savings', 'Cash', 'Investment', 'Other asset'];
   function accountsScreen() {
@@ -2044,7 +2062,8 @@
       else $('#editor').close();
     }
   }
-  function scheduleRow(t) {
+  // dated: false drops the date from the subtitle (the Bill Calendar list groups rows by day).
+  function scheduleRow(t, dated = true) {
     t = { ...t, date: t.scheduledDate || t.date };
     // As in the Bill Calendar: a check box marks the payment paid (or unpaid) in one click; clicking
     // the rest of the row opens the payment (amount, date, notes, Skip or Restore).
@@ -2053,7 +2072,7 @@
       : t.skipped
         ? '<span class="pay-check is-empty" aria-hidden="true"></span>'
         : `<button type="button" class="pay-check" data-action="quick-pay" data-id="${esc(t.id)}" aria-label="Mark ${esc(t.name)} as paid" title="Mark as paid"></button>`;
-    return `<div class="schedule-record payment-row ${t.paid ? 'is-paid' : ''}">${check}${edit('transaction', t.id, recordName(t, false, true))}${recordAmount(t, false)}</div>`;
+    return `<div class="schedule-record payment-row ${t.paid ? 'is-paid' : ''}">${check}${edit('transaction', t.id, dated ? recordName(t, false, true) : `<span class="record-name">${esc(t.name)}<small>${entryCategory(t)} · ${entrySource(t)}</small></span>`)}${recordAmount(t, false)}</div>`;
   }
   function editor(kind, id = '', preset = {}) {
     let record = state[collections[kind]].find((t) => t.id === id);
@@ -3153,6 +3172,9 @@
       id = e.dataset.id;
     if (a === 'dash-mode') {
       dashMode = id;
+      render();
+    } else if (a === 'cal-view') {
+      calView = id;
       render();
     } else if (a === 'dash-year') {
       const m = B.monthShift(state.month, Number(id) * 12);

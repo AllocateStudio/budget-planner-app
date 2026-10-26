@@ -1890,3 +1890,18 @@ test('Two extra sample goals upgrade existing demos without duplicates or replac
   assert.equal(harness(upgraded).api.get().goals.length, upgraded.goals.length);
   assert.doesNotThrow(() => h.api.validateImport(upgraded));
 });
+
+test('Bill Calendar List view groups the month by day with Payment Schedule rows', () => {
+  const h = harness();
+  h.api.sample('Jessica');
+  h.api.renderScreen('Bill Calendar');
+  h.fire('click', {
+    target: {
+      closest: (sel) => (sel === 'button' ? { dataset: { action: 'cal-view', id: 'List' } } : null),
+    },
+  });
+  const html = h.node('#main').innerHTML;
+  assert.ok(!html.includes('cal-grid'));
+  assert.ok((html.match(/class="cal-list-day/g) || []).length > 3);
+  assert.ok(html.includes('schedule-record payment-row'));
+});
