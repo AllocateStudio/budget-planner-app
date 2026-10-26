@@ -2731,3 +2731,23 @@ td .transaction-type-badge,
     flex: 1 1 0;
   }
 }
+
+/* Phones: Dashboard keeps only the month (or year) picker, stretched to the full width;
+   transactions are added from the Transactions screen. */
+@media (max-width: 600px) {
+  .dashboard-view .heading-actions {
+    width: 100%;
+  }
+  .dashboard-view .heading-actions > .btn.primary {
+    display: none;
+  }
+  .dashboard-view .heading-actions > .mp-picker,
+  .dashboard-view .heading-actions > .year-picker {
+    display: flex;
+    width: 100%;
+  }
+  .dashboard-view .heading-actions .mp-trigger {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
