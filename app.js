@@ -2948,7 +2948,7 @@
       url = URL.createObjectURL(blob),
       a = document.createElement('a');
     a.href = url;
-    a.download = `ultimate-budget-${B.today()}.json`;
+    a.download = `budget-planner-${B.today()}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }

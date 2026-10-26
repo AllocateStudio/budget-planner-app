@@ -1,4 +1,4 @@
-# Ultimate Budget · Allocate Studio
+# Budget Planner · Allocate Studio
 
 A standalone budgeting app that runs entirely in the browser. There is nothing to install or build: open `index.html`. All fonts and assets are bundled locally, and all data stays in the browser.
 
@@ -157,5 +157,6 @@ Data is saved in the browser's localStorage under `allocate-studio.ultimate-budg
 - Added to a phone's home screen, the app shows an acid green Budget icon (assets/icon-180.png for iPhone, icon-192 and icon-512 in manifest.webmanifest for Android) named Budget.
 - If the saved budget cannot be read, nothing is deleted: changes pause and a notice at the top offers Download saved data (the stored text as is), Restore backup and Start over (after a confirmation). If the browser refuses storage altogether (blocked site data, private window), the notice says changes will not be kept.
 - On phones, the Save, Delete and Cancel buttons of every edit window stay pinned to its bottom edge while the form scrolls.
+- `python3 build-customer-zip.py` builds the Etsy download from the last commit: index.html and the Budget_Planner PDFs at the top, one app/app.bundle.js, one app/styles.css and the assets in app/. It writes AllocateStudio-BudgetPlanner and its zip to ~/Desktop/etsy (or the folder given as an argument) and picks the PDFs up from there.
 - The tests check state and HTML output without a real browser. Layout and CSS changes still need a check in a browser at phone (375 px) and desktop widths.
 - Commit after each step and push to `origin` (`main`). Pull before starting work.
