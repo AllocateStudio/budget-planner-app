@@ -1718,3 +1718,22 @@ test('Expected vs Actual: plus is better than expected; this year is compared th
     '$' + expected.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   assert.ok(row.includes(`>${fmt}<`), fmt);
 });
+
+test('A paid check box marks the payment unpaid, and Undo pays it again', () => {
+  const h = harness();
+  h.api.sample('Jessica');
+  h.api.renderScreen('Recurring');
+  const click = (action, id) => {
+    const button = { dataset: { action, id } };
+    h.fire('click', { target: { closest: (sel) => (sel === 'button' ? button : null) } });
+  };
+  const id = h.node('#main').innerHTML.match(/data-action="quick-pay" data-id="([^"]+)"/)[1];
+  click('quick-pay', id);
+  assert.ok(h.node('#main').innerHTML.includes(`data-action="unpay" data-id="${id}"`));
+  click('unpay', id);
+  assert.ok(!h.api.get().transactions.some((t) => t.id === id));
+  assert.ok(h.node('#main').innerHTML.includes(`data-action="quick-pay" data-id="${id}"`));
+  assert.equal(h.node('#toast').textContent, 'Marked as unpaid');
+  h.node('#toast').child.onclick();
+  assert.ok(h.api.get().transactions.some((t) => t.id === id && t.paid));
+});

@@ -899,7 +899,9 @@ td:not(:first-child) {
 }
 .pay-check.is-done {
   background: var(--accent);
-  cursor: default;
+}
+.pay-check.is-done:hover {
+  background: #c7e84b;
 }
 .pay-check.is-empty {
   border-style: dashed;

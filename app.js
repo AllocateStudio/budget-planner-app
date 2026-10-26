@@ -1986,6 +1986,28 @@
         if (commit(before)) render();
       });
   }
+  // Clicking a filled check box undoes the payment: the occurrence is due again.
+  function unpay(id) {
+    const t = state.transactions.find((x) => x.id === id && x.recurringId && x.paid);
+    if (!t) return;
+    const before = state,
+      due = t.scheduledDate || id.slice(-10);
+    if (
+      mutate((n) => {
+        n.transactions = n.transactions.filter((x) => x.id !== id);
+        // A paused or deleted template no longer generates it, so keep it as a scheduled payment.
+        if (!B.generated(n, due, true).some((x) => x.id === id)) {
+          n.scheduled ||= [];
+          n.scheduled = n.scheduled.filter((x) => x.id !== id);
+          const { actual, paid, scheduledDate, ...rest } = t;
+          n.scheduled.push({ ...rest, date: due, actual: 0, paid: false });
+        }
+      })
+    )
+      toast('Marked as unpaid', () => {
+        if (commit(before)) render();
+      });
+  }
   function skipPayment(id, restore = false) {
     const t = findPayment(id);
     if (!t || t.paid) return;
@@ -2009,10 +2031,10 @@
   }
   function scheduleRow(t) {
     t = { ...t, date: t.scheduledDate || t.date };
-    // As in the Bill Calendar: a check box marks the payment paid in one click, the pencil
+    // As in the Bill Calendar: a check box marks the payment paid (or unpaid) in one click, the pencil
     // opens the payment (amount, date, notes, Skip or Restore). Paid rows show a filled box.
     const check = t.paid
-      ? '<span class="pay-check is-done" role="img" aria-label="Paid">✓</span>'
+      ? `<button type="button" class="pay-check is-done" data-action="unpay" data-id="${esc(t.id)}" aria-label="Mark ${esc(t.name)} as unpaid" title="Mark as unpaid">✓</button>`
       : t.skipped
         ? '<span class="pay-check is-empty" aria-hidden="true"></span>'
         : `<button type="button" class="pay-check" data-action="quick-pay" data-id="${esc(t.id)}" aria-label="Mark ${esc(t.name)} as paid" title="Mark as paid"></button>`;
@@ -3105,6 +3127,7 @@
       const t = findPayment(id);
       if (t) drawPayment(t);
     } else if (a === 'quick-pay') quickPay(id);
+    else if (a === 'unpay') unpay(id);
     else if (a === 'skip-payment') skipPayment(id);
     else if (a === 'restore-payment') skipPayment(id, true);
     else if (a === 'pause-recurring') pauseRecurring(id);
