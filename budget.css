@@ -1561,6 +1561,10 @@ td:not(:first-child) {
   flex-direction: column;
 }
 .goal-status {
+  /* Sits in the card title, so reset the heading font and its tight letter spacing. */
+  font-family: 'Budget Digits', 'DM Sans', sans-serif;
+  letter-spacing: 0;
+  white-space: nowrap;
   border-radius: 999px;
   padding: 4px 12px;
   font-size: 11px;
