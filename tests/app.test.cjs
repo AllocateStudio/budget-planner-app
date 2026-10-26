@@ -1781,21 +1781,28 @@ test('Recurring templates are one list by type, then name, paused last', () => {
     ];
   });
   const html = h.api.templateList();
-  const order = ['Pay', 'Car', 'Rent', 'Gym'].map((n) => html.indexOf(`>${n}<small>`));
+  const order = ['Pay', 'Car', 'Rent', 'Gym'].map((n) =>
+    html.indexOf(`>${n}<span class="template-meta">`),
+  );
   assert.deepEqual(
     [...order].sort((x, y) => x - y),
     order,
   );
   assert.ok(order.every((i) => i >= 0));
-  assert.match(html, /Pay<small>Income · Bi-weekly<\/small>/);
+  assert.match(
+    html,
+    /Pay<span class="template-meta"><small class="transaction-type-badge type-income">Income<\/small><small>Bi-weekly<\/small>/,
+  );
   assert.doesNotMatch(html, /template-group|\/ mo/);
-  assert.match(html, /Rent<small>Expense · Monthly<\/small>/);
+  assert.match(
+    html,
+    /Rent<span class="template-meta">[^]*?type-expense">Expense<\/small><small>Monthly<\/small>/,
+  );
   assert.match(html, /class="template-next">[A-Z][a-z]{2} \d{1,2}, \d{4}</);
   const paused = h.api.templateRow(h.api.get().recurring.find((r) => r.id === 'b'));
   assert.match(paused, /template-row is-paused/);
-  assert.match(paused, /Expense · Paused<\/small>/);
+  assert.match(paused, /Expense<\/small><small>Paused<\/small>/);
   assert.match(paused, /data-action="pause-recurring" data-id="b" aria-label="Resume Gym"/);
-  assert.doesNotMatch(paused, /transaction-type-badge/);
 });
 
 test('Paid and unpaid Undo preserve later edits to unrelated records', () => {
@@ -1866,5 +1873,5 @@ test('Ended templates stay in the list, marked Ended and placed last', () => {
   });
   const html = h.api.templateList();
   assert.ok(html.indexOf('Zeta') < html.indexOf('Alpha'));
-  assert.match(html, /Alpha<small>[^<]* · Ended<\/small>/);
+  assert.match(html, /Alpha<span[^]*?<small>Ended<\/small>/);
 });

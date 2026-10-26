@@ -2661,6 +2661,16 @@ td .transaction-type-badge,
 }
 
 /* Recurring templates: one list, next date and amount columns, a square pause button. */
+.template-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 7px;
+}
+.template-meta small,
+.template-meta .transaction-type-badge {
+  margin-top: 0;
+}
 .template-next {
   flex: 0 0 96px;
   text-align: right;
