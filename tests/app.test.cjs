@@ -134,7 +134,7 @@ test('All eight screens render empty and with the single sample dataset', () => 
       assert.ok(!h.node('#main').innerHTML.includes('NaN'));
     }
     if (profile) {
-      assert.equal(h.api.get().accounts.length, 2);
+      assert.equal(h.api.get().accounts.length, 4);
       assert.equal(h.api.get().sampleProfile, profile);
     }
   }
@@ -1230,7 +1230,7 @@ test('Debt cards follow each strategy and keep paid-off debts last', () => {
       [...indexes].sort((a, b) => a - b),
       indexes,
     );
-    assert.equal((html.match(/Extra payment first/g) || []).length, 1);
+    assert.ok(!html.includes('Extra payment first'));
     assert.equal((html.match(/class="debt-priority-badge"/g) || []).length, 3);
   }
 });
@@ -1838,6 +1838,34 @@ test('Month picker shows on Payment Schedule but not on Recurring templates', ()
 
 test('Month picker draws all three rows of months', () => {
   // A formatter once dropped rows 0 and 1, leaving only Sep to Dec.
-  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'month-picker.js'), 'utf8');
+  const src = require('fs').readFileSync(
+    require('path').join(__dirname, '..', 'month-picker.js'),
+    'utf8',
+  );
   assert.match(src, /\$\{\[0, 1, 2\]\s*\.map\(/);
+});
+
+test('Extra sample accounts are added once without replacing saved accounts', () => {
+  const h = harness();
+  h.api.sample();
+  const current = structuredClone(h.api.get());
+  for (const [kind, amount] of [
+    ['Cash', 250],
+    ['Investment', 8500],
+  ]) {
+    const account = current.accounts.find((a) => a.sample && a.kind === kind);
+    assert.ok(account);
+    assert.equal(account.opening, amount);
+  }
+  const old = structuredClone(current);
+  old.accounts = old.accounts.filter((a) => !a.id.startsWith('sample-extra-account-'));
+  delete old.sampleAccountsVersion;
+  const upgraded = harness(old).api.get();
+  assert.equal(upgraded.accounts.length, old.accounts.length + 2);
+  assert.equal(
+    JSON.stringify(upgraded.accounts.slice(0, old.accounts.length)),
+    JSON.stringify(old.accounts),
+  );
+  assert.equal(harness(upgraded).api.get().accounts.length, upgraded.accounts.length);
+  assert.doesNotThrow(() => h.api.validateImport(upgraded));
 });

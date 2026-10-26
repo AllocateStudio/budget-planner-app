@@ -1138,10 +1138,7 @@
             open = debtExpanded.has(d.id);
           return panel(
             (closed ? '' : '<span class="debt-priority-badge">' + (index + 1) + '</span> ') +
-              esc(d.name) +
-              (!closed && index === 0
-                ? '<small class="debt-first-label">Extra payment first</small>'
-                : ''),
+              esc(d.name),
             `<div class="debt-card-summary"><div><strong class="large-value">${money(balance)}</strong><p>${closed ? '<span class="paid-off-label">Paid off</span>' : esc(d.kind || 'Other') + ' · ' + d.apr + '% APR · ' + money(d.minimum) + ' minimum'}${d.dueDay ? ' · Due ' + d.dueDay : ''}</p></div><div class="debt-card-actions">${btn('Update balance', 'debt-balance', d.id, 'btn')}${!closed ? btn('Set recurring payment', 'debt-recurring', d.id, 'btn') : ''}</div></div>${bar(Math.max(0, d.balance - balance), d.balance)}<div class="debt-card-footer"><span>${money(B.debtPaid(state, d.id))} paid${state.strategy === 'Custom' ? ' · Priority ' + d.order : ''}</span><button type="button" class="textbtn" data-action="debt-expand" data-id="${esc(d.id)}" aria-expanded="${open}">${open ? 'Hide schedule' : 'View schedule'}</button></div>${open ? debtTable(d, plan) : ''}`,
             editIcon('debt', d.id, d.name),
           );
@@ -2471,6 +2468,7 @@
     delete n.sampleDebtPaymentsVersion;
     delete n.sampleIncomeVersion;
     delete n.samplePaycheckVersion;
+    delete n.sampleAccountsVersion;
   }
   function addExtraSampleDebts(n) {
     if (n.extraSampleDebtsVersion === 1) return;
@@ -2609,6 +2607,18 @@
     if (category && !n.categories.some((c) => c.name === 'Paycheck' && c.type === 'Income'))
       category.name = 'Paycheck';
     n.samplePaycheckVersion = 1;
+  }
+  function addSampleAccounts(n) {
+    if (n.sampleAccountsVersion === 1) return;
+    for (const [key, name, kind, opening] of [
+      ['cash', 'Cash', 'Cash', 250],
+      ['investment', 'Investment', 'Investment', 8500],
+    ]) {
+      const id = 'sample-extra-account-' + key;
+      if (!n.accounts.some((a) => a.id === id))
+        n.accounts.push({ id, name, kind, opening, sample: true });
+    }
+    n.sampleAccountsVersion = 1;
   }
   function sample() {
     mutate((n) => {
@@ -2862,6 +2872,7 @@
       addSampleDebtPayments(n);
       addSampleIncome(n);
       renameSampleIncome(n);
+      addSampleAccounts(n);
     });
     filters.month = state.month;
     render();
@@ -3493,13 +3504,15 @@
     (state.extraSampleDebtsVersion !== 1 ||
       state.sampleDebtPaymentsVersion !== 1 ||
       state.sampleIncomeVersion !== 1 ||
-      state.samplePaycheckVersion !== 1)
+      state.samplePaycheckVersion !== 1 ||
+      state.sampleAccountsVersion !== 1)
   )
     mutate((n) => {
       addExtraSampleDebts(n);
       addSampleDebtPayments(n);
       addSampleIncome(n);
       renameSampleIncome(n);
+      addSampleAccounts(n);
     });
   else render();
 })();

@@ -1118,15 +1118,6 @@ td:not(:first-child) {
   font-size: 14px;
   vertical-align: middle;
 }
-.debt-first-label {
-  display: block;
-  margin-top: 8px;
-  color: var(--muted);
-  font-family: 'Budget Digits', 'DM Sans', sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0;
-}
 
 /* Shared metric-card sizing across Dashboard and Debt Payoff. */
 .stats-strip {
@@ -1628,10 +1619,6 @@ td:not(:first-child) {
 }
 .debt-list > .panel > .panel-head .debt-priority-badge {
   margin-right: 0;
-}
-.debt-list > .panel > .panel-head .debt-first-label {
-  grid-column: 2;
-  margin-top: 4px;
 }
 
 .large-value.is-negative {
