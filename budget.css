@@ -1457,7 +1457,7 @@ td:not(:first-child) {
 }
 .strategy-option.is-selected {
   border-color: var(--ink);
-  background: var(--accent);
+  background: var(--blush);
   box-shadow: 2px 3px 0 var(--ink);
 }
 .strategy-option-text,
