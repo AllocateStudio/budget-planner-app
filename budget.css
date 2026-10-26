@@ -376,6 +376,14 @@ td:not(:first-child) {
   border: 1.5px solid var(--ink);
   min-height: 44px;
 }
+/* Filter labels line up with the text inside the fields (border plus inner padding). */
+.filters label {
+  padding-left: 12px;
+}
+.filters label > * {
+  margin-left: -12px;
+  width: calc(100% + 12px);
+}
 .month-filter {
   display: flex;
   gap: 5px;
