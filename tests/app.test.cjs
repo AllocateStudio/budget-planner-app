@@ -1921,3 +1921,22 @@ test('Transactions also render as phone rows: name, amount, badge, then date, ca
   );
   assert.ok(!rows.includes('Transfer →'));
 });
+test('Unreadable saved data offers download, restore and start over', () => {
+  const h = harness({ version: 99 }),
+    click = (action) =>
+      h.fire('click', {
+        target: { closest: (sel) => (sel === 'button' ? { dataset: { action } } : null) },
+      });
+  let html = h.node('#main').innerHTML;
+  assert.ok(html.includes('Your saved budget could not be read.'));
+  assert.ok(
+    html.includes('data-action="export-raw"') && html.includes('data-action="reset-blocked"'),
+  );
+  assert.equal(h.api.commit(h.api.empty()), false);
+  assert.equal(h.storage.get('allocate-studio.ultimate-budget.v2'), '{"version":99}');
+  click('reset-blocked');
+  assert.ok(h.node('#editor').innerHTML.includes('Start over?'));
+  click('reset-confirm');
+  assert.ok(!h.node('#main').innerHTML.includes('could not be read'));
+  assert.equal(JSON.parse(h.storage.get('allocate-studio.ultimate-budget.v2')).version, 4);
+});

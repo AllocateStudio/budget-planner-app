@@ -173,25 +173,33 @@
       strategy: 'Snowball',
     };
   }
+  // blocked: 'storage' when the browser refuses storage, 'data' when the saved budget cannot be read.
   let state = empty(),
     raw = null,
     blocked = false;
   try {
     raw = localStorage.getItem(KEY);
-    if (raw) {
-      const s = JSON.parse(raw);
-      state = validateImport(s);
-    } else {
-      const p = JSON.parse(localStorage.getItem('allocate-studio.ultimate-budget.preferences.v1'));
-      if (p) {
-        state.currency = p.currencySymbol || '$';
-        state.week = p.weekStartsOn || 'Monday';
-        state.month = p.month || state.month;
-      }
-    }
   } catch {
-    blocked = true;
+    blocked = 'storage';
   }
+  if (!blocked)
+    try {
+      if (raw) {
+        const s = JSON.parse(raw);
+        state = validateImport(s);
+      } else {
+        const p = JSON.parse(
+          localStorage.getItem('allocate-studio.ultimate-budget.preferences.v1'),
+        );
+        if (p) {
+          state.currency = p.currencySymbol || '$';
+          state.week = p.weekStartsOn || 'Monday';
+          state.month = p.month || state.month;
+        }
+      }
+    } catch {
+      blocked = 'data';
+    }
   let editingBudget = null,
     spendingExpanded = false,
     dashMode = 'Month',
@@ -265,9 +273,14 @@
       undo ? 6000 : 3500,
     );
   }
-  function commit(next) {
-    if (blocked) {
-      toast('Saved data could not be read. Reload before making changes.');
+  // force: restoring a backup or starting over is the way out of a blocked state.
+  function commit(next, force) {
+    if (blocked && !force) {
+      toast(
+        blocked === 'storage'
+          ? 'This browser is not saving data. Changes will not be kept.'
+          : 'Saved data could not be read. Use the options at the top of the page.',
+      );
       return false;
     }
     if (next.goals.some((g) => B.goalSaved(next, g.id) < 0)) {
@@ -283,6 +296,7 @@
       localStorage.setItem(KEY, text);
       raw = text;
       state = next;
+      blocked = false;
       $('#save-state').textContent = 'Saved in this browser';
       return true;
     } catch {
@@ -1511,9 +1525,11 @@
       )
       .join('');
     $('#main').innerHTML =
-      (blocked
-        ? '<p class="save-warning">Saved data could not be read. Changes are disabled to protect it.</p>'
-        : '') +
+      (blocked === 'storage'
+        ? '<div class="save-warning"><strong>This browser is not saving your budget.</strong><p>Site data may be blocked or the window may be private. Allow site data or open a regular window, then reload the page.</p></div>'
+        : blocked
+          ? `<div class="save-warning"><strong>Your saved budget could not be read.</strong><p>Nothing has been deleted. Changes are paused so it stays safe. Download a copy first, then restore a backup or start over.</p><div class="button-row">${btn('Download saved data', 'export-raw')}${btn('Restore backup', 'import')}${btn('Start over', 'reset-blocked', '', 'btn danger')}</div>${screen === 'Setup' ? '' : '<input type="file" id="import-file" accept="application/json,.json" hidden>'}</div>`
+          : '') +
       {
         Dashboard: dashboard,
         Transactions: transactionScreen,
@@ -2926,8 +2942,9 @@
     filters.month = state.month;
     render();
   }
-  function exportData() {
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }),
+  // text: the raw saved data when it could not be read, so it can be kept as is.
+  function exportData(text) {
+    const blob = new Blob([text ?? JSON.stringify(state, null, 2)], { type: 'application/json' }),
       url = URL.createObjectURL(blob),
       a = document.createElement('a');
     a.href = url;
@@ -3288,9 +3305,21 @@
       mutate(cleanSamples);
       toast('Sample records cleared. Your entries are kept.');
     } else if (a === 'export') exportData();
-    else if (a === 'import') $('#import-file').click();
+    else if (a === 'export-raw') exportData(raw);
+    else if (a === 'reset-blocked') {
+      $('#editor').innerHTML =
+        `<h2 id="editor-title">Start over?</h2><p class="settings-note">The saved budget that could not be read will be replaced with an empty one. Download it first if you want to keep it.</p><div class="dialog-actions">${btn('Download saved data', 'export-raw')}${btn('Cancel', 'close')}${btn('Start over', 'reset-confirm', '', 'btn danger')}</div>`;
+      $('#editor').showModal();
+    } else if (a === 'reset-confirm') {
+      if (commit(empty(), true)) {
+        filters.month = state.month;
+        $('#editor').close();
+        render();
+        toast('Started a new budget.');
+      }
+    } else if (a === 'import') $('#import-file').click();
     else if (a === 'import-confirm') {
-      if (pendingImport && commit(pendingImport)) {
+      if (pendingImport && commit(pendingImport, true)) {
         pendingImport = null;
         filters.month = state.month;
         $('#editor').close();
