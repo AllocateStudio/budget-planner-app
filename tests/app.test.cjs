@@ -1655,7 +1655,7 @@ test('Recurring shows the next unpaid date and schedule marks paid records', () 
   assert.ok(!html.includes('data-action="quick-pay"'));
 });
 
-test('Mark as paid pays in one click and Undo puts it back', () => {
+test('Mark as paid pays in one click, with no toast', () => {
   const h = harness();
   h.api.sample('Jessica');
   h.api.renderScreen('Recurring');
@@ -1668,10 +1668,8 @@ test('Mark as paid pays in one click and Undo puts it back', () => {
   assert.equal(paid.actual, paid.expected);
   assert.equal(paid.date, id.slice(-10));
   assert.ok(!h.node('#editor').open);
-  assert.equal(h.node('#toast').textContent, 'Marked as paid');
-  h.node('#toast').child.onclick();
-  assert.equal(h.api.get().transactions.length, before);
-  assert.ok(!h.api.get().transactions.some((t) => t.id === id && t.paid));
+  assert.notEqual(h.node('#toast').textContent, 'Marked as paid');
+  assert.equal(h.api.get().transactions.length, before + 1);
 });
 
 test('Only Due today and Overdue show as pills; other statuses stay plain', () => {
@@ -1719,7 +1717,7 @@ test('Expected vs Actual: plus is better than expected; this year is compared th
   assert.ok(row.includes(`>${fmt}<`), fmt);
 });
 
-test('A paid check box marks the payment unpaid, and Undo pays it again', () => {
+test('A paid check box marks the payment unpaid, and clicking again pays it', () => {
   const h = harness();
   h.api.sample('Jessica');
   h.api.renderScreen('Recurring');
@@ -1733,8 +1731,8 @@ test('A paid check box marks the payment unpaid, and Undo pays it again', () => 
   click('unpay', id);
   assert.ok(!h.api.get().transactions.some((t) => t.id === id));
   assert.ok(h.node('#main').innerHTML.includes(`data-action="quick-pay" data-id="${id}"`));
-  assert.equal(h.node('#toast').textContent, 'Marked as unpaid');
-  h.node('#toast').child.onclick();
+  assert.notEqual(h.node('#toast').textContent, 'Marked as unpaid');
+  click('quick-pay', id);
   assert.ok(h.api.get().transactions.some((t) => t.id === id && t.paid));
 });
 
@@ -1805,62 +1803,6 @@ test('Recurring templates are one list by type, then name, paused last', () => {
   assert.match(paused, /data-action="pause-recurring" data-id="b" aria-label="Resume Gym"/);
 });
 
-test('Paid and unpaid Undo preserve later edits to unrelated records', () => {
-  for (const action of ['quick-pay', 'unpay']) {
-    const h = harness();
-    h.api.sample();
-    h.api.renderScreen('Recurring');
-    const id = h.node('#main').innerHTML.match(/data-action="quick-pay" data-id="([^"]+)"/)[1];
-    const click = (action) =>
-      h.fire('click', {
-        target: {
-          closest: (sel) => (sel === 'button' ? { dataset: { action, id } } : null),
-        },
-      });
-    click('quick-pay');
-    if (action === 'unpay') click('unpay');
-    const undo = h.node('#toast').child.onclick;
-    const accountId = h.api.get().accounts[0].id;
-    h.api.mutate((n) => {
-      n.accounts[0].name = 'Keep my edit';
-      n.transactions.push({
-        id: 'later-income',
-        name: 'Later income',
-        type: 'Income',
-        accountId,
-        categoryId: 'Income-0',
-        date: B.today(),
-        expected: 25,
-        actual: 25,
-        paid: true,
-      });
-    });
-    undo();
-    assert.equal(h.api.get().accounts[0].name, 'Keep my edit');
-    assert.ok(h.api.get().transactions.some((t) => t.id === 'later-income'));
-    assert.equal(
-      h.api.get().transactions.some((t) => t.id === id && t.paid),
-      action === 'unpay',
-    );
-    assert.doesNotThrow(() => h.api.validateImport(h.api.get()));
-  }
-});
-test('Undo does not overwrite a subsequent edit to the same payment', () => {
-  const h = harness();
-  h.api.sample();
-  h.api.renderScreen('Recurring');
-  const id = h.node('#main').innerHTML.match(/data-action="quick-pay" data-id="([^"]+)"/)[1];
-  h.fire('click', {
-    target: {
-      closest: (sel) => (sel === 'button' ? { dataset: { action: 'quick-pay', id } } : null),
-    },
-  });
-  const undo = h.node('#toast').child.onclick;
-  h.api.mutate((n) => (n.transactions.find((t) => t.id === id).notes = 'Edited after payment'));
-  undo();
-  assert.equal(h.api.get().transactions.find((t) => t.id === id).notes, 'Edited after payment');
-  assert.ok(h.node('#toast').textContent.includes('payment has changed'));
-});
 test('Ended templates stay in the list, marked Ended and placed last', () => {
   const h = harness();
   const yesterday = B.date(B.today());

@@ -1986,58 +1986,12 @@
     editing.record = { ...t, scheduledDate: t.scheduledDate || t.date };
     saveTransaction(payload);
   }
-  // Undo only this occurrence; preserve edits made elsewhere since the action.
-  function paymentUndo(before, after, id, originalPayment) {
-    const snapshot = (s) => ({
-      transaction: s.transactions.find((t) => t.id === id),
-      scheduled: (s.scheduled || []).find((t) => t.id === id),
-      skipped: s.skipped.includes(id),
-    });
-    const previous = structuredClone(snapshot(before)),
-      expected = JSON.stringify(snapshot(after));
-    return () => {
-      if (JSON.stringify(snapshot(state)) !== expected) {
-        toast('This payment has changed. Open it to make changes.');
-        return;
-      }
-      const next = structuredClone(state);
-      for (const [key, value] of [
-        ['transactions', previous.transaction],
-        ['scheduled', previous.scheduled],
-      ]) {
-        next[key] = (next[key] || []).filter((t) => t.id !== id);
-        if (value) next[key].push(structuredClone(value));
-      }
-      next.skipped = next.skipped.filter((key) => key !== id);
-      if (previous.skipped) next.skipped.push(id);
-      // Keep the original unpaid occurrence if its template was paused or deleted meanwhile.
-      if (!previous.transaction && !previous.scheduled && originalPayment) {
-        const due = originalPayment.scheduledDate || originalPayment.date;
-        if (!B.generated(next, due, true).some((t) => t.id === id))
-          next.scheduled.push({
-            ...structuredClone(originalPayment),
-            date: due,
-            paid: false,
-            actual: 0,
-          });
-      }
-      try {
-        validateImport(next);
-        if (next.debts.some((d) => B.debtPaid(next, d.id) > B.debtBasis(d)))
-          throw Error('Debt payments would exceed the debt balance.');
-      } catch {
-        toast('Related records have changed. Open the payment to make changes.');
-        return;
-      }
-      if (commit(next)) render();
-    };
-  }
   // One click: paid at the expected amount on the scheduled date. Edit changes it later.
+  // No toast or Undo: the check box itself shows the change and clicking it again reverses it.
   function quickPay(id) {
     const t = findPayment(id);
     if (!t || t.paid || t.skipped) return;
-    const before = state,
-      data = new FormData();
+    const data = new FormData();
     data.set('amount', t.expected);
     data.set('date', t.scheduledDate || t.date);
     data.set('notes', t.notes || '');
@@ -2049,27 +2003,22 @@
       $('#form-error').textContent = error.message;
       return;
     }
-    if (state !== before) toast('Marked as paid', paymentUndo(before, state, id, t));
   }
   // Clicking a filled check box undoes the payment: the occurrence is due again.
   function unpay(id) {
     const t = state.transactions.find((x) => x.id === id && x.recurringId && x.paid);
     if (!t) return;
-    const before = state,
-      due = t.scheduledDate || id.slice(-10);
-    if (
-      mutate((n) => {
-        n.transactions = n.transactions.filter((x) => x.id !== id);
-        // A paused or deleted template no longer generates it, so keep it as a scheduled payment.
-        if (!B.generated(n, due, true).some((x) => x.id === id)) {
-          n.scheduled ||= [];
-          n.scheduled = n.scheduled.filter((x) => x.id !== id);
-          const { actual, paid, scheduledDate, ...rest } = t;
-          n.scheduled.push({ ...rest, date: due, actual: 0, paid: false });
-        }
-      })
-    )
-      toast('Marked as unpaid', paymentUndo(before, state, id, t));
+    const due = t.scheduledDate || id.slice(-10);
+    mutate((n) => {
+      n.transactions = n.transactions.filter((x) => x.id !== id);
+      // A paused or deleted template no longer generates it, so keep it as a scheduled payment.
+      if (!B.generated(n, due, true).some((x) => x.id === id)) {
+        n.scheduled ||= [];
+        n.scheduled = n.scheduled.filter((x) => x.id !== id);
+        const { actual, paid, scheduledDate, ...rest } = t;
+        n.scheduled.push({ ...rest, date: due, actual: 0, paid: false });
+      }
+    });
   }
   function skipPayment(id, restore = false) {
     const t = findPayment(id);
