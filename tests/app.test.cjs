@@ -923,6 +923,7 @@ test('Savings screen sums goals, shows status only against a plan and lists reac
   assert.ok(html.indexOf('>Car<') < html.indexOf('>Rainy day<'));
   assert.ok(html.indexOf('>Rainy day<') < html.indexOf('>Done<'));
   assert.ok(!html.includes('Saved includes the starting amount'));
+  assert.ok(html.includes('<small>Scheduled $0.00</small>'));
   const car = h.api.get().goals.find((g) => g.name === 'Car').id;
   save(h, 'recurring', '', {
     type: 'Transfer',
@@ -937,6 +938,7 @@ test('Savings screen sums goals, shows status only against a plan and lists reac
   html = h.node('#main').innerHTML;
   assert.ok(html.includes('goal-status is-warn">Behind'));
   assert.ok(html.includes('Edit recurring'));
+  assert.ok(html.includes('<small>Scheduled $1.00</small>'));
 });
 test('Goal cards match debt cards and View history opens inside the card', () => {
   const h = harness();

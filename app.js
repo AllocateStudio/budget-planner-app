@@ -1451,7 +1451,7 @@
     return (
       heading('Savings', '', edit('goal', '', '+ Add goal', 'btn primary')) +
       (plans.length
-        ? `<div class="stats-strip">${stat('Total saved', money(total(plans, ({ plan }) => plan.saved)), '', 'tone-mint')}${stat('Total target', money(total(state.goals, (g) => g.target)), '', 'tone-sky')}${stat('Needed / month', money(total(plans, ({ plan }) => plan.needed || 0)), '', 'tone-blush')}${stat('Goals reached', reached + ' of ' + plans.length, '', 'tone-ink')}</div><div class="goal-grid">${plans.map(card).join('')}</div>`
+        ? `<div class="stats-strip">${stat('Total saved', money(total(plans, ({ plan }) => plan.saved)), '', 'tone-mint')}${stat('Total target', money(total(state.goals, (g) => g.target)), '', 'tone-sky')}${stat('Needed / month', money(total(plans, ({ plan }) => plan.needed || 0)), 'Scheduled ' + money(total(plans, ({ plan }) => Math.min(plan.planned, plan.needed || 0))), 'tone-blush')}${stat('Goals reached', reached + ' of ' + plans.length, '', 'tone-ink')}</div><div class="goal-grid">${plans.map(card).join('')}</div>`
         : panel(
             'Savings goals',
             '<p class="empty-copy">Create a savings goal or sinking fund.</p>',
