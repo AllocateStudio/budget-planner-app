@@ -2736,21 +2736,21 @@ td .transaction-type-badge,
   }
 }
 
-/* Phones: Dashboard keeps only the month (or year) picker, stretched to the full width;
-   transactions are added from the Transactions screen. */
+/* Phones: the month (or year) picker spans the full width on every screen. Dashboard hides
+   Add transaction; it is added from the Transactions screen. */
 @media (max-width: 600px) {
-  .dashboard-view .heading-actions {
+  .heading-actions {
     width: 100%;
   }
   .dashboard-view .heading-actions > .btn.primary {
     display: none;
   }
-  .dashboard-view .heading-actions > .mp-picker,
-  .dashboard-view .heading-actions > .year-picker {
+  .heading-actions > .mp-picker,
+  .heading-actions > .year-picker {
     display: flex;
     width: 100%;
   }
-  .dashboard-view .heading-actions .mp-trigger {
+  .heading-actions .mp-trigger {
     flex: 1 1 auto;
     justify-content: center;
   }
