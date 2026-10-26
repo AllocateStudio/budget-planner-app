@@ -2659,3 +2659,42 @@ td .transaction-type-badge,
   position: relative;
   z-index: 1;
 }
+
+/* Recurring templates: grouped by type, next date and amount in fixed columns,
+   a square pause button at the end (same shape as the payment check box). */
+.template-group {
+  display: flex;
+  justify-content: space-between;
+  padding: 18px 0 8px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.template-group:first-child {
+  padding-top: 0;
+}
+.template-next {
+  flex: 0 0 72px;
+  text-align: right;
+  font-size: 13px;
+  color: var(--muted);
+}
+.template-row > .record-amount {
+  text-align: right;
+}
+.template-toggle svg {
+  fill: var(--ink);
+}
+.template-row.is-paused .record-name,
+.template-row.is-paused .record-amount {
+  color: var(--muted);
+}
+@media (max-width: 700px) {
+  .template-next {
+    flex-basis: 46px;
+  }
+  .template-row > .record-amount {
+    flex-basis: 78px;
+  }
+}

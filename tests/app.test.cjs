@@ -82,7 +82,7 @@ function harness(startupState) {
   source = source.replace(
     /if\s*\(\s*state\.sampleProfile[\s\S]*?else render\(\);\s*\}\)\(\);\s*$/,
     (startup) =>
-      'globalThis.api={get:()=>state,openSetupGroup:id=>{openSetupGroups.add(id);render();},setSetupTab:t=>{setupTab=t;render();},nextRecurringLabel,scheduleRow,editMonthBudget,saveMonthBudget,setDashMode:m=>{dashMode=m;render();},openBudgetGroup:id=>{openBudgetGroups.add(id);render();},setSpendingExpanded:value=>{spendingExpanded=value;render();},showDebtHover,hideDebtHover,applyDebtPlan,addSampleDebtPayments,updateDebtBalance,saveDebtBalance,updateAccountBalance,saveAccountBalance,debtRecurring,pauseRecurring,skipPayment,findPayment,mutate,empty,sample,cleanSamples,validateImport,editor,saveRecord,deleteRecord,removeRecord,commit,renderScreen:s=>{screen=s;render();},render};' +
+      'globalThis.api={get:()=>state,openSetupGroup:id=>{openSetupGroups.add(id);render();},setSetupTab:t=>{setupTab=t;render();},nextRecurringLabel,scheduleRow,templateRow,templateGroups,editMonthBudget,saveMonthBudget,setDashMode:m=>{dashMode=m;render();},openBudgetGroup:id=>{openBudgetGroups.add(id);render();},setSpendingExpanded:value=>{spendingExpanded=value;render();},showDebtHover,hideDebtHover,applyDebtPlan,addSampleDebtPayments,updateDebtBalance,saveDebtBalance,updateAccountBalance,saveAccountBalance,debtRecurring,pauseRecurring,skipPayment,findPayment,mutate,empty,sample,cleanSamples,validateImport,editor,saveRecord,deleteRecord,removeRecord,commit,renderScreen:s=>{screen=s;render();},render};' +
       (startupState ? startup : 'render();})();'),
   );
   vm.runInContext(source, ctx);
@@ -1736,4 +1736,49 @@ test('A paid check box marks the payment unpaid, and Undo pays it again', () => 
   assert.equal(h.node('#toast').textContent, 'Marked as unpaid');
   h.node('#toast').child.onclick();
   assert.ok(h.api.get().transactions.some((t) => t.id === id && t.paid));
+});
+
+test('Recurring templates are grouped by type with monthly totals and a pause button', () => {
+  const h = harness();
+  h.api.mutate((n) => {
+    n.recurring = [
+      {
+        id: 'a',
+        name: 'Pay',
+        type: 'Income',
+        active: true,
+        start: '2026-01-02',
+        frequency: 'Bi-weekly',
+        expected: 1200,
+      },
+      {
+        id: 'b',
+        name: 'Gym',
+        type: 'Expense',
+        active: false,
+        start: '2026-01-05',
+        frequency: 'Monthly',
+        expected: 45,
+      },
+      {
+        id: 'c',
+        name: 'Rent',
+        type: 'Expense',
+        active: true,
+        start: '2026-01-01',
+        frequency: 'Monthly',
+        expected: 1800,
+      },
+    ];
+  });
+  const html = h.api.templateGroups();
+  assert.match(html, /Income<\/span><span>\$2,600\.00 \/ mo/);
+  assert.match(html, /Expenses<\/span><span>\$1,800\.00 \/ mo/);
+  assert.doesNotMatch(html, /Transfers/);
+  assert.ok(html.indexOf('Rent') < html.indexOf('Gym'), 'paused templates go last');
+  const paused = h.api.templateRow(h.api.get().recurring.find((r) => r.id === 'b'));
+  assert.match(paused, /template-row is-paused/);
+  assert.match(paused, /<small>Paused<\/small>/);
+  assert.match(paused, /data-action="pause-recurring" data-id="b" aria-label="Resume Gym"/);
+  assert.doesNotMatch(paused, /transaction-type-badge/);
 });

@@ -657,8 +657,8 @@
       `<section class="panel"><div class="filters"><label>Month<div class="month-filter"><input type="month" id="filter-month" value="${esc(filters.month)}"><button type="button" class="icon-btn month-all" data-action="reset-month" data-id="" aria-label="Show all months" title="Show all months">All</button></div></label><label>Type<select data-filter="type">${options(['Income', 'Expense', 'Transfer'], filters.type, true)}</select></label><label>Category<select data-filter="category">${options(state.categories, filters.category, true)}</select></label><label>Account<select data-filter="account">${options(state.accounts, filters.account, true)}${state.goals.length ? `<optgroup label="Goals">${options(state.goals, filters.account)}</optgroup>` : ''}</select></label><label class="search-field">Search<input id="search" value="${esc(filters.search)}" placeholder="Name or note"></label></div><div class="table-wrap"><table><thead><tr><th>Entry</th><th>Date</th><th>Category / Account</th><th>Expected</th><th>Actual</th><th>Status</th></tr></thead><tbody>${list.map((t) => `<tr><td>${edit('transaction', t.id, esc(t.name), 'table-link')}<small class="transaction-type-badge type-${esc(t.type.toLowerCase())}">${esc(t.type)}</small></td><td class="journal-date">${fullDate(t.date)}</td><td>${entryCategory(t)}<small>${entrySource(t)}</small></td><td>${money(t.expected)}</td><td>${t.paid ? money(t.actual) : '—'}</td><td>${statusPill(t)}</td></tr>`).join('') || '<tr><td colspan="6">No matching entries.</td></tr>'}</tbody></table></div></section>`
     );
   }
-  function nextRecurringLabel(r) {
-    if (!r.active) return 'Paused';
+  function nextRecurringDate(r) {
+    if (!r.active) return '';
     const today = B.today();
     const excluded = new Set([...state.skipped, ...state.transactions.map((t) => t.id)]);
     for (let i = 0; i < 16000; i++) {
@@ -670,9 +670,44 @@
         excluded.has(`${r.id}@${date}`)
       )
         continue;
-      return 'Next: ' + fullDate(date);
+      return date;
     }
-    return 'No upcoming payments';
+    return '';
+  }
+  function nextRecurringLabel(r) {
+    if (!r.active) return 'Paused';
+    const date = nextRecurringDate(r);
+    return date ? 'Next: ' + fullDate(date) : 'No upcoming payments';
+  }
+  const pauseIcon =
+      '<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><rect x="2" y="1.5" width="2.6" height="9" rx=".6"/><rect x="7.4" y="1.5" width="2.6" height="9" rx=".6"/></svg>',
+    playIcon =
+      '<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M3 1.6v8.8a.6.6 0 0 0 .9.5l7-4.4a.6.6 0 0 0 0-1L3.9 1.1a.6.6 0 0 0-.9.5z"/></svg>';
+  // Template row: like a payment row, the whole row opens the template; the square button pauses it.
+  function templateRow(r) {
+    const next = nextRecurringDate(r),
+      label = r.active ? 'Pause' : 'Resume';
+    return `<div class="schedule-record payment-row template-row ${r.active ? '' : 'is-paused'}">${edit('recurring', r.id, `<span class="record-name">${esc(r.name)}<small>${r.active ? `${esc(r.frequency)} · ${name('accounts', r.accountId)}` : 'Paused'}</small></span>`)}<span class="template-next">${next ? shortDate(next) : '–'}</span><span class="record-amount">${money(r.expected)}</span><button type="button" class="pay-check template-toggle" data-action="pause-recurring" data-id="${esc(r.id)}" aria-label="${label} ${esc(r.name)}" title="${label}">${r.active ? pauseIcon : playIcon}</button></div>`;
+  }
+  // Templates grouped by type, active first, with the monthly total of the active ones.
+  function templateGroups() {
+    return [
+      ['Income', 'Income'],
+      ['Expense', 'Expenses'],
+      ['Transfer', 'Transfers'],
+    ]
+      .map(([type, title]) => {
+        const list = state.recurring
+          .filter((r) => r.type === type)
+          .sort((a, b) => Number(!a.active) - Number(!b.active));
+        if (!list.length) return '';
+        const monthly = B.sum(
+          list.filter((r) => r.active),
+          B.monthlyAmount,
+        );
+        return `<div class="template-group"><span>${title}</span><span>${money(monthly)} / mo</span></div>${list.map(templateRow).join('')}`;
+      })
+      .join('');
   }
   function recurringScreen() {
     const list = B.paymentSchedule(state, state.month + '-31', state.month + '-01').filter(
@@ -699,12 +734,7 @@
           )
         : panel(
             'Recurring templates',
-            state.recurring
-              .map(
-                (r) =>
-                  `<div class="schedule-record">${edit('recurring', r.id, `<span class="record-name">${esc(r.name)}<small>${esc(r.frequency)} · ${name('accounts', r.accountId)} · ${nextRecurringLabel(r)}</small></span><span class="record-amount">${money(r.expected)}<small class="transaction-type-badge type-${esc(r.type.toLowerCase())}">${esc(r.type)}</small></span>`)}${btn(r.active ? 'Pause' : 'Resume', 'pause-recurring', r.id, 'textbtn')}</div>`,
-              )
-              .join('') || '<p class="empty-copy">Add a recurring template.</p>',
+            templateGroups() || '<p class="empty-copy">Add a recurring template.</p>',
           ))
     );
   }

@@ -213,6 +213,9 @@
     'Semi-annually': 1 / 6,
     Annually: 1 / 12,
   };
+  // A recurring template's amount per month.
+  const monthlyAmount = (r) =>
+    r.expected * (monthlyFactor[frequencyAliases[r.frequency] || r.frequency] || 0);
   // Active recurring transfers into a goal, as a monthly amount.
   function goalPlanned(state, id, asOf = today()) {
     return sum(
@@ -224,7 +227,7 @@
           r.toId === id &&
           (!r.end || r.end >= asOf),
       ),
-      (r) => r.expected * (monthlyFactor[frequencyAliases[r.frequency] || r.frequency] || 0),
+      monthlyAmount,
     );
   }
   // Calendar months until the target date, including the current month.
@@ -579,6 +582,7 @@
     goalAssets,
     accountMonth,
     goalPlanned,
+    monthlyAmount,
     goalPlan,
     totalAssets,
     summary,
