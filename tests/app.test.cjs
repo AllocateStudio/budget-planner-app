@@ -1738,7 +1738,7 @@ test('A paid check box marks the payment unpaid, and Undo pays it again', () => 
   assert.ok(h.api.get().transactions.some((t) => t.id === id && t.paid));
 });
 
-test('Recurring templates are grouped by type under quiet headings, by name, paused last', () => {
+test('Recurring templates are one list by type, then name, paused last', () => {
   const h = harness();
   h.api.mutate((n) => {
     n.recurring = [
@@ -1787,14 +1787,13 @@ test('Recurring templates are grouped by type under quiet headings, by name, pau
     order,
   );
   assert.ok(order.every((i) => i >= 0));
-  assert.match(html, /template-group">Income</);
-  assert.match(html, /template-group">Expenses</);
-  assert.doesNotMatch(html, /Transfers|\/ mo/);
-  assert.match(html, /Rent<small>[^<]* · Monthly<\/small>/);
+  assert.match(html, /Pay<small>Income · Bi-weekly<\/small>/);
+  assert.doesNotMatch(html, /template-group|\/ mo/);
+  assert.match(html, /Rent<small>Expense · Monthly<\/small>/);
   assert.match(html, /class="template-next">[A-Z][a-z]{2} \d{1,2}, \d{4}</);
   const paused = h.api.templateRow(h.api.get().recurring.find((r) => r.id === 'b'));
   assert.match(paused, /template-row is-paused/);
-  assert.match(paused, / · Paused<\/small>/);
+  assert.match(paused, /Expense · Paused<\/small>/);
   assert.match(paused, /data-action="pause-recurring" data-id="b" aria-label="Resume Gym"/);
   assert.doesNotMatch(paused, /transaction-type-badge/);
 });

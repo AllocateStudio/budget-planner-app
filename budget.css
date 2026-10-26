@@ -2660,17 +2660,7 @@ td .transaction-type-badge,
   z-index: 1;
 }
 
-/* Recurring templates: quiet group headings, amount column and a square pause button. */
-.template-group {
-  margin: 26px 0 0;
-  padding: 0 0 8px;
-  border-bottom: 1px solid var(--line);
-  font-size: 14px;
-  font-weight: 700;
-}
-.template-group:first-child {
-  margin-top: 0;
-}
+/* Recurring templates: one list, next date and amount columns, a square pause button. */
 .template-next {
   flex: 0 0 96px;
   text-align: right;
