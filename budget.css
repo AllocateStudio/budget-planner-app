@@ -1734,6 +1734,9 @@ td:not(:first-child) {
 .dashboard-view .stats-strip {
   margin-top: 22px;
 }
+.dashboard-view > .screen-switch + .welcome {
+  margin-top: 22px;
+}
 .year-picker .mp-trigger {
   padding: 6px 12px;
   font-variant-numeric: tabular-nums;
