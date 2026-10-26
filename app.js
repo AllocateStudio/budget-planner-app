@@ -2031,14 +2031,14 @@
   }
   function scheduleRow(t) {
     t = { ...t, date: t.scheduledDate || t.date };
-    // As in the Bill Calendar: a check box marks the payment paid (or unpaid) in one click, the pencil
-    // opens the payment (amount, date, notes, Skip or Restore). Paid rows show a filled box.
+    // As in the Bill Calendar: a check box marks the payment paid (or unpaid) in one click; clicking
+    // the rest of the row opens the payment (amount, date, notes, Skip or Restore).
     const check = t.paid
       ? `<button type="button" class="pay-check is-done" data-action="unpay" data-id="${esc(t.id)}" aria-label="Mark ${esc(t.name)} as unpaid" title="Mark as unpaid">✓</button>`
       : t.skipped
         ? '<span class="pay-check is-empty" aria-hidden="true"></span>'
         : `<button type="button" class="pay-check" data-action="quick-pay" data-id="${esc(t.id)}" aria-label="Mark ${esc(t.name)} as paid" title="Mark as paid"></button>`;
-    return `<div class="schedule-record payment-row ${t.paid ? 'is-paid' : ''}">${check}${edit('transaction', t.id, recordName(t, false, true))}${recordAmount(t, false)}<button type="button" class="icon-btn edit-icon" data-action="open-payment" data-id="${esc(t.id)}" aria-label="Edit ${esc(t.name)}" title="Edit">&#9998;</button></div>`;
+    return `<div class="schedule-record payment-row ${t.paid ? 'is-paid' : ''}">${check}${edit('transaction', t.id, recordName(t, false, true))}${recordAmount(t, false)}</div>`;
   }
   function editor(kind, id = '', preset = {}) {
     let record = state[collections[kind]].find((t) => t.id === id);
@@ -3123,9 +3123,6 @@
       spendingExpanded = !spendingExpanded;
       render();
       $('[data-action="toggle-spending"]')?.focus();
-    } else if (a === 'open-payment') {
-      const t = findPayment(id);
-      if (t) drawPayment(t);
     } else if (a === 'quick-pay') quickPay(id);
     else if (a === 'unpay') unpay(id);
     else if (a === 'skip-payment') skipPayment(id);

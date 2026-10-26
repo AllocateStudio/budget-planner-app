@@ -971,23 +971,6 @@ td:not(:first-child) {
   .payment-row > .record-amount {
     flex-basis: auto;
   }
-  /* Phones: tapping anywhere on the row (except the check box) opens the payment,
-     so the pencil is not needed. */
-  .payment-row {
-    position: relative;
-  }
-  .payment-row > .row-link::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-  }
-  .payment-row > .pay-check {
-    position: relative;
-    z-index: 1;
-  }
-  .payment-row > .edit-icon {
-    display: none;
-  }
   .schedule-totals {
     gap: 12px;
   }
@@ -2656,10 +2639,23 @@ td .transaction-type-badge,
   }
 }
 
-/* Wide screens: the pencil edits a payment; the name is plain text. */
-@media (min-width: 701px) {
-  .payment-row > .row-link {
-    pointer-events: none;
-    cursor: default;
-  }
+/* Clicking anywhere on a payment row (except the check box) opens the payment;
+   the whole row lights up on hover. */
+.payment-row {
+  position: relative;
+}
+.payment-row > .row-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.payment-row > .row-link:hover {
+  background: none;
+}
+.payment-row:hover {
+  background: #fafaf7;
+}
+.payment-row > .pay-check {
+  position: relative;
+  z-index: 1;
 }

@@ -1651,7 +1651,7 @@ test('Recurring shows the next unpaid date and schedule marks paid records', () 
   assert.ok(html.includes('schedule-record payment-row is-paid'));
   assert.ok(html.includes('class="pay-check is-done"'));
   assert.ok(html.includes('<small>Paid</small>'));
-  assert.ok(html.includes('data-action="open-payment"'));
+  assert.ok(html.includes('data-edit="transaction"'));
   assert.ok(!html.includes('data-action="quick-pay"'));
 });
 
