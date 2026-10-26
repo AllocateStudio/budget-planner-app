@@ -1835,3 +1835,9 @@ test('Month picker shows on Payment Schedule but not on Recurring templates', ()
   tab('Recurring');
   assert.ok(!h.node('#main').innerHTML.includes('Month picker'));
 });
+
+test('Month picker draws all three rows of months', () => {
+  // A formatter once dropped rows 0 and 1, leaving only Sep to Dec.
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'month-picker.js'), 'utf8');
+  assert.match(src, /\$\{\[0, 1, 2\]\s*\.map\(/);
+});

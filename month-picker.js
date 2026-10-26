@@ -135,9 +135,7 @@
         : year + delta >= Math.floor(c.min / 12) && year + delta <= Math.floor(c.max / 12);
     function draw(focus = true) {
       const cells = Array.from({ length: 12 }, (_, i) => (years ? page + i : year * 12 + i));
-      dialog.innerHTML = `<div class="mp-header"><button type="button" class="mp-arrow" data-mp-nav="-1" aria-label="${years ? 'Previous 12 years' : 'Previous year'}" ${navPossible(-1) ? '' : 'disabled'}>‹</button><button type="button" class="mp-year" data-mp-year aria-label="${years ? 'Show months' : 'Choose year'}">${years ? `${page}–${Math.min(2199, page + 11)}` : year}</button><button type="button" class="mp-arrow" data-mp-nav="1" aria-label="${years ? 'Next 12 years' : 'Next year'}" ${navPossible(1) ? '' : 'disabled'}>›</button></div><div class="mp-grid" role="grid" aria-label="${years ? 'Years' : 'Months'}">${[
-        2,
-      ]
+      dialog.innerHTML = `<div class="mp-header"><button type="button" class="mp-arrow" data-mp-nav="-1" aria-label="${years ? 'Previous 12 years' : 'Previous year'}" ${navPossible(-1) ? '' : 'disabled'}>‹</button><button type="button" class="mp-year" data-mp-year aria-label="${years ? 'Show months' : 'Choose year'}">${years ? `${page}–${Math.min(2199, page + 11)}` : year}</button><button type="button" class="mp-arrow" data-mp-nav="1" aria-label="${years ? 'Next 12 years' : 'Next year'}" ${navPossible(1) ? '' : 'disabled'}>›</button></div><div class="mp-grid" role="grid" aria-label="${years ? 'Years' : 'Months'}">${[0, 1, 2]
         .map(
           (row) =>
             `<div class="mp-row" role="row">${cells
