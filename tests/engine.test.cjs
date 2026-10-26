@@ -363,6 +363,18 @@ test('Debt without a due day is not missed before the month ends', () => {
   assert.equal(r.find((x) => x.month === '2026-09').state, 'missed');
   assert.equal(r.find((x) => x.month === '2026-10').state, 'future');
 });
+test('Debt is not missed on its due day, only the day after', () => {
+  const s = base();
+  s.extra = 0;
+  s.budgetStart = '2026-10-01';
+  s.debts = [{ id: 'd', balance: 1000, minimum: 100, apr: 0, start: '2026-10-01', dueDay: 15 }];
+  const state = (asOf) =>
+    B.debtSchedule(s, 'd', B.debtProjection(s, 'Snowball', asOf), asOf).find(
+      (x) => x.month === '2026-10',
+    ).state;
+  assert.equal(state('2026-10-15'), 'future');
+  assert.equal(state('2026-10-16'), 'missed');
+});
 test('Debt strategy comparison, monthly interest and impossible plan are deterministic', () => {
   const s = base();
   s.extra = 50;
