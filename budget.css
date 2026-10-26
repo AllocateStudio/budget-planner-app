@@ -603,7 +603,8 @@ td:not(:first-child) {
   .filters {
     grid-template-columns: 1fr 1fr;
   }
-  .search-field {
+  /* Month gets a full row so the month name fits; Account and Search share the last row. */
+  .filters label:first-child {
     grid-column: 1/-1;
   }
   .welcome {
