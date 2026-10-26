@@ -683,14 +683,14 @@
       '<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><rect x="2" y="1.5" width="2.6" height="9" rx=".6"/><rect x="7.4" y="1.5" width="2.6" height="9" rx=".6"/></svg>',
     playIcon =
       '<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M3 1.6v8.8a.6.6 0 0 0 .9.5l7-4.4a.6.6 0 0 0 0-1L3.9 1.1a.6.6 0 0 0-.9.5z"/></svg>';
-  // Template row: name with the journal's type badge and the frequency, next payment date, amount, a square pause button.
+  // Template row: name with the journal's type badge; next date (year only if not this one) over the frequency; next payment date, amount, a square pause button.
   // The whole row opens the template.
   const templateEnded = (r) => Boolean(r.end && r.end < B.today());
   function templateRow(r) {
     const label = r.active ? 'Pause' : 'Resume',
       next = nextRecurringDate(r),
       note = !r.active ? 'Paused' : templateEnded(r) ? 'Ended' : esc(r.frequency);
-    return `<div class="schedule-record payment-row template-row ${r.active && !templateEnded(r) ? '' : 'is-paused'}">${edit('recurring', r.id, `<span class="record-name">${esc(r.name)}<span class="template-meta"><small class="transaction-type-badge type-${esc(r.type.toLowerCase())}">${esc(r.type)}</small><small>${note}</small></span></span>`)}<span class="template-next">${next ? fullDate(next) : '–'}</span><span class="record-amount">${money(r.expected)}</span><button type="button" class="pay-check template-toggle" data-action="pause-recurring" data-id="${esc(r.id)}" aria-label="${label} ${esc(r.name)}" title="${label}">${r.active ? pauseIcon : playIcon}</button></div>`;
+    return `<div class="schedule-record payment-row template-row ${r.active && !templateEnded(r) ? '' : 'is-paused'}">${edit('recurring', r.id, `<span class="record-name">${esc(r.name)}<small class="transaction-type-badge type-${esc(r.type.toLowerCase())}">${esc(r.type)}</small></span>`)}<span class="template-next">${next ? shortDate(next) : '–'}<small>${note}</small></span><span class="record-amount">${money(r.expected)}</span><button type="button" class="pay-check template-toggle" data-action="pause-recurring" data-id="${esc(r.id)}" aria-label="${label} ${esc(r.name)}" title="${label}">${r.active ? pauseIcon : playIcon}</button></div>`;
   }
   // One list: income, then expenses, then transfers, each by name; paused and ended go last.
   function templateList() {

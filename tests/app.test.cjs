@@ -1780,7 +1780,7 @@ test('Recurring templates are one list by type, then name, paused last', () => {
   });
   const html = h.api.templateList();
   const order = ['Pay', 'Car', 'Rent', 'Gym'].map((n) =>
-    html.indexOf(`>${n}<span class="template-meta">`),
+    html.indexOf(`>${n}<small class="transaction-type-badge`),
   );
   assert.deepEqual(
     [...order].sort((x, y) => x - y),
@@ -1789,17 +1789,21 @@ test('Recurring templates are one list by type, then name, paused last', () => {
   assert.ok(order.every((i) => i >= 0));
   assert.match(
     html,
-    /Pay<span class="template-meta"><small class="transaction-type-badge type-income">Income<\/small><small>Bi-weekly<\/small>/,
+    /Pay<small class="transaction-type-badge type-income">Income<\/small>[^]*?class="template-next">[^<]*<small>Bi-weekly<\/small>/,
   );
   assert.doesNotMatch(html, /template-group|\/ mo/);
   assert.match(
     html,
-    /Rent<span class="template-meta">[^]*?type-expense">Expense<\/small><small>Monthly<\/small>/,
+    /Rent<small class="transaction-type-badge type-expense">Expense<\/small>[^]*?<small>Monthly<\/small>/,
   );
-  assert.match(html, /class="template-next">[A-Z][a-z]{2} \d{1,2}, \d{4}</);
+  // Next date without the year this year; the year shows only for a date in another year.
+  const dateFormat = new RegExp(`^[A-Z][a-z]{2} \\d{1,2}(, (?!${B.today().slice(0, 4)})\\d{4})?$`);
+  const dates = [...html.matchAll(/class="template-next">([^<]*)</g)].map((m) => m[1]);
+  assert.ok(dates.filter((d) => d !== '–').length >= 3);
+  for (const date of dates) if (date !== '–') assert.match(date, dateFormat);
   const paused = h.api.templateRow(h.api.get().recurring.find((r) => r.id === 'b'));
   assert.match(paused, /template-row is-paused/);
-  assert.match(paused, /Expense<\/small><small>Paused<\/small>/);
+  assert.match(paused, /class="template-next">–<small>Paused<\/small>/);
   assert.match(paused, /data-action="pause-recurring" data-id="b" aria-label="Resume Gym"/);
 });
 
@@ -1815,5 +1819,5 @@ test('Ended templates stay in the list, marked Ended and placed last', () => {
   });
   const html = h.api.templateList();
   assert.ok(html.indexOf('Zeta') < html.indexOf('Alpha'));
-  assert.match(html, /Alpha<span[^]*?<small>Ended<\/small>/);
+  assert.match(html, /Alpha<small[^]*?<small>Ended<\/small>/);
 });
