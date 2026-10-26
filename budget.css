@@ -388,8 +388,23 @@ td:not(:first-child) {
   display: flex;
   gap: 5px;
 }
+.month-filter {
+  min-width: 0;
+}
+/* The month field takes what is left next to All; iOS gives date inputs a wide intrinsic size,
+   so it is reset to let the field shrink instead of pushing All over the edge. */
 .month-filter input {
-  min-width: 110px;
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.month-filter input::-webkit-date-and-time-value {
+  text-align: left;
+}
+.month-filter .month-all {
+  flex: 0 0 auto;
 }
 .month-filter .month-all {
   width: auto;
