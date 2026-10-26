@@ -298,8 +298,16 @@
     }
     return false;
   };
+  // The month picker is hidden on the Recurring templates tab: templates do not depend on a month.
   function heading(title, subtitle = '', actions = '') {
-    return `<div class="budget-heading"><div class="stats-head"><h1>${title}</h1>${subtitle ? `<p class="muted">${subtitle}</p>` : ''}</div><div class="heading-actions">${screen === 'Dashboard' && dashMode === 'Year' ? `<div class="week-nav-picker year-picker"><button type="button" class="mp-step" data-action="dash-year" data-id="-1" aria-label="Previous year">‹</button><span class="mp-trigger">${state.month.slice(0, 4)}</span><button type="button" class="mp-step" data-action="dash-year" data-id="1" aria-label="Next year">›</button></div>` : ['Dashboard', 'Transactions', 'Recurring', 'Bill Calendar'].includes(screen) ? renderMonthPicker({ value: state.month, id: 'budget-month', locale: 'en-US' }) : ''}${actions}</div></div>`;
+    return `<div class="budget-heading"><div class="stats-head"><h1>${title}</h1>${subtitle ? `<p class="muted">${subtitle}</p>` : ''}</div><div class="heading-actions">${
+      screen === 'Dashboard' && dashMode === 'Year'
+        ? `<div class="week-nav-picker year-picker"><button type="button" class="mp-step" data-action="dash-year" data-id="-1" aria-label="Previous year">‹</button><span class="mp-trigger">${state.month.slice(0, 4)}</span><button type="button" class="mp-step" data-action="dash-year" data-id="1" aria-label="Next year">›</button></div>`
+        : ['Dashboard', 'Transactions', 'Recurring', 'Bill Calendar'].includes(screen) &&
+            !(screen === 'Recurring' && tab === 'Recurring')
+          ? renderMonthPicker({ value: state.month, id: 'budget-month', locale: 'en-US' })
+          : ''
+    }${actions}</div></div>`;
   }
   function stat(label, value, note, tone) {
     return `<div class="stat-tile ${tone}"><span class="stat-label">${label}</span><strong class="stat-value">${value}</strong><small>${note}</small></div>`;

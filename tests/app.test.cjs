@@ -1821,3 +1821,17 @@ test('Ended templates stay in the list, marked Ended and placed last', () => {
   assert.ok(html.indexOf('Zeta') < html.indexOf('Alpha'));
   assert.match(html, /Alpha<small[^]*?<small>Ended<\/small>/);
 });
+
+test('Month picker shows on Payment Schedule but not on Recurring templates', () => {
+  const h = harness();
+  h.api.sample('Jessica');
+  h.api.renderScreen('Recurring');
+  const tab = (id) =>
+    h.fire('click', {
+      target: { closest: (sel) => (sel === 'button' ? { dataset: { action: 'tab', id } } : null) },
+    });
+  tab('Payment Schedule');
+  assert.ok(h.node('#main').innerHTML.includes('Month picker'));
+  tab('Recurring');
+  assert.ok(!h.node('#main').innerHTML.includes('Month picker'));
+});
