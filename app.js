@@ -683,26 +683,14 @@
       '<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><rect x="2" y="1.5" width="2.6" height="9" rx=".6"/><rect x="7.4" y="1.5" width="2.6" height="9" rx=".6"/></svg>',
     playIcon =
       '<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M3 1.6v8.8a.6.6 0 0 0 .9.5l7-4.4a.6.6 0 0 0 0-1L3.9 1.1a.6.6 0 0 0-.9.5z"/></svg>';
-  // Template row: name and when it pays, the amount, a square pause button.
+  // Template row: name with category and frequency, next payment date, amount, a square pause button.
   // The whole row opens the template.
   const templateEnded = (r) => Boolean(r.end && r.end < B.today());
-  const ordinal = (n) =>
-    n + (n % 100 > 10 && n % 100 < 14 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
-  // When a template pays, in words: "Monthly · 1st", "Bi-weekly · Fridays", "Annually · Mar 15".
-  function templateWhen(r) {
-    const f = B.frequencyAliases[r.frequency] || r.frequency,
-      d = B.date(r.start);
-    if (['Weekly', 'Bi-weekly', 'Every 4 Weeks'].includes(f))
-      return `${r.frequency} · ${d.toLocaleDateString('en-US', { weekday: 'long' })}s`;
-    if (f === 'Semi-monthly') return `${r.frequency} · 1st and 15th`;
-    if (f === 'Annually')
-      return `${r.frequency} · ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
-    return `${r.frequency} · ${ordinal(r.monthDay || d.getDate())}`;
-  }
   function templateRow(r) {
     const label = r.active ? 'Pause' : 'Resume',
-      note = !r.active ? 'Paused' : templateEnded(r) ? 'Ended' : esc(templateWhen(r));
-    return `<div class="schedule-record payment-row template-row ${r.active && !templateEnded(r) ? '' : 'is-paused'}">${edit('recurring', r.id, `<span class="record-name">${esc(r.name)}<small>${note}</small></span>`)}<span class="record-amount">${money(r.expected)}</span><button type="button" class="pay-check template-toggle" data-action="pause-recurring" data-id="${esc(r.id)}" aria-label="${label} ${esc(r.name)}" title="${label}">${r.active ? pauseIcon : playIcon}</button></div>`;
+      next = nextRecurringDate(r),
+      note = !r.active ? 'Paused' : templateEnded(r) ? 'Ended' : esc(r.frequency);
+    return `<div class="schedule-record payment-row template-row ${r.active && !templateEnded(r) ? '' : 'is-paused'}">${edit('recurring', r.id, `<span class="record-name">${esc(r.name)}<small>${entryCategory(r)} · ${note}</small></span>`)}<span class="template-next">${next ? fullDate(next) : '–'}</span><span class="record-amount">${money(r.expected)}</span><button type="button" class="pay-check template-toggle" data-action="pause-recurring" data-id="${esc(r.id)}" aria-label="${label} ${esc(r.name)}" title="${label}">${r.active ? pauseIcon : playIcon}</button></div>`;
   }
   // Templates under quiet Income / Expenses / Transfers headings, by name; paused and ended last.
   function templateList() {
