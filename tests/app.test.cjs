@@ -1738,7 +1738,7 @@ test('A paid check box marks the payment unpaid, and Undo pays it again', () => 
   assert.ok(h.api.get().transactions.some((t) => t.id === id && t.paid));
 });
 
-test('Recurring templates are one plain list: income first, then by name, paused last', () => {
+test('Recurring templates are grouped by type under quiet headings, by name, paused last', () => {
   const h = harness();
   h.api.mutate((n) => {
     n.recurring = [
@@ -1787,8 +1787,11 @@ test('Recurring templates are one plain list: income first, then by name, paused
     order,
   );
   assert.ok(order.every((i) => i >= 0));
-  assert.match(html, /\+\$1,200\.00/);
-  assert.doesNotMatch(html, /template-group|\/ mo|Next/);
+  assert.match(html, /template-group">Income</);
+  assert.match(html, /template-group">Expenses</);
+  assert.doesNotMatch(html, /Transfers|\/ mo|Next/);
+  assert.match(html, /Pay<small>Bi-weekly · Fridays<\/small>/);
+  assert.match(html, /Rent<small>Monthly · 1st<\/small>/);
   const paused = h.api.templateRow(h.api.get().recurring.find((r) => r.id === 'b'));
   assert.match(paused, /template-row is-paused/);
   assert.match(paused, /<small>Paused<\/small>/);

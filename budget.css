@@ -2660,7 +2660,17 @@ td .transaction-type-badge,
   z-index: 1;
 }
 
-/* Recurring templates: one plain list, amount column and a square pause button. */
+/* Recurring templates: quiet group headings, amount column and a square pause button. */
+.template-group {
+  margin: 26px 0 0;
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  font-weight: 700;
+}
+.template-group:first-child {
+  margin-top: 0;
+}
 .template-row > .record-amount {
   text-align: right;
 }
