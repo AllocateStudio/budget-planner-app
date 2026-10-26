@@ -2792,22 +2792,3 @@ td .transaction-type-badge,
     padding-inline: 11px;
   }
 }
-
-/* Phones: the eight sections sit in an even 3-column grid with full names (3 + 3 + 2). */
-@media (max-width: 600px) {
-  #navigation {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
-  }
-  #navigation .nav-item {
-    padding: 8px 4px;
-    text-align: center;
-    white-space: nowrap;
-  }
-}
-@media (max-width: 360px) {
-  #navigation .nav-item {
-    font-size: 11px;
-  }
-}
