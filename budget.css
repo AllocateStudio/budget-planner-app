@@ -857,8 +857,10 @@ td:not(:first-child) {
   flex: 1;
   min-width: 0;
 }
+/* Same pink as the screen switches. */
 .transaction-types .switch-pill.active {
-  background: var(--accent);
+  background: var(--blush);
+  color: var(--ink);
 }
 /* Recurring templates and dated payments */
 .schedule-record {
