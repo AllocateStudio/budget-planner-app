@@ -259,6 +259,17 @@ test('Income monthly budget saves, displays progress and never flags higher inco
     ),
     3000,
   );
+  // The edit applies from the real current month; income dated today opens that month above target.
+  save(h, 'transaction', '', {
+    name: 'Bonus',
+    type: 'Income',
+    categoryId: 'Income-0',
+    accountId: h.api.get().accounts[0].id,
+    expected: '4000',
+    actual: '4000',
+    date: B.today(),
+    paid: 'on',
+  });
   h.api.renderScreen('Dashboard');
   const html = h.node('#main').innerHTML;
   const row = html.match(
