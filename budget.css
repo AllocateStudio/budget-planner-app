@@ -78,8 +78,10 @@
   color: var(--ink);
   min-height: 44px;
 }
-.nav-item:hover {
-  background: #eeeae1;
+@media (hover: hover) {
+  .nav-item:hover {
+    background: #eeeae1;
+  }
 }
 .nav-item.active {
   background: var(--accent);
@@ -178,8 +180,10 @@
 .row-link:last-child {
   border-bottom: 0;
 }
-.row-link:hover {
-  background: #fafaf7;
+@media (hover: hover) {
+  .row-link:hover {
+    background: #fafaf7;
+  }
 }
 .row-link small,
 .schedule-record > .record-amount small,
@@ -571,8 +575,10 @@ td:not(:first-child) {
   cursor: default;
   min-height: 120px;
 }
-.calendar-entry:hover {
-  outline: 1px solid var(--ink);
+@media (hover: hover) {
+  .calendar-entry:hover {
+    outline: 1px solid var(--ink);
+  }
 }
 @media (max-width: 1000px) {
   .cards-grid {
@@ -848,9 +854,11 @@ td:not(:first-child) {
   padding: 4px 0;
   cursor: pointer;
 }
-.editable-heading:hover {
-  text-decoration: underline;
-  text-underline-offset: 4px;
+@media (hover: hover) {
+  .editable-heading:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
 }
 
 .budget-value {
@@ -866,9 +874,11 @@ td:not(:first-child) {
   font-variant-numeric: tabular-nums;
   color: var(--ink);
 }
-.budget-value:hover {
-  background: #f5f3f9;
-  border-color: var(--line);
+@media (hover: hover) {
+  .budget-value:hover {
+    background: #f5f3f9;
+    border-color: var(--line);
+  }
 }
 
 .breakdown-actions {
@@ -928,14 +938,18 @@ td:not(:first-child) {
   color: var(--ink);
   cursor: pointer;
 }
-.pay-check:hover {
-  background: #f3fad9;
+@media (hover: hover) {
+  .pay-check:hover {
+    background: #f3fad9;
+  }
 }
 .pay-check.is-done {
   background: var(--blush);
 }
-.pay-check.is-done:hover {
-  background: #eaa3c6;
+@media (hover: hover) {
+  .pay-check.is-done:hover {
+    background: #eaa3c6;
+  }
 }
 .pay-check.is-empty {
   border-style: dashed;
@@ -1459,8 +1473,10 @@ td:not(:first-child) {
     border-color 0.15s,
     box-shadow 0.15s;
 }
-.strategy-option:hover {
-  border-color: var(--ink);
+@media (hover: hover) {
+  .strategy-option:hover {
+    border-color: var(--ink);
+  }
 }
 .strategy-option:focus-visible {
   outline: 3px solid var(--accent);
@@ -2067,8 +2083,10 @@ button.budget-input {
   color: var(--ink);
   white-space: nowrap;
 }
-button.budget-input:hover {
-  border-color: var(--ink);
+@media (hover: hover) {
+  button.budget-input:hover {
+    border-color: var(--ink);
+  }
 }
 /* The budget dialog's amount field only needs room for a money amount. */
 #month-budget-form input[name='amount'] {
@@ -2677,11 +2695,15 @@ td .transaction-type-badge,
   position: absolute;
   inset: 0;
 }
-.payment-row > .row-link:hover {
-  background: none;
+@media (hover: hover) {
+  .payment-row > .row-link:hover {
+    background: none;
+  }
 }
-.payment-row:hover {
-  background: #fafaf7;
+@media (hover: hover) {
+  .payment-row:hover {
+    background: #fafaf7;
+  }
 }
 .payment-row > .pay-check {
   position: relative;
