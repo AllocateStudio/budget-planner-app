@@ -1856,7 +1856,7 @@ test('Month picker draws all three rows of months', () => {
     require('path').join(__dirname, '..', 'month-picker.js'),
     'utf8',
   );
-  assert.match(src, /\$\{\[0, 1, 2\]\s*\.map\(/);
+  assert.match(src, /\$\{\[\s*0,\s*1,\s*2,?\s*\]\s*\.map\(/);
 });
 
 test('Extra sample accounts are added once without replacing saved accounts', () => {
