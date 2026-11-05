@@ -704,10 +704,21 @@ td:not(:first-child) {
 .dashboard-view .record-name > small {
   display: none;
 }
+.cal-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.cal-toolbar .screen-switch {
+  margin-bottom: 0;
+}
 .calendar-preferences {
   display: flex;
   justify-content: flex-end;
-  margin: 0 0 18px;
+  margin-left: auto;
 }
 .calendar-preferences label {
   display: flex;

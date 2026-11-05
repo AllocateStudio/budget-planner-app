@@ -784,7 +784,8 @@
         : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     return (
       heading('Bill Calendar', '', edit('recurring', '', '+ Add recurring', 'btn primary')) +
-      `<div class="screen-switch">${['Month', 'List'].map((t) => btn(t, 'cal-view', t, 'switch-pill ' + (calView === t ? 'active' : ''))).join('')}</div>` +
+      // Week start sits on the same row as the Month / List switch (stacked on phones).
+      `<div class="cal-toolbar"><div class="screen-switch">${['Month', 'List'].map((t) => btn(t, 'cal-view', t, 'switch-pill ' + (calView === t ? 'active' : ''))).join('')}</div>${calView === 'List' ? '' : `<div class="calendar-preferences"><label>Week starts on<select id="calendar-week">${options(['Monday', 'Sunday'], state.week)}</select></label></div>`}</div>` +
       (calView === 'List' ? calendarList(list) : calendarGrid(list, start, weekdays))
     );
   }
@@ -802,7 +803,7 @@
     );
   }
   function calendarGrid(list, start, weekdays) {
-    return `<div class="calendar-preferences"><label>Week starts on<select id="calendar-week">${options(['Monday', 'Sunday'], state.week)}</select></label></div><div id="cal-body"><div class="cal-grid">${weekdays.map((x) => `<div class="cal-weekday">${x}</div>`).join('')}${Array.from(
+    return `<div id="cal-body"><div class="cal-grid">${weekdays.map((x) => `<div class="cal-weekday">${x}</div>`).join('')}${Array.from(
       { length: 42 },
       (_, i) => {
         const day = new Date(start);
