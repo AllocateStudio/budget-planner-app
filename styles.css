@@ -71,8 +71,10 @@ select,
 textarea {
   font: inherit;
 }
+/* Safari on iPhone and iPad paints button text system blue unless a colour is set. */
 button {
   cursor: pointer;
+  color: inherit;
 }
 a {
   color: inherit;
